@@ -3,7 +3,7 @@ set nocompatible              " be iMproved
 call plug#begin()
 
 " custom plugins
-Plug 'fatih/vim-go', { 'do': ':GoInstallBinaries' }
+Plug 'fatih/vim-go'
 Plug 'majutsushi/tagbar'
 Plug 'scrooloose/nerdtree'
 Plug 'vim-airline/vim-airline'
@@ -14,7 +14,7 @@ Plug 'mbbill/undotree'
 Plug 'Lokaltog/vim-easymotion'
 Plug 'scrooloose/nerdcommenter'
 "" Great tool for auto-completion of variables and functions
-Plug 'Valloric/YouCompleteMe', { 'do': './install.py --clangd-completer' }
+Plug 'Valloric/YouCompleteMe'
 "" Good Auto Fill Tool use F2 to trigger
 Plug 'SirVer/ultisnips'
 Plug 'honza/vim-snippets'
@@ -67,6 +67,20 @@ set cursorline
 set completeopt=menuone,longest,preview
 set virtualedit=onemore
 
+set laststatus=2
+set statusline=%{GitBranch()}
+set completeopt-=preview
+
+set background=dark
+highlight clear
+
+if exists("syntax_on")
+  syntax reset
+endif
+set t_Co=256
+
+let g:colors_name="molokai" 
+
 """ Markdown
 "let g:vim_markdown_folding_disabled=1
 "let g:vim_markdown_math=1
@@ -92,7 +106,7 @@ let g:ctrlp_prompt_mappings = {
 	\ 'AcceptSelection("e")': ['<2-LeftMouse>'],
 	\ }
 
-" vim go
+""" vim-go
 " disable open browser after posting snippet
 let g:go_play_open_browser = 0
 " enable goimports
@@ -108,7 +122,6 @@ let g:go_info_mode='gopls'
 let g:go_referrers_mode = 'gopls'
 
 " vim-airline
-set laststatus=2
 let g:bufferline_echo = 0
 let g:airline#extensions#tabline#enabled = 1
 let g:airline_theme = 'dark'
@@ -117,10 +130,9 @@ let g:airline_powerline_fonts = 1
 let g:airline#extensions#tabline#show_buffers = 0
 "" Show tab number by its sequence
 let g:airline#extensions#tabline#tab_nr_type = 1
-set statusline=%{GitBranch()}
 
 """ You complete me
-set completeopt-=preview
+let g:ycm_gopls_binary_path = "gopls"
 let g:ycm_gopls_args = ['-remote=auto']
 let g:ycm_min_num_of_chars_for_completion = 3
 let g:ycm_min_num_identifier_candidate_chars = 3
