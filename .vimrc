@@ -3,7 +3,7 @@ set nocompatible              " be iMproved
 call plug#begin()
 
 " custom plugins
-Plug 'fatih/vim-go'
+Plug 'fatih/vim-go', { 'do': ':GoInstallBinaries' }
 Plug 'majutsushi/tagbar'
 Plug 'scrooloose/nerdtree'
 Plug 'vim-airline/vim-airline'
@@ -14,7 +14,7 @@ Plug 'mbbill/undotree'
 Plug 'Lokaltog/vim-easymotion'
 Plug 'scrooloose/nerdcommenter'
 "" Great tool for auto-completion of variables and functions
-Plug 'Valloric/YouCompleteMe'
+Plug 'Valloric/YouCompleteMe', { 'do': './install.py --clangd-completer' }
 "" Good Auto Fill Tool use F2 to trigger
 Plug 'SirVer/ultisnips'
 Plug 'honza/vim-snippets'
@@ -101,6 +101,11 @@ let g:go_fmt_command = "goimports"
 let g:go_highlight_functions = 1
 let g:go_highlight_methods = 1
 let g:go_highlight_structs = 1
+let g:go_gopls_enabled = 1
+let g:go_gopls_options = ['-remote=auto']
+let g:go_def_mode='gopls'
+let g:go_info_mode='gopls'
+let g:go_referrers_mode = 'gopls'
 
 " vim-airline
 set laststatus=2
@@ -116,6 +121,7 @@ set statusline=%{GitBranch()}
 
 """ You complete me
 set completeopt-=preview
+let g:ycm_gopls_args = ['-remote=auto']
 let g:ycm_min_num_of_chars_for_completion = 3
 let g:ycm_min_num_identifier_candidate_chars = 3
 let g:ycm_completion_confirm_key = '<Right>'
