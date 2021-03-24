@@ -44,7 +44,6 @@ set number
 set cursorline
 set scrolloff=10
 set encoding=utf-8
-colorscheme molokai
 " Easier to delete space(tab)
 set smarttab
 set hlsearch
