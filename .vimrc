@@ -29,6 +29,9 @@ Plug 'Chiel92/vim-autoformat'
 "Plug 'plasticboy/vim-markdown'
 "" Fuzzy Search of files in repository|file directory. Super handy!!
 Plug 'kien/ctrlp.vim'
+Plug 'tomasr/molokai'
+"" OSC52: Ctrl+c copy to clipboard in vim
+Plug 'fcpg/vim-osc52'
 
 " all of your Plugins must be added before the following line
 call plug#end()            " required
@@ -63,6 +66,7 @@ set fileformats=unix,dos,mac
 
 set cursorline
 set completeopt=menuone,longest,preview
+set virtualedit=onemore
 
 """ Markdown
 "let g:vim_markdown_folding_disabled=1
@@ -118,9 +122,6 @@ let g:ycm_min_num_identifier_candidate_chars = 3
 let g:ycm_completion_confirm_key = '<Right>'
 let g:ycm_autoclose_preview_window_after_completion = 1
 let g:ycm_autoclose_preview_window_after_insertion = 1
-
-"" YCM配置
-" 全局YCM配置文件路径
 "let g:ycm_global_ycm_extra_conf = '~/.ycm_extra_conf.py'
 let g:ycm_confirm_extra_conf = 0  " 不提示是否载入本地ycm_extra_conf文件
 
@@ -218,6 +219,12 @@ inoremap <C-U> <C-G>u<C-U>
 " Ctrl+J跳转至定义、声明或文件
 nnoremap <C-J> :YcmCompleter GoToDefinitionElseDeclaration<CR>|
 
+" OSC52: Ctrl+c copy to clipboard in vim
+vmap <C-c> y:Oscyank<CR>
+
+vnoremap $ $h
+
+autocmd FileType make set noexpandtab
 " jump between errors in quickfix list
 let mapleader = 'c'
 map <leader>n :cnext<CR>
@@ -257,11 +264,3 @@ endfunction
 
 au FileType go nmap <leader>b :<C-u>call <SID>build_go_files()<CR>
 
-""" OSC52: Ctrl+c copy to clipboard in vim
-source ~/.vim/osc52.vim
-vmap <C-c> y:call SendViaOSC52(getreg('"'))<CR>
-
-set virtualedit=onemore
-vnoremap $ $h
-
-autocmd FileType make set noexpandtab
