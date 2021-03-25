@@ -86,11 +86,9 @@ let g:colors_name="molokai"
 "let g:vim_markdown_math=1
 
 """ CtrlP
-let mapleader = 'f'
 let g:ctrlp_working_path_mode = 'ra'
 let g:ctrlp_map = '<leader>p'
 let g:ctrlp_cmd = 'CtrlP'
-map <leader>f :CtrlPMRU<CR>
 let g:ctrlp_custom_ignore = {
     \ 'dir':  '\v[\/]\.(git|hg|svn|rvm)$',
     \ 'file': '\v\.(exe|so|dll|zip|tar|tar.gz|pyc)$',
@@ -134,8 +132,7 @@ let g:airline#extensions#tabline#tab_nr_type = 1
 """ You complete me
 let g:ycm_gopls_binary_path = "gopls"
 let g:ycm_gopls_args = ['-remote=auto']
-let g:ycm_min_num_of_chars_for_completion = 3
-let g:ycm_min_num_identifier_candidate_chars = 3
+let g:ycm_min_num_identifier_candidate_chars = 2
 let g:ycm_completion_confirm_key = '<Right>'
 let g:ycm_autoclose_preview_window_after_completion = 1
 let g:ycm_autoclose_preview_window_after_insertion = 1
@@ -164,6 +161,22 @@ let g:ycm_show_diagnostics_ui = 0  " 禁用YCM自带语法检查(使用ale)
 " 防止YCM和Ultisnips的TAB键冲突，禁止YCM的TAB
 let g:ycm_key_list_select_completion = ['<C-n>', '<Down>']
 let g:ycm_key_list_previous_completion = ['<C-p>', '<Up>']
+
+""" Ultisnip
+let g:did_UltiSnips_vim_after = 1
+let g:UltiSnipsEditSplit="vertical"
+let g:UltiSnipsExpandTrigger = "<NOP>"
+let g:UltiSnipsJumpForwardTrigger = "<TAB>"
+let g:UltiSnipsJumpBackwardTrigger = "<C-b>"
+function ExpandSnippet()
+    call UltiSnips#ExpandSnippet()
+    if g:ulti_expand_res
+        return ""
+    else
+        return "\<CR>"
+    endif
+endfunction
+inoremap <expr> <CR> pumvisible() ? "<C-R>=ExpandSnippet()<CR>" : "\<CR>"
 
 """ tagbar
 let g:tagbar_autofocus=1
@@ -211,13 +224,14 @@ autocmd BufEnter *.json* exe 'vmap = :Autoformat<CR>'
 autocmd BufEnter *.md exe 'noremap <F5> :!google-chrome-stable %:p<CR>'
 
 " shortcuts remap
-nmap <F2> :tabnew<CR>
-nmap <F3> :tabclose<CR>
 nmap <F5> :UndotreeToggle<CR>
 nmap <F7> :NERDTreeTabsToggle<CR>
 nmap <F8> :TagbarToggle<CR>
+nmap <F10> :set nu!<CR>
 nmap <C-Left> :tabprevious<CR>
 nmap <C-Right> :tabnext<CR>
+imap <C-Left> <Esc>:tabprevious<CR>i
+imap <C-Right> <Esc>:tabnext<CR>i
 " Switch btw splitted windows
 "nmap <silent> <A-Left> :wincmd w<CR>
 "nmap <silent> <A-Right> :wincmd w<CR>
@@ -225,19 +239,28 @@ nmap <silent> <A-Up> :wincmd k<CR>
 nmap <silent> <A-Down> :wincmd j<CR>
 nmap <silent> <A-Left> :wincmd h<CR>
 nmap <silent> <A-Right> :wincmd l<CR>
+imap <silent> <A-Up> <Esc>:wincmd k<CR>i
+imap <silent> <A-Down> <Esc>:wincmd j<CR>i
+imap <silent> <A-Left> <Esc>:wincmd h<CR>i
+imap <silent> <A-Right> <Esc>:wincmd l<CR>i
 noremap  <C-E> :q!<CR>
 vnoremap <C-E> <C-C>:q!<CR>
-inoremap <C-E> <Esc>:q!<CR>
+inoremap <C-E> <Esc>:q!<CR>i
 noremap  <C-S> :update<CR>
 vnoremap <C-S> <C-C>:update<CR>
 inoremap <C-S> <Esc>:update<CR>
-inoremap <C-U> <C-G>u<C-U>
+inoremap <C-U> <C-G>u<C-U>i
 
 " Ctrl+J跳转至定义、声明或文件
 nnoremap <C-J> :YcmCompleter GoToDefinitionElseDeclaration<CR>|
 
 " OSC52: Ctrl+c copy to clipboard in vim
 vmap <C-c> y:Oscyank<CR>
+
+" Fuzzy find recent files
+let mapleader = 'f'
+map <leader>f :CtrlPMRU<CR>
+map <leader>p :CtrlP<CR>
 
 vnoremap $ $h
 
