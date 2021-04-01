@@ -2,7 +2,7 @@ set nocompatible              " be iMproved
 
 call plug#begin()
 
-" custom plugins
+"" custom plugins
 Plug 'fatih/vim-go'
 Plug 'majutsushi/tagbar'
 Plug 'scrooloose/nerdtree'
@@ -38,6 +38,8 @@ call plug#end()            " required
 
 " general customizations
 syntax on
+" Auto save on make with
+set autowrite
 set ts=4
 set sw=4
 set number
@@ -105,12 +107,17 @@ let g:ctrlp_prompt_mappings = {
 	\ }
 
 """ vim-go
+" cheatsheet: https://gist.github.com/krlvi/d22bdcb66566261ea8e8da36f796fa0a
 " disable open browser after posting snippet
 let g:go_play_open_browser = 0
 " enable goimports
 let g:go_fmt_command = "goimports"
 " enable additional highlighting
 let g:go_highlight_functions = 1
+" Format on save
+let g:go_fmt_autosave = 1
+" Disable gofmt parse errors
+let g:go_fmt_fail_silently = 1
 let g:go_highlight_methods = 1
 let g:go_highlight_structs = 1
 let g:go_gopls_enabled = 1
@@ -118,6 +125,9 @@ let g:go_gopls_options = ['-remote=auto']
 let g:go_def_mode='gopls'
 let g:go_info_mode='gopls'
 let g:go_referrers_mode = 'gopls'
+let g:go_metalinter_enabled = ['vet', 'golint', 'errcheck', 'deadcode']
+let g:go_metalinter_autosave = 1
+let g:go_metalinter_autosave_enabled = ['vet', 'golint']
 
 " vim-airline
 let g:bufferline_echo = 0
@@ -273,7 +283,7 @@ nnoremap <leader>c :cclose<CR>
 
 let mapleader = 'g'
 " show a list of interfaces which is implemented by the type under your cursor
-au FileType go nmap <leader>s <Plug>(go-implements)
+au FileType go nmap <leader>I <Plug>(go-implements)
 " show type info for the word under your cursor
 au FileType go nmap <leader>gi <Plug>(go-info)
 " open the relevant Godoc for the word under the cursor
@@ -281,17 +291,17 @@ au FileType go nmap <leader>gd <Plug>(go-doc)
 au FileType go nmap <leader>gv <Plug>(go-doc-vertical)
 " run Go commands
 au FileType go nmap <leader>r <Plug>(go-run)
-"au FileType go nmap <leader>b <Plug>(go-build)
-au FileType go nmap <leader>t <Plug>(go-test)
+au FileType go nmap <leader>T <Plug>(go-test)
+au FileType go nmap <leader>t <Plug>(go-test-func)
 au FileType go nmap <leader>c <Plug>(go-coverage)
 au FileType go nmap <leader>i <Plug>(go-install)
-" open the definition/declaration in a new vertical, horizontal or tab for the
-" word under your cursor
-au FileType go nmap <leader>ds <Plug>(go-def-split)
 au FileType go nmap <leader>dv <Plug>(go-def-vertical)
 au FileType go nmap <leader>dt <Plug>(go-def-tab)
+au FileType go nmap <leader>ds <Plug>(go-def-stack)
+au FileType go nmap <leader>q <Plug>(go-callstack)
+au FileType go nmap <leader>h <Plug>(go-referrers)
 " rename the identifier under the cursor to a new name
-au FileType go nmap <leader>e <Plug>(go-rename)
+au FileType go nmap <leader>R <Plug>(go-rename)
 " run :GoBuild or :GoTestCompile based on the go file
 function! s:build_go_files()
   let l:file = expand('%')
