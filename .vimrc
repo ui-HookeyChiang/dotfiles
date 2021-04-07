@@ -262,7 +262,11 @@ inoremap <C-S> <Esc>:update<CR>
 inoremap <C-U> <C-G>u<C-U>i
 
 " Ctrl+J跳转至定义、声明或文件
-nnoremap <C-J> :YcmCompleter GoToDefinitionElseDeclaration<CR>|
+let mapleader = 'y'
+nnoremap <leader>g :YcmCompleter GoToDefinitionElseDeclaration<CR>
+nnoremap <leader>c :YcmCompleter GoToReferences<CR>
+nnoremap <leader>s :YcmCompleter GoToSymbol <C-R>=expand("<cword>")<CR><CR>
+nnoremap <leader>r :YcmCompleter RefactorRename<space>
 
 " OSC52: Ctrl+c copy to clipboard in vim
 vmap <C-c> y:Oscyank<CR>
@@ -313,4 +317,3 @@ function! s:build_go_files()
 endfunction
 
 au FileType go nmap <leader>b :<C-u>call <SID>build_go_files()<CR>
-
