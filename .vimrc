@@ -81,6 +81,7 @@ if exists("syntax_on")
   syntax reset
 endif
 set t_Co=256
+set term=xterm-256color
 
 let g:colors_name="molokai" 
 
