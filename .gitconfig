@@ -1,7 +1,7 @@
 [user]
-    name = Hookey Chiang
-    email = hookey123456@gmail.com
-[core]  
+    name = ui-HookeyChiang
+    email = hookey.chiang@ui.com
+[core]
     editor = vim
 [alias]
     au = add -u
@@ -12,10 +12,13 @@
     ci = commit -v
     cim = commit -m
     cia = commit -v --amend
-    co = checkout
+    cian = commit -v --amend --no-edit
     cb = checkout -b
+    co = checkout
+    cop = checkout --patch
     cp = cherry-pick
     di = diff
+    dc = diff --cached
     ll = log --pretty=format:"%C(yellow)%h%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --numstat
     ld = log --pretty=format:"%C(yellow)%h\\ %C(green)%ad%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --date=short --graph
     ls = log --pretty=format:"%C(green)%h\\ %C(yellow)[%ad]%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --date=relative
@@ -24,13 +27,13 @@
     sh = stash
     shk = stash --keep-index
     shp = stash pop
-    tg = tag -a 
+    tg = tag -a
     pu = push --tags
-    un = reset --hard HEAD  
+    un = reset --hard HEAD
     uh = reset --hard HEAD^
-[color]  
-    diff = auto  
-    status = auto  
-    branch = auto 
-[branch]  
+[color]
+    diff = auto
+    status = auto
+    branch = auto
+[branch]
     autosetuprebase = always

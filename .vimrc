@@ -85,6 +85,10 @@ set term=xterm-256color
 
 let g:colors_name="molokai" 
 
+" explicitly show trailing spaces, tab, eol
+set list!
+set listchars=tab:>-,trail:·
+
 """ Markdown
 "let g:vim_markdown_folding_disabled=1
 "let g:vim_markdown_math=1
@@ -105,8 +109,8 @@ let g:ctrlp_mruf_max=500
 let g:ctrlp_follow_symlinks=1
 let g:ctrlp_prompt_mappings = {
     \ 'AcceptSelection("t")': ['<cr>'],
-	\ 'AcceptSelection("e")': ['<2-LeftMouse>'],
-	\ }
+    \ 'AcceptSelection("e")': ['<2-LeftMouse>'],
+    \ }
 
 """ vim-go
 " cheatsheet: https://gist.github.com/krlvi/d22bdcb66566261ea8e8da36f796fa0a
@@ -167,7 +171,6 @@ let g:ycm_semantic_triggers = {
             \ 'c,cpp,python,java,go,erlang,perl': ['re!\w{2}'],
             \ 'cs,lua,javascript': ['re!\w{2}'],
             \ }
-                                    
 let g:ycm_show_diagnostics_ui = 0  " 禁用YCM自带语法检查(使用ale)
 
 " 防止YCM和Ultisnips的TAB键冲突，禁止YCM的TAB
@@ -233,34 +236,41 @@ autocmd BufEnter *.c* exe 'vmap = :Autoformat<CR>'
 autocmd BufEnter *.json* exe 'vmap = :Autoformat<CR>'
 
 "" Open markdown files with Chrome.
-autocmd BufEnter *.md exe 'noremap <F5> :!google-chrome-stable %:p<CR>'
+autocmd BufEnter *.md exe 'noremap <F4> :!google-chrome-stable %:p<CR>'
 
 " shortcuts remap
 nmap <F5> :UndotreeToggle<CR>
 nmap <F7> :NERDTreeTabsToggle<CR>
 nmap <F8> :TagbarToggle<CR>
+
+" Show number of line
 nmap <F10> :set nu!<CR>
-nmap <C-Left> :tabprevious<CR>
-nmap <C-Right> :tabnext<CR>
-imap <C-Left> <Esc>:tabprevious<CR>i
-imap <C-Right> <Esc>:tabnext<CR>i
+
+" Switch btw tabs
+nmap <silent> <S-home> :tabprevious<CR>
+nmap <silent> <S-end> :tabnext<CR>
+imap <silent> <S-home> <Esc>:tabprevious<CR>i
+imap <silent> <S-end> <Esc>:tabnext<CR>i
+
 " Switch btw splitted windows
-"nmap <silent> <A-Left> :wincmd w<CR>
-"nmap <silent> <A-Right> :wincmd w<CR>
-nmap <silent> <A-Up> :wincmd k<CR>
-nmap <silent> <A-Down> :wincmd j<CR>
-nmap <silent> <A-Left> :wincmd h<CR>
-nmap <silent> <A-Right> :wincmd l<CR>
-imap <silent> <A-Up> <Esc>:wincmd k<CR>i
-imap <silent> <A-Down> <Esc>:wincmd j<CR>i
-imap <silent> <A-Left> <Esc>:wincmd h<CR>i
-imap <silent> <A-Right> <Esc>:wincmd l<CR>i
-noremap  <C-E> :q!<CR>
-vnoremap <C-E> <C-C>:q!<CR>
-inoremap <C-E> <Esc>:q!<CR>i
-noremap  <C-S> :update<CR>
-vnoremap <C-S> <C-C>:update<CR>
-inoremap <C-S> <Esc>:update<CR>
+nmap <silent> <S-Left> :wincmd h<CR>
+nmap <silent> <S-Right> :wincmd l<CR>
+imap <silent> <S-Left> <Esc>:wincmd h<CR>i
+imap <silent> <S-Right> <Esc>:wincmd l<CR>i
+nmap <silent> <S-Up> :wincmd k<CR>
+nmap <silent> <S-Down> :wincmd j<CR>
+imap <silent> <S-Up> :wincmd k<CR>
+imap <silent> <S-Down> :wincmd j<CR>
+
+" Exit
+noremap  <S-E> :q!<CR>
+vnoremap <S-E> <C-C>:q!<CR>
+
+" Save
+noremap  <S-S> :update<CR>
+vnoremap <S-S> <C-C>:update<CR>
+
+" ???
 inoremap <C-U> <C-G>u<C-U>i
 
 " Ctrl+J跳转至定义、声明或文件
@@ -287,7 +297,7 @@ map <leader>n :cnext<CR>
 map <leader>m :cprev<CR>
 nnoremap <leader>c :cclose<CR>
 
-let mapleader = 'g'
+let mapleader = 'b'
 " show a list of interfaces which is implemented by the type under your cursor
 au FileType go nmap <leader>I <Plug>(go-implements)
 " show type info for the word under your cursor
@@ -308,6 +318,7 @@ au FileType go nmap <leader>q <Plug>(go-callstack)
 au FileType go nmap <leader>h <Plug>(go-referrers)
 " rename the identifier under the cursor to a new name
 au FileType go nmap <leader>R <Plug>(go-rename)
+
 " run :GoBuild or :GoTestCompile based on the go file
 function! s:build_go_files()
   let l:file = expand('%')
@@ -319,3 +330,26 @@ function! s:build_go_files()
 endfunction
 
 au FileType go nmap <leader>b :<C-u>call <SID>build_go_files()<CR>
+
+if has("cscope")
+    set autochdir
+    set tags=tags;
+    set cscopetag
+    set csto=0
+
+    if filereadable("cscope.out")
+        cs add cscope.out
+    elseif $CSCOPE_DB != ""
+        cs add $CSCOPE_DB
+    endif
+    set cscopeverbose
+
+    nmap zs :cs find s <C-R>=expand("<cword>")<CR><CR>
+    nmap zg :cs find g <C-R>=expand("<cword>")<CR><CR>
+    nmap zc :cs find c <C-R>=expand("<cword>")<CR><CR>
+    nmap zt :cs find t <C-R>=expand("<cword>")<CR><CR>
+    nmap ze :cs find e <C-R>=expand("<cword>")<CR><CR>
+    nmap zf :cs find f <C-R>=expand("<cfile>")<CR><CR>
+    nmap zi :cs find i ^<C-R>=expand("<cfile>")<CR>$<CR>
+    nmap zd :cs find d <C-R>=expand("<cword>")<CR><CR>
+endif
