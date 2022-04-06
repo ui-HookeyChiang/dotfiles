@@ -87,7 +87,7 @@ let g:colors_name="molokai"
 
 " explicitly show trailing spaces, tab, eol
 set list!
-set listchars=tab:>-,trail:·
+set listchars=tab:>_,trail:·
 
 """ Markdown
 "let g:vim_markdown_folding_disabled=1
@@ -146,7 +146,9 @@ let g:airline#extensions#tabline#show_buffers = 0
 let g:airline#extensions#tabline#tab_nr_type = 1
 
 """ You complete me
-let g:ycm_gopls_binary_path = "gopls"
+let g:ycm_python_binary_path = '/usr/bin/python3'
+
+let g:ycm_gopls_binary_path = "~/go/bin/gopls"
 let g:ycm_gopls_args = ['-remote=auto']
 let g:ycm_min_num_identifier_candidate_chars = 2
 let g:ycm_completion_confirm_key = '<Right>'
@@ -168,7 +170,7 @@ let g:ycm_key_invoke_completion = '<c-space>'  " 主动补全(默认<c-space>)
 
 " 输入2个字符就触发补全
 let g:ycm_semantic_triggers = {
-            \ 'c,cpp,python,java,go,erlang,perl': ['re!\w{2}'],
+            \ 'c,cpp,python,java,go,erlang,perl,py': ['re!\w{2}'],
             \ 'cs,lua,javascript': ['re!\w{2}'],
             \ }
 let g:ycm_show_diagnostics_ui = 0  " 禁用YCM自带语法检查(使用ale)
