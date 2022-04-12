@@ -6,6 +6,7 @@
 [alias]
     au = add -u
     ap = add --patch
+    br = branch
     bv = branch -vv
     ba = branch -ra
     bd = branch -d
