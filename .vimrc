@@ -337,6 +337,7 @@ if has("cscope")
     set autochdir
     set tags=tags;
     set cscopetag
+	set csre
     set csto=0
 
     if filereadable("cscope.out")
