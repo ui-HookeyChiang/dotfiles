@@ -253,16 +253,24 @@ nmap <silent> <S-home> :tabprevious<CR>
 nmap <silent> <S-end> :tabnext<CR>
 imap <silent> <S-home> <Esc>:tabprevious<CR>i
 imap <silent> <S-end> <Esc>:tabnext<CR>i
+nmap <silent> <C-j> :tabprevious<CR>
+nmap <silent> <C-l> :tabnext<CR>
+imap <silent> <C-j> <Esc>:tabprevious<CR>i
+imap <silent> <C-l> <Esc>:tabnext<CR>i
+nmap <silent> <S-Left> :tabprevious<CR>
+nmap <silent> <S-Right> :tabnext<CR>
+imap <silent> <S-Left> <Esc>:tabprevious<CR>i
+imap <silent> <S-Right> <Esc>:tabnext<CR>i
 
 " Switch btw splitted windows
-nmap <silent> <S-Left> :wincmd h<CR>
-nmap <silent> <S-Right> :wincmd l<CR>
-imap <silent> <S-Left> <Esc>:wincmd h<CR>i
-imap <silent> <S-Right> <Esc>:wincmd l<CR>i
-nmap <silent> <S-Up> :wincmd k<CR>
-nmap <silent> <S-Down> :wincmd j<CR>
-imap <silent> <S-Up> :wincmd k<CR>
-imap <silent> <S-Down> :wincmd j<CR>
+nmap <silent> <S-j> :wincmd h<CR>
+nmap <silent> <S-l> :wincmd l<CR>
+imap <silent> <S-j> <Esc>:wincmd h<CR>i
+imap <silent> <S-l> <Esc>:wincmd l<CR>i
+nmap <silent> <S-i> :wincmd k<CR>
+nmap <silent> <S-k> :wincmd j<CR>
+imap <silent> <S-i> :wincmd k<CR>
+imap <silent> <S-k> :wincmd j<CR>
 
 " Exit
 noremap  <S-E> :q!<CR>
@@ -337,7 +345,7 @@ if has("cscope")
     set autochdir
     set tags=tags;
     set cscopetag
-	set csre
+    set csre
     set csto=0
 
     if filereadable("cscope.out")
