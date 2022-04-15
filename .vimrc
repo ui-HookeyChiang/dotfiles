@@ -265,12 +265,8 @@ imap <silent> <S-Right> <Esc>:tabnext<CR>i
 " Switch btw splitted windows
 nmap <silent> <S-j> :wincmd h<CR>
 nmap <silent> <S-l> :wincmd l<CR>
-imap <silent> <S-j> <Esc>:wincmd h<CR>i
-imap <silent> <S-l> <Esc>:wincmd l<CR>i
 nmap <silent> <S-i> :wincmd k<CR>
 nmap <silent> <S-k> :wincmd j<CR>
-imap <silent> <S-i> :wincmd k<CR>
-imap <silent> <S-k> :wincmd j<CR>
 
 " Exit
 noremap  <S-E> :q!<CR>
