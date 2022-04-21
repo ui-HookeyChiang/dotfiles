@@ -253,14 +253,18 @@ nmap <silent> <S-home> :tabprevious<CR>
 nmap <silent> <S-end> :tabnext<CR>
 imap <silent> <S-home> <Esc>:tabprevious<CR>i
 imap <silent> <S-end> <Esc>:tabnext<CR>i
-nmap <silent> <C-j> :tabprevious<CR>
-nmap <silent> <C-l> :tabnext<CR>
-imap <silent> <C-j> <Esc>:tabprevious<CR>i
-imap <silent> <C-l> <Esc>:tabnext<CR>i
 nmap <silent> <S-Left> :tabprevious<CR>
 nmap <silent> <S-Right> :tabnext<CR>
 imap <silent> <S-Left> <Esc>:tabprevious<CR>i
 imap <silent> <S-Right> <Esc>:tabnext<CR>i
+
+" Move line up down
+nnoremap <C-k> :m .+1<CR>==
+nnoremap <C-i> :m .-2<CR>==
+inoremap <C-k> <Esc>:m .+1<CR>==gi
+inoremap <C-i> <Esc>:m .-2<CR>==gi
+vnoremap <C-k> :m '>+1<CR>gv=gv
+vnoremap <C-i> :m '<-2<CR>gv=gv
 
 " Switch btw splitted windows
 nmap <silent> <S-j> :wincmd h<CR>
