@@ -259,12 +259,12 @@ imap <silent> <S-Left> <Esc>:tabprevious<CR>i
 imap <silent> <S-Right> <Esc>:tabnext<CR>i
 
 " Move line up down
-nnoremap <C-k> :m .+1<CR>==
-nnoremap <C-i> :m .-2<CR>==
-inoremap <C-k> <Esc>:m .+1<CR>==gi
-inoremap <C-i> <Esc>:m .-2<CR>==gi
-vnoremap <C-k> :m '>+1<CR>gv=gv
-vnoremap <C-i> :m '<-2<CR>gv=gv
+nmap <S-Down> :m .+1<CR>==
+nnoremap <S-Up> :m .-2<CR>==
+imap <S-Down> <Esc>:m .+1<CR>==gi
+inoremap <S-Up> <Esc>:m .-2<CR>==gi
+vmap <S-Down> :m '>+1<CR>gv=gv
+vnoremap <S-Up> :m '<-2<CR>gv=gv
 
 " Switch btw splitted windows
 nmap <silent> <S-j> :wincmd h<CR>
