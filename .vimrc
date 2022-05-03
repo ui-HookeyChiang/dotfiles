@@ -87,7 +87,7 @@ let g:colors_name="molokai"
 
 " explicitly show trailing spaces, tab, eol
 set list!
-set listchars=tab:>_,trail:·
+set listchars=tab:>\ ,trail:·
 
 """ Markdown
 "let g:vim_markdown_folding_disabled=1
