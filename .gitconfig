@@ -31,6 +31,7 @@
     shp = stash pop
     tg = tag -a
     pu = push --tags
+    pull = pull --rebase
     un = reset --hard HEAD
     uh = reset --hard HEAD^
 [color]
@@ -40,4 +41,4 @@
 [branch]
     autosetuprebase = always
 [url "git@github.com:"]
-	insteadOf = https://github.com/
+    insteadOf = https://github.com/
