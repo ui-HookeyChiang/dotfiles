@@ -18,6 +18,8 @@
     co = checkout
     cop = checkout --patch
     cp = cherry-pick
+    cpa = cherry-pick --abort
+    cpc = cherry-pick --continue
     df = diff
     dc = diff --cached
     dh = diff HEAD~1
@@ -25,13 +27,17 @@
     ld = log --pretty=format:"%C(yellow)%h\\ %C(green)%ad%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --date=short --graph
     ls = log --pretty=format:"%C(green)%h\\ %C(yellow)[%ad]%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --date=relative
     mm = merge --no-ff
+    pu = push --tags
+    pur = pull --rebase
+    re = rebase
+    rea = rebase --abort
+    rec = rebase --continue
+    rei = rebase -i
     st = status --short --branch
     sh = stash
     shk = stash --keep-index
     shp = stash pop
     tg = tag -a
-    pu = push --tags
-    pull = pull --rebase
     un = reset --hard HEAD
     uh = reset --hard HEAD^
 [color]
