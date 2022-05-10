@@ -13,3 +13,6 @@ else
 fi
 
 mesg n
+
+export PATH="/opt/homebrew/bin:/opt/local/bin:/opt/local/sbin:$PATH"
+
