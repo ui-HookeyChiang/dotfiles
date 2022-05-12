@@ -93,9 +93,13 @@ set listchars=tab:>\ ,trail:·
 "let g:vim_markdown_folding_disabled=1
 "let g:vim_markdown_math=1
 
-""" CtrlP
+" Fuzzy find recent global files/local files/contents
+""" CtrlP: Fuzzy find recent files
+let mapleader = 'f'
+map <leader>f :CtrlPMRU<CR>
+map <leader>d :CtrlP<CR>
+
 let g:ctrlp_working_path_mode = 'ra'
-let g:ctrlp_map = '<leader>p'
 let g:ctrlp_cmd = 'CtrlP'
 let g:ctrlp_custom_ignore = {
     \ 'dir':  '\v[\/]\.(git|hg|svn|rvm)$',
@@ -111,6 +115,10 @@ let g:ctrlp_prompt_mappings = {
     \ 'AcceptSelection("t")': ['<cr>'],
     \ 'AcceptSelection("e")': ['<2-LeftMouse>'],
     \ }
+
+""" EasyMotion
+let g:EasyMotion_do_mapping = 0
+map <leader>s <Plug>(easymotion-overwin-f2)
 
 """ vim-go
 " cheatsheet: https://gist.github.com/krlvi/d22bdcb66566261ea8e8da36f796fa0a
@@ -292,11 +300,6 @@ nnoremap <leader>r :YcmCompleter RefactorRename<space>
 
 " OSC52: Ctrl+c copy to clipboard in vim
 vmap <C-c> y:Oscyank<CR>
-
-" Fuzzy find recent files
-let mapleader = 'f'
-map <leader>f :CtrlPMRU<CR>
-map <leader>p :CtrlP<CR>
 
 vnoremap $ $h
 
