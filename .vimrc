@@ -69,8 +69,6 @@ set cursorline
 set completeopt=menuone,longest,preview
 set virtualedit=onemore
 
-set laststatus=2
-set statusline=%{GitBranch()}
 set completeopt-=preview
 
 set background=dark
@@ -82,8 +80,6 @@ if exists("syntax_on")
 endif
 set t_Co=256
 set term=xterm-256color
-
-let g:colors_name="molokai" 
 
 " explicitly show trailing spaces, tab, eol
 set list!
@@ -143,15 +139,22 @@ let g:go_metalinter_enabled = ['vet', 'golint', 'errcheck', 'deadcode']
 let g:go_metalinter_autosave = 1
 let g:go_metalinter_autosave_enabled = ['vet', 'golint']
 
-" vim-airline
+"" vim-airline
+let g:airline#extensions#fugitiveline#enabled = 0
 let g:bufferline_echo = 0
 let g:airline#extensions#tabline#enabled = 1
-let g:airline_theme = 'dark'
+let g:airline_theme = 'powerlineish'
 let g:airline_powerline_fonts = 1
 "" This can prevent the bug when only one tab left
 let g:airline#extensions#tabline#show_buffers = 0
 "" Show tab number by its sequence
 let g:airline#extensions#tabline#tab_nr_type = 1
+let g:airline#extensions#tabline#fnamemod = ':t'
+
+let g:airline#parts#ffenc#skip_expected_string='utf-8[unix]'
+let g:airline_section_warning = ''
+let g:airline_section_error = ''
+let g:airline_section_z = '%p%% %l/%L:%v'
 
 """ You complete me
 let g:ycm_python_binary_path = '/usr/bin/python3'
