@@ -143,7 +143,7 @@ let g:go_metalinter_autosave_enabled = ['vet', 'golint']
 let g:airline#extensions#fugitiveline#enabled = 0
 let g:bufferline_echo = 0
 let g:airline#extensions#tabline#enabled = 1
-let g:airline_theme = 'powerlineish'
+""let g:airline_theme = 'powerlineish'
 let g:airline_powerline_fonts = 1
 "" This can prevent the bug when only one tab left
 let g:airline#extensions#tabline#show_buffers = 0
