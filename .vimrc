@@ -143,7 +143,6 @@ let g:go_metalinter_autosave_enabled = ['vet', 'golint']
 let g:airline#extensions#fugitiveline#enabled = 0
 let g:bufferline_echo = 0
 let g:airline#extensions#tabline#enabled = 1
-""let g:airline_theme = 'powerlineish'
 let g:airline_powerline_fonts = 1
 "" This can prevent the bug when only one tab left
 let g:airline#extensions#tabline#show_buffers = 0
@@ -158,7 +157,6 @@ let g:airline_section_z = '%p%% %l/%L:%v'
 
 """ You complete me
 let g:ycm_python_binary_path = '/usr/bin/python3'
-
 let g:ycm_gopls_binary_path = "~/go/bin/gopls"
 let g:ycm_gopls_args = ['-remote=auto']
 let g:ycm_min_num_identifier_candidate_chars = 2
@@ -181,8 +179,8 @@ let g:ycm_key_invoke_completion = '<c-space>'  " 主动补全(默认<c-space>)
 
 " 输入2个字符就触发补全
 let g:ycm_semantic_triggers = {
-            \ 'c,cpp,python,java,go,erlang,perl,py': ['re!\w{2}'],
-            \ 'cs,lua,javascript': ['re!\w{2}'],
+            \ 'c,cpp,python,java,go,erlang,perl,py': ['re!\w{2}', '_'],
+            \ 'cs,lua,javascript': ['re!\w{2}', '_'],
             \ }
 let g:ycm_show_diagnostics_ui = 0  " 禁用YCM自带语法检查(使用ale)
 
@@ -242,7 +240,7 @@ let g:tagbar_type_go = {
 let g:autoformat_autoindent = 0 
 let g:autoformat_retab = 0 
 let g:autoformat_remove_trailing_spaces = 0
-let g:formatterpath = ['/usr/local/go/bin/gofmt', '/usr/local/bin/clang-format', '/usr/local/bin/js-beautify']
+let g:formatterpath = ['gofmt', 'clang-format', 'prettier']
 nmap == :Autoformat<CR>
 autocmd BufEnter *.go* exe 'vmap = :Autoformat<CR>'
 autocmd BufEnter *.c* exe 'vmap = :Autoformat<CR>'
