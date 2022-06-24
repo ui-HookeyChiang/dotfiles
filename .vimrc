@@ -2,7 +2,7 @@ set nocompatible              " be iMproved
 
 call plug#begin()
 
-"" custom plugins
+" custom plugins
 Plug 'fatih/vim-go'
 Plug 'majutsushi/tagbar'
 Plug 'scrooloose/nerdtree'
@@ -27,18 +27,20 @@ Plug 'Chiel92/vim-autoformat'
 "" These two are for mark-down
 "Plug 'godlygeek/tabular'
 "Plug 'plasticboy/vim-markdown'
-"" Fuzzy Search of files in repository|file directory. Super handy!!
-Plug 'kien/ctrlp.vim'
 Plug 'tomasr/molokai'
 "" OSC52: Ctrl+c copy to clipboard in vim
 Plug 'fcpg/vim-osc52'
+"" Fuzzy Search
+Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' } 
+Plug 'junegunn/fzf.vim'
 
-" all of your Plugins must be added before the following line
+"" all of your Plugins must be added before the following line
 call plug#end()            " required
 
 " general customizations
 syntax on
-" Auto save on make with
+
+"" Auto save on make with
 set autowrite
 set ts=4
 set sw=4
@@ -46,10 +48,10 @@ set number
 set cursorline
 set scrolloff=5
 set encoding=utf-8
-" Easier to delete space(tab)
+"" Easier to delete space(tab)
 set smarttab
 set hlsearch
-" do not history when leavy buffer
+"" do not history when leavy buffer
 set hidden
 set complete-=i
 set showmode
@@ -81,52 +83,110 @@ endif
 set t_Co=256
 set term=xterm-256color
 
-" explicitly show trailing spaces, tab, eol
+"" explicitly show trailing spaces, tab, eol
 set list!
 set listchars=tab:>\ ,trail:·
 
-""" Markdown
+" Markdown
 "let g:vim_markdown_folding_disabled=1
 "let g:vim_markdown_math=1
 
-" Fuzzy find recent global files/local files/contents
-""" CtrlP: Fuzzy find recent files
-let mapleader = 'f'
-map <leader>f :CtrlPMRU<CR>
-map <leader>d :CtrlP<CR>
+" fzf Fuzzy find recent global files/local files/contents
+command! FZFMru call fzf#run({
+	\  'source':  v:oldfiles,
+	\  'sink':    'e',
+	\  'options': '-m -x +s',
+	\  'down':    '67%'})
+command! -nargs=* AG call fzf#run({
+	\ 'source':  printf('ag --nogroup --column --color "%s"',
+	\                   escape(empty(<q-args>) ? '^(?=.)' : <q-args>, '"\')),
+	\ 'sink*':    function('<sid>ag_handler'),
+	\ 'options': '--ansi --expect=ctrl-t,ctrl-v,ctrl-x --delimiter : --nth 4.. '.
+	\            '--multi --bind=ctrl-a:select-all,ctrl-d:deselect-all '.
+	\            '--color hl:68,hl+:110',
+	\ 'down':    '67%'
+	\ }, 
+	\ fzf#vim#with_preview({'dir': function('<sid>GetProjectRoot')}, 'right:50%'))
 
-let g:ctrlp_working_path_mode = 'ra'
-let g:ctrlp_cmd = 'CtrlP'
-let g:ctrlp_custom_ignore = {
-    \ 'dir':  '\v[\/]\.(git|hg|svn|rvm)$',
-    \ 'file': '\v\.(exe|so|dll|zip|tar|tar.gz|pyc)$',
-    \ }
-let g:ctrlp_working_path_mode=0
-let g:ctrlp_match_window_bottom=1
-let g:ctrlp_max_height=15
-let g:ctrlp_match_window_reversed=0
-let g:ctrlp_mruf_max=500
-let g:ctrlp_follow_symlinks=1
-let g:ctrlp_prompt_mappings = {
-    \ 'AcceptSelection("t")': ['<cr>'],
-    \ 'AcceptSelection("e")': ['<2-LeftMouse>'],
-    \ }
+"" Gets the root of the Git repo or submodule, relative to the current buffer, or home dir
+function! s:GetProjectRoot()
+	let project_root = system('git -C ' . shellescape(expand('%:p:h')) . ' rev-parse --show-toplevel 2> /dev/null')[:-2]
+	if strlen(project_root) > 0
+		return project_root
+	else
+		return system('echo $HOME')
+	endif
+endfunction
 
-""" EasyMotion
-let g:EasyMotion_do_mapping = 0
-map <leader>s <Plug>(easymotion-overwin-f2)
+function! s:ag_to_qf(line)
+  let parts = split(a:line, ':')
+  return {'filename': parts[0], 'lnum': parts[1], 'col': parts[2],
+        \ 'text': join(parts[3:], ':')}
+endfunction
 
-""" vim-go
-" cheatsheet: https://gist.github.com/krlvi/d22bdcb66566261ea8e8da36f796fa0a
-" disable open browser after posting snippet
+function! s:ag_handler(lines)
+  if len(a:lines) < 2 | return | endif
+
+  let cmd = get({'ctrl-x': 'split',
+               \ 'ctrl-v': 'vertical split',
+               \ 'ctrl-t': 'tabe'}, a:lines[0], 'e')
+  let list = map(a:lines[1:], 's:ag_to_qf(v:val)')
+
+  let first = list[0]
+  execute cmd escape(first.filename, ' %#\')
+  execute first.lnum
+  execute 'normal!' first.col.'|zz'
+
+  if len(list) > 1
+    call setqflist(list)
+    copen
+    wincmd p
+  endif
+endfunction
+
+"" fzf settings
+"" This is the default extra key bindings
+let g:fzf_action = {
+            \ 'ctrl-t': 'tab split',
+            \ 'ctrl-x': 'split',
+            \ 'ctrl-v': 'vsplit' }
+
+"" Default fzf layout
+"" - down / up / left / right
+let g:fzf_layout = { 'down': '67%' }
+
+"" Customize fzf colors to match your color scheme
+let g:fzf_colors =
+            \ { 'fg':    ['fg', 'Normal'],
+            \ 'bg':      ['bg', 'Normal'],
+            \ 'hl':      ['fg', 'Comment'],
+            \ 'fg+':     ['fg', 'CursorLine', 'CursorColumn', 'Normal'],
+            \ 'bg+':     ['bg', 'CursorLine', 'CursorColumn'],
+            \ 'hl+':     ['fg', 'Statement'],
+            \ 'info':    ['fg', 'PreProc'],
+            \ 'prompt':  ['fg', 'Conditional'],
+            \ 'pointer': ['fg', 'Exception'],
+            \ 'marker':  ['fg', 'Keyword'],
+            \ 'spinner': ['fg', 'Label'],
+            \ 'header':  ['fg', 'Comment'] }
+
+"" Enable per-command history.
+"" CTRL-N and CTRL-P will be automatically bound to next-history and
+"" previous-history instead of down and up. If you don't like the change,
+"" explicitly bind the keys to down and up in your $FZF_DEFAULT_OPTS.
+let g:fzf_history_dir = '~/.local/share/fzf-history'
+
+" vim-go
+"" cheatsheet: https://gist.github.com/krlvi/d22bdcb66566261ea8e8da36f796fa0a
+"" disable open browser after posting snippet
 let g:go_play_open_browser = 0
-" enable goimports
+"" enable goimports
 let g:go_fmt_command = "goimports"
-" enable additional highlighting
+"" enable additional highlighting
 let g:go_highlight_functions = 1
-" Format on save
+"" Format on save
 let g:go_fmt_autosave = 1
-" Disable gofmt parse errors
+"" Disable gofmt parse errors
 let g:go_fmt_fail_silently = 1
 let g:go_highlight_methods = 1
 let g:go_highlight_structs = 1
@@ -139,11 +199,12 @@ let g:go_metalinter_enabled = ['vet', 'golint', 'errcheck', 'deadcode']
 let g:go_metalinter_autosave = 1
 let g:go_metalinter_autosave_enabled = ['vet', 'golint']
 
-"" vim-airline
+" vim-airline
 let g:airline#extensions#fugitiveline#enabled = 0
 let g:bufferline_echo = 0
 let g:airline#extensions#tabline#enabled = 1
-let g:airline_powerline_fonts = 1
+""let g:airline_theme = 'powerlineish'
+""let g:airline_powerline_fonts = 1
 "" This can prevent the bug when only one tab left
 let g:airline#extensions#tabline#show_buffers = 0
 "" Show tab number by its sequence
@@ -155,7 +216,7 @@ let g:airline_section_warning = ''
 let g:airline_section_error = ''
 let g:airline_section_z = '%p%% %l/%L:%v'
 
-""" You complete me
+" You complete me
 let g:ycm_python_binary_path = '/usr/bin/python3'
 let g:ycm_gopls_binary_path = "~/go/bin/gopls"
 let g:ycm_gopls_args = ['-remote=auto']
@@ -166,29 +227,29 @@ let g:ycm_autoclose_preview_window_after_insertion = 1
 "let g:ycm_global_ycm_extra_conf = '~/.ycm_extra_conf.py'
 let g:ycm_confirm_extra_conf = 0  " 不提示是否载入本地ycm_extra_conf文件
 
-" 语法关键字、注释、字符串补全
+"" 语法关键字、注释、字符串补全
 let g:ycm_seed_identifiers_with_syntax = 1
 let g:ycm_complete_in_comments = 1
 let g:ycm_complete_in_strings = 1
-" 从注释、字符串、tag文件中收集用于补全信息
+"" 从注释、字符串、tag文件中收集用于补全信息
 let g:ycm_collect_identifiers_from_comments_and_strings = 1
 let g:ycm_collect_identifiers_from_tags_files = 1
 
-" 禁止快捷键触发补全
+"" 禁止快捷键触发补全
 let g:ycm_key_invoke_completion = '<c-space>'  " 主动补全(默认<c-space>)
 
-" 输入2个字符就触发补全
+"" 输入2个字符就触发补全
 let g:ycm_semantic_triggers = {
             \ 'c,cpp,python,java,go,erlang,perl,py': ['re!\w{2}', '_'],
             \ 'cs,lua,javascript': ['re!\w{2}', '_'],
             \ }
 let g:ycm_show_diagnostics_ui = 0  " 禁用YCM自带语法检查(使用ale)
 
-" 防止YCM和Ultisnips的TAB键冲突，禁止YCM的TAB
+"" 防止YCM和Ultisnips的TAB键冲突，禁止YCM的TAB
 let g:ycm_key_list_select_completion = ['<C-n>', '<Down>']
 let g:ycm_key_list_previous_completion = ['<C-p>', '<Up>']
 
-""" Ultisnip
+" Ultisnip
 let g:did_UltiSnips_vim_after = 1
 let g:UltiSnipsEditSplit="vertical"
 let g:UltiSnipsExpandTrigger = "<NOP>"
@@ -204,7 +265,7 @@ function ExpandSnippet()
 endfunction
 inoremap <expr> <CR> pumvisible() ? "<C-R>=ExpandSnippet()<CR>" : "\<CR>"
 
-""" tagbar
+" tagbar
 let g:tagbar_autofocus=1
 let g:tagbar_foldlevel=2
 let g:tagbar_type_go = {
@@ -235,8 +296,10 @@ let g:tagbar_type_go = {
     \ 'ctagsargs' : '-sort -silent'
 \ }
 
+" EasyMotion
+let g:EasyMotion_do_mapping = 0
 
-""" vim-autoformat
+" vim-autoformat
 let g:autoformat_autoindent = 0 
 let g:autoformat_retab = 0 
 let g:autoformat_remove_trailing_spaces = 0
@@ -246,7 +309,7 @@ autocmd BufEnter *.go* exe 'vmap = :Autoformat<CR>'
 autocmd BufEnter *.c* exe 'vmap = :Autoformat<CR>'
 autocmd BufEnter *.json* exe 'vmap = :Autoformat<CR>'
 
-"" Open markdown files with Chrome.
+" Open markdown files with Chrome.
 autocmd BufEnter *.md exe 'noremap <F4> :!google-chrome-stable %:p<CR>'
 
 " shortcuts remap
@@ -368,3 +431,16 @@ if has("cscope")
     nmap zi :cs find i ^<C-R>=expand("<cfile>")<CR>$<CR>
     nmap zd :cs find d <C-R>=expand("<cword>")<CR><CR>
 endif
+
+let mapleader = 'f'
+"" EasyMotion Search and jump 
+map <leader>s <Plug>(easymotion-overwin-f2)
+"" fzf recent files
+map <leader>f :FZFMru<CR>
+"" fzf files in this dir
+map <leader>d :FZF<CR>
+"" Search by file name in project root
+map <leader>g :Files `=<sid>GetProjectRoot()`<cr>
+"" Search by file content in project root
+map <leader>a :AG<cr>
+
