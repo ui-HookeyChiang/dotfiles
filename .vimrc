@@ -5,14 +5,20 @@ call plug#begin()
 " custom plugins
 Plug 'fatih/vim-go'
 Plug 'majutsushi/tagbar'
-Plug 'scrooloose/nerdtree'
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 Plug 'tpope/vim-fugitive'
+"""""""""""""""""""""""
+"Nerdtree File Manager"
+"""""""""""""""""""""""
+Plug 'scrooloose/nerdtree', { 'on':  'NERDTreeToggle' }
+Plug 'scrooloose/nerdcommenter'
 Plug 'jistr/vim-nerdtree-tabs'
+" 可以在導航目錄中看到 git 版本資訊
+Plug 'Xuyuanp/nerdtree-git-plugin'
+
 Plug 'mbbill/undotree'
 Plug 'Lokaltog/vim-easymotion'
-Plug 'scrooloose/nerdcommenter'
 "" Great tool for auto-completion of variables and functions
 Plug 'Valloric/YouCompleteMe'
 "" Good Auto Fill Tool use F2 to trigger
@@ -20,8 +26,6 @@ Plug 'SirVer/ultisnips'
 Plug 'honza/vim-snippets'
 "" This plug-in provides automatic closing of quotes, parenthesis, brackets, etc.
 Plug 'Raimondi/delimitMate'
-" 可以在導航目錄中看到 git 版本資訊
-Plug 'Xuyuanp/nerdtree-git-plugin'
 "" C and other languages' formatting
 Plug 'Chiel92/vim-autoformat'
 "" These two are for mark-down
@@ -33,7 +37,6 @@ Plug 'fcpg/vim-osc52'
 "" Fuzzy Search
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' } 
 Plug 'junegunn/fzf.vim'
-
 "" all of your Plugins must be added before the following line
 call plug#end()            " required
 
@@ -199,7 +202,11 @@ let g:go_metalinter_enabled = ['vet', 'golint', 'errcheck', 'deadcode']
 let g:go_metalinter_autosave = 1
 let g:go_metalinter_autosave_enabled = ['vet', 'golint']
 
-" vim-airline
+"""""""""""""""""""""""""
+"for airline status bar"
+""""""""""""""""""""""""
+"refer to https://github.com/vim-airline/vim-airline/wiki/Screenshots for
+"colorschemes Screenshots
 let g:airline#extensions#fugitiveline#enabled = 0
 let g:bufferline_echo = 0
 let g:airline#extensions#tabline#enabled = 1
@@ -216,7 +223,9 @@ let g:airline_section_warning = ''
 let g:airline_section_error = ''
 let g:airline_section_z = '%p%% %l/%L:%v'
 
-" You complete me
+"""""""""""""""""
+"You Complete Me"
+"""""""""""""""""
 let g:ycm_python_binary_path = '/usr/bin/python3'
 let g:ycm_gopls_binary_path = "~/go/bin/gopls"
 let g:ycm_gopls_args = ['-remote=auto']
@@ -312,7 +321,100 @@ autocmd BufEnter *.json* exe 'vmap = :Autoformat<CR>'
 " Open markdown files with Chrome.
 autocmd BufEnter *.md exe 'noremap <F4> :!google-chrome-stable %:p<CR>'
 
-" shortcuts remap
+"""""""""""
+"NERDTree "
+"""""""""""
+" Start NERDTree and leave the cursor in it.
+" autocmd VimEnter * NERDTree
+
+"start nerdtree and put cursor in empty buffer or file
+autocmd VimEnter * NERDTree | wincmd p
+
+" Start NERDTree when Vim is started without file arguments. 
+" below 2 lines were commented for startify to work
+"" autocmd StdinReadPre * let s:std_in=1
+"" autocmd VimEnter * if argc() == 0 && !exists('s:std_in') | NERDTree | endif
+
+" If another buffer tries to replace NERDTree, put it in the other window, and bring back NERDTree.
+autocmd BufEnter * if bufname('#') =~ 'NERD_tree_\d\+' && bufname('%') !~ 'NERD_tree_\d\+' && winnr('$') > 1 |
+    \ let buf=bufnr() | buffer# | execute "normal! \<C-W>w" | execute 'buffer'.buf | endif
+" Exit Vim if NERDTree is the only window remaining in the only tab.
+autocmd BufEnter * if tabpagenr('$') == 1 && winnr('$') == 1 && exists('b:NERDTree') && b:NERDTree.isTabTree() | quit | endif
+
+let g:NERDTreeWinSize=20
+
+"disable 80 extentions of nerdtree for less lag
+let g:NERDTreeLimitedSyntax = 1
+
+" Create default mappings
+let g:NERDCreateDefaultMappings = 1
+
+" Add spaces after comment delimiters by default
+let g:NERDSpaceDelims = 1
+
+" Use compact syntax for prettified multi-line comments
+let g:NERDCompactSexyComs = 1
+
+" Align line-wise comment delimiters flush left instead of following code indentation
+let g:NERDDefaultAlign = 'left'
+
+" Set a language to use its alternate delimiters by default
+let g:NERDAltDelims_java = 1
+
+" Add your own custom formats or override the defaults
+let g:NERDCustomDelimiters = { 'c': { 'left': '/**','right': '*/' } }
+
+" Allow commenting and inverting empty lines (useful when commenting a region)
+let g:NERDCommentEmptyLines = 1
+
+" Enable trimming of trailing whitespace when uncommenting
+let g:NERDTrimTrailingWhitespace = 1
+
+" Enable NERDCommenterToggle to check all selected lines is commented or not 
+let g:NERDToggleCheckAllLines = 1
+
+"""""""""""""""""""""""""""""""""
+" NERDTree Functions and colors "
+"""""""""""""""""""""""""""""""""
+let g:NERDTreeDirArrowExpandable = ''
+let g:NERDTreeDirArrowCollapsible = ''
+let g:NERDTreeHighlightFolders = 1 " enables folder icon highlighting using exact match
+let g:NERDTreeHighlightFoldersFullName = 1 " highlights the folder name
+" you can add these colors to your .vimrc to help customizing
+let s:brown = "905532"
+let s:aqua =  "3AFFDB"
+let s:blue = "689FB6"
+let s:darkBlue = "44788E"
+let s:purple = "834F79"
+let s:lightPurple = "834F79"
+let s:red = "AE403F"
+let s:beige = "F5C06F"
+let s:yellow = "F09F17"
+let s:orange = "D4843E"
+let s:darkOrange = "F16529"
+let s:pink = "CB6F6F"
+let s:salmon = "EE6E73"
+let s:green = "8FAA54"
+let s:lightGreen = "31B53E"
+let s:white = "FFFFFF"
+let s:rspec_red = 'FE405F'
+let s:git_orange = 'F54D27'
+
+let g:NERDTreeExtensionHighlightColor = {} " this line is needed to avoid error
+let g:NERDTreeExtensionHighlightColor['css'] = s:blue " sets the color of css files to blue
+
+let g:NERDTreeExactMatchHighlightColor = {} " this line is needed to avoid error
+let g:NERDTreeExactMatchHighlightColor['.gitignore'] = s:git_orange " sets the color for .gitignore files
+
+let g:NERDTreePatternMatchHighlightColor = {} " this line is needed to avoid error
+let g:NERDTreePatternMatchHighlightColor['.*_spec\.rb$'] = s:rspec_red " sets the color for files ending with _spec.rb
+
+let g:WebDevIconsDefaultFolderSymbolColor = s:beige " sets the color for folders that did not match any rule
+let g:WebDevIconsDefaultFileSymbolColor = s:blue " sets the color for files that did not match any rule
+
+"""""""""""""""""""
+" Custom Mappings "
+"""""""""""""""""""
 nmap <F5> :UndotreeToggle<CR>
 nmap <F7> :NERDTreeTabsToggle<CR>
 nmap <F8> :TagbarToggle<CR>
