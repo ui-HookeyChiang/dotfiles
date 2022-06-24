@@ -434,13 +434,15 @@ endif
 
 let mapleader = 'f'
 "" EasyMotion Search and jump 
-map <leader>s <Plug>(easymotion-overwin-f2)
+map <leader>e <Plug>(easymotion-overwin-f2)
 "" fzf recent files
 map <leader>f :FZFMru<CR>
-"" fzf files in this dir
+"" fzf file name in this dir
 map <leader>d :FZF<CR>
-"" Search by file name in project root
-map <leader>g :Files `=<sid>GetProjectRoot()`<cr>
-"" Search by file content in project root
-map <leader>a :AG<cr>
+"" fzf file name in project root
+map <leader>g :Files `=<sid>GetProjectRoot()`<CR>
+"" fzf file content by interaction in project root
+map <leader>a :AG <CR>
+"" fzf file content by word in project root
+map <leader>s :AG <C-R>=expand("<cword>")<CR><CR>
 
