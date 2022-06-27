@@ -17,13 +17,17 @@ Plug 'tpope/vim-fugitive'
 Plug 'scrooloose/nerdtree', { 'on':  'NERDTreeToggle' }
 Plug 'scrooloose/nerdcommenter'
 Plug 'jistr/vim-nerdtree-tabs'
-" 可以在導航目錄中看到 git 版本資訊
 Plug 'Xuyuanp/nerdtree-git-plugin'
 
 Plug 'mbbill/undotree'
 Plug 'Lokaltog/vim-easymotion'
-"" Great tool for auto-completion of variables and functions
+"""""""""""""""""""""
+" Completion plugin "
+"""""""""""""""""""""
 Plug 'Valloric/YouCompleteMe'
+"Plug 'neoclide/coc.nvim', {'branch': 'release'}
+"Use CocInstall coc-tsserver coc-css coc-html coc-sh 
+
 "" Good Auto Fill Tool use F2 to trigger
 Plug 'SirVer/ultisnips'
 Plug 'honza/vim-snippets'
@@ -283,8 +287,8 @@ let g:ycm_key_invoke_completion = '<c-space>'  " 主动补全(默认<c-space>)
 
 "" 输入2个字符就触发补全
 let g:ycm_semantic_triggers = {
-            \ 'c,cpp,python,java,go,erlang,perl,py': ['re!\w{2}', '_'],
-            \ 'cs,lua,javascript': ['re!\w{2}', '_'],
+            \ 'c,cpp,python,java,go,erlang,perl,py': ['re!\w{2}'],
+            \ 'cs,lua,javascript': ['re!\w{2}'],
             \ }
 let g:ycm_show_diagnostics_ui = 0  " 禁用YCM自带语法检查(使用ale)
 
@@ -362,8 +366,8 @@ autocmd BufEnter *.md exe 'noremap <F4> :!google-chrome-stable %:p<CR>'
 autocmd VimEnter * NERDTree | wincmd p
 
 "start nerdtree and put cursor in empty buffer or file
-autocmd TabEnter * if winnr('$')<=1 | NERDTreeFind | wincmd p
-autocmd WinEnter * if winnr('$')<=1 && !exists('b:NERDTree')| NERDTreeFind | wincmd p
+"autocmd TabEnter * if winnr('$')<=1 && !IsNERDTreeOpen() | NERDTree | wincmd p
+autocmd WinEnter * if winnr('$')<=1 && !IsNERDTreeOpen() | NERDTree | wincmd p
 "autocmd BufEnter * if winnr('$')<=1 && bufname('%') !~# 'NERD_tree_' | cd %:p:h | NERDTreeToggle | wincmd p
 
 " Start NERDTree when Vim is started without file arguments. 
@@ -374,7 +378,7 @@ autocmd WinEnter * if winnr('$')<=1 && !exists('b:NERDTree')| NERDTreeFind | win
 " Exit Vim if NERDTree is the only window remaining in the only tab.
 autocmd BufEnter * if winnr('$') == 1 && IsNERDTreeOpen() | quit | endif
 "autocmd BufWinEnter * silent! loadview
-autocmd BufEnter * lcd %:p:h
+"autocmd BufEnter * lcd %:p:h
 
 " Check if NERDTree is open or active
 function! IsNERDTreeOpen()
@@ -475,20 +479,22 @@ nmap <F8> :TagbarToggle<CR>
 nmap <F10> :set nu!<CR>
 
 " Switch btw tabs
-nmap <silent> <S-home> :tabprevious<CR>
-nmap <silent> <S-end> :tabnext<CR>
-imap <silent> <S-home> <Esc>:tabprevious<CR>i
-imap <silent> <S-end> <Esc>:tabnext<CR>i
+nmap <silent> <S-home> :tabm -1<CR>
+nmap <silent> <S-end> :tabm +1<CR>
+imap <silent> <S-home> <Esc>:tabm -1<CR>i
+imap <silent> <S-end> <Esc>:tabm +1<CR>i
+
+" Switch btw tabs
 nmap <silent> <S-Left> :tabprevious<CR>
 nmap <silent> <S-Right> :tabnext<CR>
 imap <silent> <S-Left> <Esc>:tabprevious<CR>i
 imap <silent> <S-Right> <Esc>:tabnext<CR>i
 
 " Move line up down
-nmap <S-Down> :m .+1<CR>==
-nnoremap <S-Up> :m .-2<CR>==
-imap <S-Down> <Esc>:m .+1<CR>==gi
-inoremap <S-Up> <Esc>:m .-2<CR>==gi
+nmap <S-Down> :m .+1<CR>
+nnoremap <S-Up> :m .-2<CR>
+imap <S-Down> <Esc>:m .+1<CR>i
+inoremap <S-Up> <Esc>:m .-2<CR>i
 vmap <S-Down> :m '>+1<CR>gv=gv
 vnoremap <S-Up> :m '<-2<CR>gv=gv
 
@@ -596,7 +602,6 @@ map <leader>d :FZF<CR>
 "" fzf file name in project root
 map <leader>g :Files `=<sid>GetProjectRoot()`<CR>
 "" fzf file content by interaction in project root
-"map <leader>a :AG<CR>
 map <leader>a :AgIn `=<sid>GetProjectRoot()`<CR>
 "" fzf file content by word in project root
 map <leader>s :AG <C-R><C-W><CR>
