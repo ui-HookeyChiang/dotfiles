@@ -366,9 +366,8 @@ autocmd BufEnter *.md exe 'noremap <F4> :!google-chrome-stable %:p<CR>'
 autocmd VimEnter * NERDTree | wincmd p
 
 "start nerdtree and put cursor in empty buffer or file
-"autocmd TabEnter * if winnr('$')<=1 && !IsNERDTreeOpen() | NERDTree | wincmd p
-autocmd WinEnter * if winnr('$')<=1 && !IsNERDTreeOpen() | NERDTree | wincmd p
-"autocmd BufEnter * if winnr('$')<=1 && bufname('%') !~# 'NERD_tree_' | cd %:p:h | NERDTreeToggle | wincmd p
+"autocmd TabEnter * if winnr('$')<=1 && | NERDTree | wincmd p
+autocmd WinEnter * if winnr('$')<=1 && !exists('b:NERDTree') | NERDTreeFind | wincmd p
 
 " Start NERDTree when Vim is started without file arguments. 
 " below 2 lines were commented for startify to work
@@ -378,7 +377,8 @@ autocmd WinEnter * if winnr('$')<=1 && !IsNERDTreeOpen() | NERDTree | wincmd p
 " Exit Vim if NERDTree is the only window remaining in the only tab.
 autocmd BufEnter * if winnr('$') == 1 && IsNERDTreeOpen() | quit | endif
 "autocmd BufWinEnter * silent! loadview
-"autocmd BufEnter * lcd %:p:h
+autocmd BufEnter * lcd %:p:h
+"autocmd BufEnter * if winnr('$') == 1 && !IsNERDTreeOpen() | NERDTreeFind | wincmd p
 
 " Check if NERDTree is open or active
 function! IsNERDTreeOpen()
