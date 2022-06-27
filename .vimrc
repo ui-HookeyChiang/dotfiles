@@ -5,12 +5,15 @@ call plug#begin()
 " custom plugins
 Plug 'fatih/vim-go'
 Plug 'majutsushi/tagbar'
+""""""""""""""""""""""
+" Airline status bar "
+""""""""""""""""""""""
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 Plug 'tpope/vim-fugitive'
-"""""""""""""""""""""""
-"Nerdtree File Manager"
-"""""""""""""""""""""""
+"""""""""""""""""""""""""
+" Nerdtree File Manager "
+"""""""""""""""""""""""""
 Plug 'scrooloose/nerdtree', { 'on':  'NERDTreeToggle' }
 Plug 'scrooloose/nerdcommenter'
 Plug 'jistr/vim-nerdtree-tabs'
@@ -26,19 +29,37 @@ Plug 'SirVer/ultisnips'
 Plug 'honza/vim-snippets'
 "" This plug-in provides automatic closing of quotes, parenthesis, brackets, etc.
 Plug 'Raimondi/delimitMate'
-"" C and other languages' formatting
+""""""""""""""""""""""
+" Beautify your code "
+""""""""""""""""""""""
 Plug 'Chiel92/vim-autoformat'
 "" These two are for mark-down
 "Plug 'godlygeek/tabular'
 "Plug 'plasticboy/vim-markdown'
-Plug 'tomasr/molokai'
 "" OSC52: Ctrl+c copy to clipboard in vim
 Plug 'fcpg/vim-osc52'
-"" Fuzzy Search
+""""""""""""""""
+" Fuzzy Search "
+""""""""""""""""
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' } 
 Plug 'junegunn/fzf.vim'
+""""""""""""""""
+" Start Screen "
+""""""""""""""""
+Plug 'mhinz/vim-startify'
+""""""""""""""""""""""""
+" Make all text center "
+""""""""""""""""""""""""
+Plug 'junegunn/goyo.vim'
+
 "" all of your Plugins must be added before the following line
 call plug#end()            " required
+
+""""""""""
+" Cursor "
+""""""""""
+let &t_SI = "\<Esc>]50;CursorShape=1\x7"
+let &t_EI = "\<Esc>]50;CursorShape=0\x7"
 
 " general customizations
 syntax on
@@ -94,12 +115,38 @@ set listchars=tab:>\ ,trail:·
 "let g:vim_markdown_folding_disabled=1
 "let g:vim_markdown_math=1
 
-" fzf Fuzzy find recent global files/local files/contents
-command! FZFMru call fzf#run({
-	\  'source':  v:oldfiles,
-	\  'sink':    'e',
-	\  'options': '-m -x +s',
-	\  'down':    '67%'})
+"" fzf settings
+"" This is the default extra key bindings
+let g:fzf_action = {
+            \ 'ctrl-t': 'tab split',
+            \ 'ctrl-x': 'split',
+            \ 'ctrl-v': 'vsplit' }
+
+"" Default fzf layout
+"" - down / up / left / right
+let g:fzf_layout = { 'down': '67%' }
+
+"" Customize fzf colors to match your color scheme
+let g:fzf_colors =
+            \ { 'fg':    ['fg', 'Normal'],
+            \ 'bg':      ['bg', 'Normal'],
+            \ 'hl':      ['fg', 'Comment'],
+            \ 'fg+':     ['fg', 'CursorLine', 'CursorColumn', 'Normal'],
+            \ 'bg+':     ['bg', 'CursorLine', 'CursorColumn'],
+            \ 'hl+':     ['fg', 'Statement'],
+            \ 'info':    ['fg', 'PreProc'],
+            \ 'prompt':  ['fg', 'Conditional'],
+            \ 'pointer': ['fg', 'Exception'],
+            \ 'marker':  ['fg', 'Keyword'],
+            \ 'spinner': ['fg', 'Label'],
+            \ 'header':  ['fg', 'Comment'] }
+
+"" Enable per-command history.
+"" CTRL-N and CTRL-P will be automatically bound to next-history and
+"" previous-history instead of down and up. If you don't like the change,
+"" explicitly bind the keys to down and up in your $FZF_DEFAULT_OPTS.
+let g:fzf_history_dir = '~/.local/share/fzf-history'
+
 command! -nargs=* AG call fzf#run({
 	\ 'source':  printf('ag --nogroup --column --color "%s"',
 	\                   escape(empty(<q-args>) ? '^(?=.)' : <q-args>, '"\')),
@@ -108,8 +155,8 @@ command! -nargs=* AG call fzf#run({
 	\            '--multi --bind=ctrl-a:select-all,ctrl-d:deselect-all '.
 	\            '--color hl:68,hl+:110',
 	\ 'down':    '67%'
-	\ }, 
-	\ fzf#vim#with_preview({'dir': function('<sid>GetProjectRoot')}, 'right:50%'))
+	\ },
+	\ fzf#vim#with_preview({'dir': s:GetProjectRoot()}, 'right:50%'))
 
 "" Gets the root of the Git repo or submodule, relative to the current buffer, or home dir
 function! s:GetProjectRoot()
@@ -147,37 +194,24 @@ function! s:ag_handler(lines)
   endif
 endfunction
 
-"" fzf settings
-"" This is the default extra key bindings
-let g:fzf_action = {
-            \ 'ctrl-t': 'tab split',
-            \ 'ctrl-x': 'split',
-            \ 'ctrl-v': 'vsplit' }
+" AgIn: Start ag in the specified directory
+"
+" e.g.
+"   :AgIn .. foo
+function! s:ag_in(bang, ...)
+  let start_dir=expand(a:1)
 
-"" Default fzf layout
-"" - down / up / left / right
-let g:fzf_layout = { 'down': '67%' }
+  if !isdirectory(start_dir)
+    throw 'not a valid directory: ' .. start_dir
+  endif
+  " Press `?' to enable preview window.
+  call fzf#vim#ag(join(a:000[1:], ' '), fzf#vim#with_preview({'dir': start_dir}, 'right:50%'), a:bang)
 
-"" Customize fzf colors to match your color scheme
-let g:fzf_colors =
-            \ { 'fg':    ['fg', 'Normal'],
-            \ 'bg':      ['bg', 'Normal'],
-            \ 'hl':      ['fg', 'Comment'],
-            \ 'fg+':     ['fg', 'CursorLine', 'CursorColumn', 'Normal'],
-            \ 'bg+':     ['bg', 'CursorLine', 'CursorColumn'],
-            \ 'hl+':     ['fg', 'Statement'],
-            \ 'info':    ['fg', 'PreProc'],
-            \ 'prompt':  ['fg', 'Conditional'],
-            \ 'pointer': ['fg', 'Exception'],
-            \ 'marker':  ['fg', 'Keyword'],
-            \ 'spinner': ['fg', 'Label'],
-            \ 'header':  ['fg', 'Comment'] }
+endfunction
 
-"" Enable per-command history.
-"" CTRL-N and CTRL-P will be automatically bound to next-history and
-"" previous-history instead of down and up. If you don't like the change,
-"" explicitly bind the keys to down and up in your $FZF_DEFAULT_OPTS.
-let g:fzf_history_dir = '~/.local/share/fzf-history'
+command! -bang -nargs=+ -complete=dir AgIn call s:ag_in(<bang>0, <f-args>)
+
+command! -bang -nargs=* Rg call fzf#vim#grep("rg --column --line-number --no-heading --hidden -g '!.git/' --color=always --smart-case ".shellescape(<q-args>), 1, fzf#vim#with_preview({'dir': s:GetProjectRoot()}, 'right:50%'), <bang>0)
 
 " vim-go
 "" cheatsheet: https://gist.github.com/krlvi/d22bdcb66566261ea8e8da36f796fa0a
@@ -202,9 +236,9 @@ let g:go_metalinter_enabled = ['vet', 'golint', 'errcheck', 'deadcode']
 let g:go_metalinter_autosave = 1
 let g:go_metalinter_autosave_enabled = ['vet', 'golint']
 
-"""""""""""""""""""""""""
-"for airline status bar"
-""""""""""""""""""""""""
+""""""""""""""""""""""
+" Airline status bar "
+""""""""""""""""""""""
 "refer to https://github.com/vim-airline/vim-airline/wiki/Screenshots for
 "colorschemes Screenshots
 let g:airline#extensions#fugitiveline#enabled = 0
@@ -223,9 +257,9 @@ let g:airline_section_warning = ''
 let g:airline_section_error = ''
 let g:airline_section_z = '%p%% %l/%L:%v'
 
-"""""""""""""""""
-"You Complete Me"
-"""""""""""""""""
+"""""""""""""""""""
+" You Complete Me "
+"""""""""""""""""""
 let g:ycm_python_binary_path = '/usr/bin/python3'
 let g:ycm_gopls_binary_path = "~/go/bin/gopls"
 let g:ycm_gopls_args = ['-remote=auto']
@@ -308,38 +342,56 @@ let g:tagbar_type_go = {
 " EasyMotion
 let g:EasyMotion_do_mapping = 0
 
-" vim-autoformat
+""""""""""""""""""
+" vim-autoformat "
+""""""""""""""""""
+" Install formatter before use.
 let g:autoformat_autoindent = 0 
 let g:autoformat_retab = 0 
 let g:autoformat_remove_trailing_spaces = 0
-let g:formatterpath = ['gofmt', 'clang-format', 'prettier']
 nmap == :Autoformat<CR>
-autocmd BufEnter *.go* exe 'vmap = :Autoformat<CR>'
-autocmd BufEnter *.c* exe 'vmap = :Autoformat<CR>'
-autocmd BufEnter *.json* exe 'vmap = :Autoformat<CR>'
+au BufWrite * :Autoformat
 
 " Open markdown files with Chrome.
 autocmd BufEnter *.md exe 'noremap <F4> :!google-chrome-stable %:p<CR>'
 
-"""""""""""
-"NERDTree "
-"""""""""""
+""""""""""""
+" NERDTree "
+""""""""""""
 " Start NERDTree and leave the cursor in it.
-" autocmd VimEnter * NERDTree
+autocmd VimEnter * NERDTree | wincmd p
 
 "start nerdtree and put cursor in empty buffer or file
-autocmd VimEnter * NERDTree | wincmd p
+autocmd TabEnter * if winnr('$')<=1 | NERDTreeFind | wincmd p
+autocmd WinEnter * if winnr('$')<=1 && !exists('b:NERDTree')| NERDTreeFind | wincmd p
+"autocmd BufEnter * if winnr('$')<=1 && bufname('%') !~# 'NERD_tree_' | cd %:p:h | NERDTreeToggle | wincmd p
 
 " Start NERDTree when Vim is started without file arguments. 
 " below 2 lines were commented for startify to work
 "" autocmd StdinReadPre * let s:std_in=1
-"" autocmd VimEnter * if argc() == 0 && !exists('s:std_in') | NERDTree | endif
+"autocmd VimEnter * if argc() == 0 && !exists('s:std_in') | NERDTree | endif
 
-" If another buffer tries to replace NERDTree, put it in the other window, and bring back NERDTree.
-autocmd BufEnter * if bufname('#') =~ 'NERD_tree_\d\+' && bufname('%') !~ 'NERD_tree_\d\+' && winnr('$') > 1 |
-    \ let buf=bufnr() | buffer# | execute "normal! \<C-W>w" | execute 'buffer'.buf | endif
 " Exit Vim if NERDTree is the only window remaining in the only tab.
-autocmd BufEnter * if tabpagenr('$') == 1 && winnr('$') == 1 && exists('b:NERDTree') && b:NERDTree.isTabTree() | quit | endif
+autocmd BufEnter * if winnr('$') == 1 && IsNERDTreeOpen() | quit | endif
+"autocmd BufWinEnter * silent! loadview
+autocmd BufEnter * lcd %:p:h
+
+" Check if NERDTree is open or active
+function! IsNERDTreeOpen()
+  return exists("t:NERDTreeBufName") && (bufwinnr(t:NERDTreeBufName) != -1)
+endfunction
+
+" Call NERDTreeFind iff NERDTree is active, current window contains a modifiable
+" file, and we're not in vimdiff
+function! SyncTree()
+  if &modifiable && IsNERDTreeOpen() && strlen(expand('%')) > 0 && !&diff
+    NERDTreeFind
+    wincmd p
+  endif
+endfunction
+
+" Highlight currently open buffer in NERDTree
+autocmd BufRead * call SyncTree()
 
 let g:NERDTreeWinSize=20
 
@@ -538,13 +590,44 @@ let mapleader = 'f'
 "" EasyMotion Search and jump 
 map <leader>e <Plug>(easymotion-overwin-f2)
 "" fzf recent files
-map <leader>f :FZFMru<CR>
+map <leader>f :History<CR>
 "" fzf file name in this dir
 map <leader>d :FZF<CR>
 "" fzf file name in project root
 map <leader>g :Files `=<sid>GetProjectRoot()`<CR>
 "" fzf file content by interaction in project root
-map <leader>a :AG <CR>
+"map <leader>a :AG<CR>
+map <leader>a :AgIn `=<sid>GetProjectRoot()`<CR>
 "" fzf file content by word in project root
-map <leader>s :AG <C-R>=expand("<cword>")<CR><CR>
+map <leader>s :AG <C-R><C-W><CR>
+
+"""""""""""""""""""""""""""""""""
+" Options For The Startify Menu "
+"""""""""""""""""""""""""""""""""
+let g:startify_custom_header = startify#pad(split(system("figlet -w 100 Hookey"), "\n"))
+"Incase you are insane and want to open a new tab with Goyo enabled
+autocmd BufEnter *
+       \ if !exists('t:startify_new_tab') && empty(expand('%')) && !exists('t:goyo_master') |
+       \   let t:startify_new_tab = 1 |
+       \   Startify |
+       \ endif
+"Bookmarks. Syntax is clear.add yours
+let g:startify_bookmarks = [ {'I': '~/i3/i3/config'},{'L': '~/.blerc'},{'Z': '~/.zshrc'},{'B': '~/.bashrc'},{'V': '~/.vimrc'}]
+    let g:startify_lists = [
+          \ { 'type': 'bookmarks', 'header': ['   Bookmarks']      },
+          \ { 'type': 'files',     'header': ['   Recent']            },
+          \ { 'type': 'sessions',  'header': ['   Sessions']       },
+          \ { 'type': 'commands',  'header': ['   Commands']       },
+          \ ]
+"cant tell wtf it does so its commented
+" \ { 'type': 'dir',       'header': ['   MRU '. getcwd()] },
+
+hi StartifyBracket ctermfg=240
+hi StartifyFile    ctermfg=147
+hi StartifyFooter  ctermfg=240
+hi StartifyHeader  ctermfg=114
+hi StartifyNumber  ctermfg=215
+hi StartifyPath    ctermfg=245
+hi StartifySlash   ctermfg=240
+hi StartifySpecial ctermfg=240
 
