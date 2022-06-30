@@ -319,9 +319,9 @@ nmap <silent> [c <Plug>(coc-diagnostic-prev)
 nmap <silent> ]c <Plug>(coc-diagnostic-next)
 
 " GoTo code navigation.
-nmap <silent> cd <Plug>(coc-definition)
+nmap <silent> cg <Plug>(coc-definition)
 nmap <silent> cf <Plug>(coc-type-definition)
-nmap <silent> cg <Plug>(coc-implementation)
+nmap <silent> cd <Plug>(coc-implementation)
 nmap <silent> cc <Plug>(coc-references)
 " Symbol renaming.
 nmap cr <Plug>(coc-rename)
