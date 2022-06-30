@@ -24,9 +24,11 @@ Plug 'Lokaltog/vim-easymotion'
 """""""""""""""""""""
 " Completion plugin "
 """""""""""""""""""""
-Plug 'Valloric/YouCompleteMe'
-"Plug 'neoclide/coc.nvim', {'branch': 'release'}
-"Use CocInstall coc-tsserver coc-css coc-html coc-sh 
+"Plug 'Valloric/YouCompleteMe'
+Plug 'neoclide/coc.nvim', {'branch': 'release'}
+"Install Nodejs: `curl -sL install-node.vercel.app/lts | bash`
+"Install lsp in vim `:CocInstall coc-tsserver coc-css coc-html coc-sh
+"coc-clangd coc-docker coc-dot-complete coc-go coc-json coc-sql coc-pyright`
 
 "" Good Auto Fill Tool use F2 to trigger
 Plug 'SirVer/ultisnips'
@@ -119,7 +121,9 @@ set listchars=tab:>\ ,trail:·
 "let g:vim_markdown_folding_disabled=1
 "let g:vim_markdown_math=1
 
-"" fzf settings
+""""""""""""""""
+" fzf settings "
+""""""""""""""""
 "" This is the default extra key bindings
 let g:fzf_action = {
             \ 'ctrl-t': 'tab split',
@@ -160,7 +164,7 @@ command! -nargs=* AG call fzf#run({
 	\            '--color hl:68,hl+:110',
 	\ 'down':    '67%'
 	\ },
-	\ fzf#vim#with_preview({'dir': s:GetProjectRoot()}, 'right:50%'))
+	\ fzf#vim#with_preview({'dir': s:GetProjectRoot()}, 'right:50%:hidden'))
 
 "" Gets the root of the Git repo or submodule, relative to the current buffer, or home dir
 function! s:GetProjectRoot()
@@ -209,7 +213,7 @@ function! s:ag_in(bang, ...)
     throw 'not a valid directory: ' .. start_dir
   endif
   " Press `?' to enable preview window.
-  call fzf#vim#ag(join(a:000[1:], ' '), fzf#vim#with_preview({'dir': start_dir}, 'right:50%'), a:bang)
+  call fzf#vim#ag(join(a:000[1:], ' '), fzf#vim#with_preview({'dir': start_dir}, 'right:50%', '?'), a:bang)
 
 endfunction
 
@@ -217,28 +221,24 @@ command! -bang -nargs=+ -complete=dir AgIn call s:ag_in(<bang>0, <f-args>)
 
 command! -bang -nargs=* Rg call fzf#vim#grep("rg --column --line-number --no-heading --hidden -g '!.git/' --color=always --smart-case ".shellescape(<q-args>), 1, fzf#vim#with_preview({'dir': s:GetProjectRoot()}, 'right:50%'), <bang>0)
 
-" vim-go
-"" cheatsheet: https://gist.github.com/krlvi/d22bdcb66566261ea8e8da36f796fa0a
-"" disable open browser after posting snippet
-let g:go_play_open_browser = 0
-"" enable goimports
-let g:go_fmt_command = "goimports"
-"" enable additional highlighting
-let g:go_highlight_functions = 1
-"" Format on save
-let g:go_fmt_autosave = 1
-"" Disable gofmt parse errors
-let g:go_fmt_fail_silently = 1
-let g:go_highlight_methods = 1
-let g:go_highlight_structs = 1
-let g:go_gopls_enabled = 1
-let g:go_gopls_options = ['-remote=auto']
-let g:go_def_mode='gopls'
-let g:go_info_mode='gopls'
-let g:go_referrers_mode = 'gopls'
-let g:go_metalinter_enabled = ['vet', 'golint', 'errcheck', 'deadcode']
-let g:go_metalinter_autosave = 1
-let g:go_metalinter_autosave_enabled = ['vet', 'golint']
+let mapleader = 'f'
+"" fzf recent files
+map <leader>f :History<CR>
+"" fzf file name in this dir
+map <leader>d :FZF<CR>
+"" fzf file name in project root
+map <leader>g :Files `=<sid>GetProjectRoot()`<CR>
+"" fzf file content by interaction in project root
+map <leader>a :AgIn `=<sid>GetProjectRoot()`<CR>
+"" fzf file content by word in project root
+map <leader>s :AG <C-R><C-W><CR>
+
+""""""""""""""
+" EasyMotion "
+""""""""""""""
+let g:EasyMotion_do_mapping = 0
+"" EasyMotion Search and jump 
+map <leader>e <Plug>(easymotion-overwin-f2)
 
 """"""""""""""""""""""
 " Airline status bar "
@@ -261,58 +261,105 @@ let g:airline_section_warning = ''
 let g:airline_section_error = ''
 let g:airline_section_z = '%p%% %l/%L:%v'
 
-"""""""""""""""""""
-" You Complete Me "
-"""""""""""""""""""
-let g:ycm_python_binary_path = '/usr/bin/python3'
-let g:ycm_gopls_binary_path = "~/go/bin/gopls"
-let g:ycm_gopls_args = ['-remote=auto']
-let g:ycm_min_num_identifier_candidate_chars = 2
-let g:ycm_completion_confirm_key = '<Right>'
-let g:ycm_autoclose_preview_window_after_completion = 1
-let g:ycm_autoclose_preview_window_after_insertion = 1
-"let g:ycm_global_ycm_extra_conf = '~/.ycm_extra_conf.py'
-let g:ycm_confirm_extra_conf = 0  " 不提示是否载入本地ycm_extra_conf文件
+"""""""""""""""""""""""""
+" Conquer of Completion "
+"""""""""""""""""""""""""
+" Always show the signcolumn, otherwise it would shift the text each time
+" diagnostics appear/become resolved.
+if has("nvim-0.5.0") || has("patch-8.1.1564")
+  " Recently vim can merge signcolumn and number column into one
+  set signcolumn=number
+else
+  set signcolumn=yes
+endif
 
-"" 语法关键字、注释、字符串补全
-let g:ycm_seed_identifiers_with_syntax = 1
-let g:ycm_complete_in_comments = 1
-let g:ycm_complete_in_strings = 1
-"" 从注释、字符串、tag文件中收集用于补全信息
-let g:ycm_collect_identifiers_from_comments_and_strings = 1
-let g:ycm_collect_identifiers_from_tags_files = 1
+" Some servers have issues with backup files, see #649.
+set nobackup
+set nowritebackup
 
-"" 禁止快捷键触发补全
-let g:ycm_key_invoke_completion = '<c-space>'  " 主动补全(默认<c-space>)
+" Having longer updatetime (default is 4000 ms = 4 s) leads to noticeable
+" delays and poor user experience.
+set updatetime=300
 
-"" 输入2个字符就触发补全
-let g:ycm_semantic_triggers = {
-            \ 'c,cpp,python,java,go,erlang,perl,py': ['re!\w{2}'],
-            \ 'cs,lua,javascript': ['re!\w{2}'],
-            \ }
-let g:ycm_show_diagnostics_ui = 0  " 禁用YCM自带语法检查(使用ale)
+" Don't pass messages to |ins-completion-menu|.
+set shortmess+=c
+"let g:coc_global_extensions = ['coc-json', 'coc-go', 'coc-clangd',
+""			\ 'coc-docker', 'coc-sh', 'coc-tsserver', 'coc-css',
+""			\ 'coc-pyright']
 
-"" 防止YCM和Ultisnips的TAB键冲突，禁止YCM的TAB
-let g:ycm_key_list_select_completion = ['<C-n>', '<Down>']
-let g:ycm_key_list_previous_completion = ['<C-p>', '<Up>']
+" Use tab for trigger completion with characters ahead and navigate.
+" NOTE: Use command ':verbose imap <tab>' to make sure tab is not mapped by
+" other plugin before putting this into your config.
+inoremap <silent><expr> <CR>
+      \ pumvisible() ? "\<C-n>" :
+      \ CheckBackspace() ? "\<TAB>" :
+      \ coc#refresh()
+inoremap <expr><CR> pumvisible() ? "\<C-p>" : "\<C-h>"
 
-" Ultisnip
-let g:did_UltiSnips_vim_after = 1
-let g:UltiSnipsEditSplit="vertical"
-let g:UltiSnipsExpandTrigger = "<NOP>"
-let g:UltiSnipsJumpForwardTrigger = "<TAB>"
-let g:UltiSnipsJumpBackwardTrigger = "<C-b>"
-function ExpandSnippet()
-    call UltiSnips#ExpandSnippet()
-    if g:ulti_expand_res
-        return ""
-    else
-        return "\<CR>"
-    endif
+function! CheckBackspace() abort
+  let col = col('.') - 1
+  return !col || getline('.')[col - 1]  =~# '\s'
 endfunction
-inoremap <expr> <CR> pumvisible() ? "<C-R>=ExpandSnippet()<CR>" : "\<CR>"
 
-" tagbar
+" Use <c-space> to trigger completion.
+if has('nvim')
+  inoremap <silent><expr> <c-space> coc#refresh()
+else
+  inoremap <silent><expr> <c-@> coc#refresh()
+endif
+
+" Make <CR> auto-select the first completion item and notify coc.nvim to
+" format on enter, <cr> could be remapped by other vim plugin
+inoremap <silent><expr> <cr> pumvisible() ? coc#_select_confirm()
+                              \: "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
+
+" Use `[g` and `]g` to navigate diagnostics
+" Use `:CocDiagnostics` to get all diagnostics of current buffer in location list.
+nmap <silent> [c <Plug>(coc-diagnostic-prev)
+nmap <silent> ]c <Plug>(coc-diagnostic-next)
+
+" GoTo code navigation.
+nmap <silent> cd <Plug>(coc-definition)
+nmap <silent> cf <Plug>(coc-type-definition)
+nmap <silent> cg <Plug>(coc-implementation)
+nmap <silent> cc <Plug>(coc-references)
+" Symbol renaming.
+nmap cr <Plug>(coc-rename)
+nnoremap <silent> cs  :exe 'CocList -I --normal --input='.expand('<cword>').' symbols'<CR>
+" Search workspace symbols.
+nnoremap <silent><nowait> <space>s  :<C-u>CocList -I symbols<cr>
+" Find symbol of current document.
+nnoremap <silent><nowait> <space>o  :<C-u>CocList outline<cr>
+" Formatting selected code.
+xmap cf  <Plug>(coc-format-selected)
+nmap cf  <Plug>(coc-format-selected)
+
+" Use K to show documentation in preview window.
+nnoremap <silent> K :call ShowDocumentation()<CR>
+function! ShowDocumentation()
+  if CocAction('hasProvider', 'hover')
+    call CocActionAsync('doHover')
+  else
+    call feedkeys('K', 'in')
+  endif
+endfunction
+
+" Highlight the symbol and its references when holding the cursor.
+autocmd CursorHold * silent call CocActionAsync('highlight')
+
+" Remap <C-f> and <C-b> for scroll float windows/popups.
+if has('nvim-0.4.0') || has('patch-8.2.0750')
+  nnoremap <silent><nowait><expr> <C-f> coc#float#has_scroll() ? coc#float#scroll(1) : "\<C-f>"
+  nnoremap <silent><nowait><expr> <C-b> coc#float#has_scroll() ? coc#float#scroll(0) : "\<C-b>"
+  inoremap <silent><nowait><expr> <C-f> coc#float#has_scroll() ? "\<c-r>=coc#float#scroll(1)\<cr>" : "\<Right>"
+  inoremap <silent><nowait><expr> <C-b> coc#float#has_scroll() ? "\<c-r>=coc#float#scroll(0)\<cr>" : "\<Left>"
+  vnoremap <silent><nowait><expr> <C-f> coc#float#has_scroll() ? coc#float#scroll(1) : "\<C-f>"
+  vnoremap <silent><nowait><expr> <C-b> coc#float#has_scroll() ? coc#float#scroll(0) : "\<C-b>"
+endif
+
+""""""""""
+" tagbar "
+""""""""""
 let g:tagbar_autofocus=1
 let g:tagbar_foldlevel=2
 let g:tagbar_type_go = {
@@ -343,9 +390,6 @@ let g:tagbar_type_go = {
     \ 'ctagsargs' : '-sort -silent'
 \ }
 
-" EasyMotion
-let g:EasyMotion_do_mapping = 0
-
 """"""""""""""""""
 " vim-autoformat "
 """"""""""""""""""
@@ -366,36 +410,19 @@ autocmd BufEnter *.md exe 'noremap <F4> :!google-chrome-stable %:p<CR>'
 autocmd VimEnter * NERDTree | wincmd p
 
 "start nerdtree and put cursor in empty buffer or file
-"autocmd TabEnter * if winnr('$')<=1 && | NERDTree | wincmd p
-autocmd WinEnter * if winnr('$')<=1 && !exists('b:NERDTree') | NERDTreeFind | wincmd p
+"autocmd TabEnter * if winnr('$')<=1 && | NERDTreeFind | wincmd p
+autocmd TabEnter * if tabpagenr('$')<=1 && !(exists("b:NERDTree") && b:NERDTree.isTabTree()) | NERDTreeFind | wincmd p
+
+" Exit Vim if NERDTree is the only window remaining in the only tab.
+autocmd BufEnter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
 
 " Start NERDTree when Vim is started without file arguments. 
 " below 2 lines were commented for startify to work
 "" autocmd StdinReadPre * let s:std_in=1
 "autocmd VimEnter * if argc() == 0 && !exists('s:std_in') | NERDTree | endif
 
-" Exit Vim if NERDTree is the only window remaining in the only tab.
-autocmd BufEnter * if winnr('$') == 1 && IsNERDTreeOpen() | quit | endif
 "autocmd BufWinEnter * silent! loadview
 autocmd BufEnter * lcd %:p:h
-"autocmd BufEnter * if winnr('$') == 1 && !IsNERDTreeOpen() | NERDTreeFind | wincmd p
-
-" Check if NERDTree is open or active
-function! IsNERDTreeOpen()
-  return exists("t:NERDTreeBufName") && (bufwinnr(t:NERDTreeBufName) != -1)
-endfunction
-
-" Call NERDTreeFind iff NERDTree is active, current window contains a modifiable
-" file, and we're not in vimdiff
-function! SyncTree()
-  if &modifiable && IsNERDTreeOpen() && strlen(expand('%')) > 0 && !&diff
-    NERDTreeFind
-    wincmd p
-  endif
-endfunction
-
-" Highlight currently open buffer in NERDTree
-autocmd BufRead * call SyncTree()
 
 let g:NERDTreeWinSize=20
 
@@ -515,59 +542,16 @@ vnoremap <S-S> <C-C>:update<CR>
 " ???
 inoremap <C-U> <C-G>u<C-U>i
 
-" Ctrl+J跳转至定义、声明或文件
-let mapleader = 'y'
-nnoremap <leader>g :YcmCompleter GoToDefinitionElseDeclaration<CR>
-nnoremap <leader>c :YcmCompleter GoToReferences<CR>
-nnoremap <leader>s :YcmCompleter GoToSymbol <C-R>=expand("<cword>")<CR><CR>
-nnoremap <leader>r :YcmCompleter RefactorRename<space>
-
 " OSC52: Ctrl+c copy to clipboard in vim
 vmap <C-c> y:Oscyank<CR>
 
 vnoremap $ $h
 
 autocmd FileType make set noexpandtab
-" jump between errors in quickfix list
-let mapleader = 'c'
-map <leader>n :cnext<CR>
-map <leader>m :cprev<CR>
-nnoremap <leader>c :cclose<CR>
 
-let mapleader = 'b'
-" show a list of interfaces which is implemented by the type under your cursor
-au FileType go nmap <leader>I <Plug>(go-implements)
-" show type info for the word under your cursor
-au FileType go nmap <leader>gi <Plug>(go-info)
-" open the relevant Godoc for the word under the cursor
-au FileType go nmap <leader>gd <Plug>(go-doc)
-au FileType go nmap <leader>gv <Plug>(go-doc-vertical)
-" run Go commands
-au FileType go nmap <leader>r <Plug>(go-run)
-au FileType go nmap <leader>T <Plug>(go-test)
-au FileType go nmap <leader>t <Plug>(go-test-func)
-au FileType go nmap <leader>c <Plug>(go-coverage)
-au FileType go nmap <leader>i <Plug>(go-install)
-au FileType go nmap <leader>dv <Plug>(go-def-vertical)
-au FileType go nmap <leader>dt <Plug>(go-def-tab)
-au FileType go nmap <leader>ds <Plug>(go-def-stack)
-au FileType go nmap <leader>q <Plug>(go-callstack)
-au FileType go nmap <leader>h <Plug>(go-referrers)
-" rename the identifier under the cursor to a new name
-au FileType go nmap <leader>R <Plug>(go-rename)
-
-" run :GoBuild or :GoTestCompile based on the go file
-function! s:build_go_files()
-  let l:file = expand('%')
-  if l:file =~# '^\f\+_test\.go$'
-    call go#test#Test(0, 1)
-  elseif l:file =~# '^\f\+\.go$'
-    call go#cmd#Build(0)
-  endif
-endfunction
-
-au FileType go nmap <leader>b :<C-u>call <SID>build_go_files()<CR>
-
+""""""""""""""""""""
+" Cscope and ctags "
+""""""""""""""""""""
 if has("cscope")
     set autochdir
     set tags=tags;
@@ -592,27 +576,13 @@ if has("cscope")
     nmap zd :cs find d <C-R>=expand("<cword>")<CR><CR>
 endif
 
-let mapleader = 'f'
-"" EasyMotion Search and jump 
-map <leader>e <Plug>(easymotion-overwin-f2)
-"" fzf recent files
-map <leader>f :History<CR>
-"" fzf file name in this dir
-map <leader>d :FZF<CR>
-"" fzf file name in project root
-map <leader>g :Files `=<sid>GetProjectRoot()`<CR>
-"" fzf file content by interaction in project root
-map <leader>a :AgIn `=<sid>GetProjectRoot()`<CR>
-"" fzf file content by word in project root
-map <leader>s :AG <C-R><C-W><CR>
-
 """""""""""""""""""""""""""""""""
 " Options For The Startify Menu "
 """""""""""""""""""""""""""""""""
 let g:startify_custom_header = startify#pad(split(system("figlet -w 100 Hookey"), "\n"))
 "Incase you are insane and want to open a new tab with Goyo enabled
 autocmd BufEnter *
-       \ if !exists('t:startify_new_tab') && empty(expand('%')) && !exists('t:goyo_master') |
+       \ if bufnr('$') <=1 && !exists('t:startify_new_tab') && empty(expand('%')) && !exists('t:goyo_master') |
        \   let t:startify_new_tab = 1 |
        \   Startify |
        \ endif

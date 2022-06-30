@@ -117,3 +117,11 @@ mvg (){
     mv $1 $2
   fi
 }
+
+[ -f ~/.fzf.bash ] && source ~/.fzf.bash
+
+# Setup go
+# ---------
+if [[ ! "$PATH" == */home/${USER}/go/bin* ]]; then
+  export PATH="${PATH:+${PATH}:}/home/${USER}/go/bin"
+fi
