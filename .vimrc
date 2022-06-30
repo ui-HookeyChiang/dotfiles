@@ -579,23 +579,47 @@ endif
 """""""""""""""""""""""""""""""""
 " Options For The Startify Menu "
 """""""""""""""""""""""""""""""""
+let g:startify_enable_special      = 0
+let g:startify_files_number        = 8
+let g:startify_relative_path       = 1
+let g:startify_change_to_dir       = 1
+let g:startify_update_oldfiles     = 1
+let g:startify_session_autoload    = 1
+let g:startify_session_persistence = 1
+
+let g:startify_skiplist = [
+		\ 'COMMIT_EDITMSG',
+		\ 'bundle/.*/doc',
+		\ '/data/repo/neovim/runtime/doc',
+		\ '/Users/mhi/local/vim/share/vim/vim74/doc',
+		\ ]
+
 let g:startify_custom_header = startify#pad(split(system("figlet -w 100 Hookey"), "\n"))
 "Incase you are insane and want to open a new tab with Goyo enabled
-autocmd BufEnter *
-       \ if bufnr('$') <=1 && !exists('t:startify_new_tab') && empty(expand('%')) && !exists('t:goyo_master') |
-       \   let t:startify_new_tab = 1 |
-       \   Startify |
-       \ endif
+"
+"Run Startify for each new tab!~
+if has('nvim')
+	autocmd TabNewEntered * Startify
+else
+	autocmd BufWinEnter *
+		\ if bufwinnr('$') <=1 && !exists('t:startify_new_tab')
+		\     && empty(expand('%'))
+		\     && empty(&l:buftype)
+		\     && &l:modifiable |
+		\   let t:startify_new_tab = 1 |
+		\   Startify |
+		\ endif
+endif
+
 "Bookmarks. Syntax is clear.add yours
 let g:startify_bookmarks = [ {'I': '~/i3/i3/config'},{'L': '~/.blerc'},{'Z': '~/.zshrc'},{'B': '~/.bashrc'},{'V': '~/.vimrc'}]
-    let g:startify_lists = [
-          \ { 'type': 'bookmarks', 'header': ['   Bookmarks']      },
-          \ { 'type': 'files',     'header': ['   Recent']            },
-          \ { 'type': 'sessions',  'header': ['   Sessions']       },
-          \ { 'type': 'commands',  'header': ['   Commands']       },
-          \ ]
-"cant tell wtf it does so its commented
-" \ { 'type': 'dir',       'header': ['   MRU '. getcwd()] },
+let g:startify_lists = [
+	\ { 'type': 'files',     'header': ['   Recent']            },
+	\ { 'type': 'sessions',  'header': ['   Sessions']       },
+	\ { 'type': 'commands',  'header': ['   Commands']       },
+	\ { 'type': 'dir', 'header': ['Current Directory'. getcwd()] },
+	\ { 'type': 'bookmarks', 'header': ['   Bookmarks']      },
+	\ ]
 
 hi StartifyBracket ctermfg=240
 hi StartifyFile    ctermfg=147
@@ -606,3 +630,11 @@ hi StartifyPath    ctermfg=245
 hi StartifySlash   ctermfg=240
 hi StartifySpecial ctermfg=240
 
+function! StartifyNewtab()
+  let line = line('.')
+  tabnew
+  execute line
+  call startify#open_buffers()
+endfunction
+
+autocmd User Startified nnoremap <buffer><cr> :call StartifyNewtab()<cr>
