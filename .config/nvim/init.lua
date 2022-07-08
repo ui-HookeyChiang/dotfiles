@@ -50,6 +50,12 @@ if is_bootstrap then
   return
 end
 
+vim.api.nvim_create_autocmd('FileType', {
+  desc = 'Resume to qf after selection',
+  command = 'nnoremap <buffer> <CR> <CR>:wincmd p<CR>',
+  pattern = 'qf'
+})
+
 -- Automatically source and re-compile packer whenever you save this init.lua
 local packer_group = vim.api.nvim_create_augroup('Packer', { clear = true })
 vim.api.nvim_create_autocmd('BufWritePost', {
