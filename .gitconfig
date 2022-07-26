@@ -2,7 +2,7 @@
     name = ui-HookeyChiang
     email = hookey.chiang@ui.com
 [core]
-    editor = vim
+	editor = nvim
 [alias]
     au = add -u
     ap = add --patch
@@ -46,5 +46,5 @@
     branch = auto
 [branch]
     autosetuprebase = always
-[url "git@github.com:"]
+[url "ssh://git@github.com/"]
     insteadOf = https://github.com/
