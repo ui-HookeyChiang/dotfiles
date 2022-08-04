@@ -31,6 +31,9 @@ require('packer').startup(function(use)
   use { 'nvim-telescope/telescope-fzf-native.nvim', run = 'make', cond = vim.fn.executable "make" == 1 }
   use 'lukas-reineke/lsp-format.nvim'
   use 'dhananjaylatkar/cscope_maps.nvim'
+  use 'Raimondi/delimitMate'
+  use 'fcpg/vim-osc52'
+  use 'frazrepo/vim-rainbow'
   if is_bootstrap then
     require('packer').sync()
   end
@@ -105,6 +108,8 @@ vim.cmd[[colorscheme tokyonight]]
 
 -- Set completeopt to have a better completion experience
 vim.o.completeopt = 'menuone,noselect'
+
+vim.opt.clipboard = 'unnamedplus'
 
 vim.env.TERM="xterm-256color"
 -- [[ Basic Keymaps ]]
