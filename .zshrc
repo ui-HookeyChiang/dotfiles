@@ -79,6 +79,7 @@ ZSH_THEME="robbyrussell"
 plugins=(git zsh-z zsh-syntax-highlighting zsh-autosuggestions zsh-completions tmux tig docker aliases)
 
 source $ZSH/oh-my-zsh.sh
+source ~/.profile
 
 # User configuration
 

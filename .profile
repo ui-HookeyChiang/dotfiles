@@ -14,5 +14,14 @@ fi
 
 mesg n
 
-export PATH="/opt/homebrew/bin:/opt/local/bin:/opt/local/sbin:$PATH"
+export PATH="/opt/local/bin:/opt/local/sbin:$PATH"
+
+if [ `command -v homebrew` ]; then
+  export PATH="/opt/homebrew/bin:$PATH"
+fi
+
+if [ `command -v go` ]; then
+  gopath=`go env GOPATH`
+  export PATH=$gopath:$gopath/bin:$PATH
+fi
 
