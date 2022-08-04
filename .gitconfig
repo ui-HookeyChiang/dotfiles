@@ -2,7 +2,9 @@
     name = ui-HookeyChiang
     email = hookey.chiang@ui.com
 [core]
-	editor = nvim
+    editor = nvim
+[commit]
+    verbose = true
 [alias]
     au = add -u
     ap = add --patch
