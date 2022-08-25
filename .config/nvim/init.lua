@@ -34,6 +34,7 @@ require('packer').startup(function(use)
   use 'Raimondi/delimitMate'
   use 'fcpg/vim-osc52'
   use 'frazrepo/vim-rainbow'
+  use 'ntpeters/vim-better-whitespace'
   if is_bootstrap then
     require('packer').sync()
   end
@@ -119,6 +120,8 @@ vim.env.TERM="xterm-256color"
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
+vim.g.better_whitespace_enabled=1
+vim.g.strip_whitespace_on_save=1
 -- Keymaps for better default experience
 -- See `:help vim.keymap.set()`
 vim.keymap.set({ 'n', 'v' }, '<Space>', '<Nop>', { silent = true })
@@ -136,6 +139,10 @@ vim.keymap.set({ 'n', 'v' }, "<leader><Up>", "<ESC>:wincmd k<CR>")
 vim.keymap.set({ 'n', 'v' }, "<leader><Down>", "<ESC>:wincmd j<CR>")
 vim.keymap.set({ 'n', 'v' }, "<leader><Left>", "<ESC>:wincmd h<CR>")
 vim.keymap.set({ 'n', 'v' }, "<leader><Right>", "<ESC>:wincmd l<CR>")
+-- ADjust size of window
+vim.keymap.set({ 'n', 'v' }, "<leader>=", "<ESC><C-w>=<CR>")
+vim.keymap.set({ 'n', 'v' }, "<leader>+", "<ESC><C-w>+<CR>")
+vim.keymap.set({ 'n', 'v' }, "<leader>-", "<ESC><C-w>-<CR>")
 -- Move line up down
 vim.keymap.set({ 'n', 'v', 'i' }, "<S-Up>", "<ESC>:m .-2<CR>")
 vim.keymap.set({ 'n', 'v', 'i' }, "<S-Down>", "<ESC>:m .+1<CR>")
