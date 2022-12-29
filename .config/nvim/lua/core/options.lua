@@ -78,7 +78,7 @@ vim.opt.winblend       = 10;
 
 vim.opt.undofile       = true;
 vim.opt.synmaxcol      = 2500;
-vim.opt.formatoptions  = "1jcroql";
+vim.opt.formatoptions  = "1jcroqltw";
 vim.opt.textwidth      = 80;
 vim.opt.expandtab      = true;
 vim.opt.autoindent     = true;
@@ -86,7 +86,7 @@ vim.opt.tabstop        = 2;
 vim.opt.shiftwidth     = 2;
 vim.opt.softtabstop    = -1;
 vim.opt.breakindentopt = "shift:2,min:20";
-vim.opt.wrap           = false;
+vim.opt.wrap           = true;
 vim.opt.linebreak      = true;
 vim.opt.number         = true;
 vim.opt.colorcolumn    = "80";
