@@ -11,10 +11,6 @@ function config.tokyonight()
   vim.cmd('colorscheme tokyonight')
 end
 
-function config.zephyr()
-  vim.cmd('colorscheme zephyr')
-end
-
 function config.galaxyline()
   require('modules.ui.eviline')
 end
