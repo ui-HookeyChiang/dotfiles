@@ -1,42 +1,35 @@
-local editor = {}
+local package = require('core.pack').package
 local conf = require('modules.editor.config')
 
-editor['nvim-telescope/telescope.nvim'] = {
+package({
+  'nvim-telescope/telescope.nvim',
   cmd = 'Telescope',
   config = conf.telescope,
-  requires = {
-    {'nvim-lua/popup.nvim', opt = true},
-    {'nvim-lua/plenary.nvim',opt = true},
-    {'nvim-telescope/telescope-fzy-native.nvim',opt = true},
-  }
-}
+  dependencies = {
+    'nvim-lua/plenary.nvim',
+    'nvim-telescope/telescope-fzy-native.nvim',
+    'nvim-telescope/telescope-file-browser.nvim',
+  },
+})
 
-editor['rhysd/accelerated-jk'] = {
-  opt = true
-}
-
-editor['hrsh7th/vim-eft'] = {
-  opt = true,
-  config = function()
-    vim.g.eft_ignorecase = true
-  end
-}
-
-editor['kana/vim-operator-replace'] = {
-  keys = {{'x','p'}},
-  config = function()
-    vim.api.nvim_set_keymap("x", "p", "<Plug>(operator-replace)",{silent =true})
-  end,
-  requires = 'kana/vim-operator-user'
-}
-
-editor['rhysd/vim-operator-surround'] = {
+package({
+  'nvim-treesitter/nvim-treesitter',
   event = 'BufRead',
-  requires = 'kana/vim-operator-user'
-}
+  run = ':TSUpdate',
+  config = conf.nvim_treesitter,
+  dependencies = {
+    'nvim-treesitter/nvim-treesitter-textobjects',
+  },
+})
 
-editor['kana/vim-niceblock']  = {
-  opt = true
-}
+package({ 'glepnir/mcc.nvim', ft = { 'c', 'cpp', 'go', 'rust' }, config = conf.mcc_nvim })
 
-return editor
+package({
+  'glepnir/hlsearch.nvim',
+  event = 'BufRead',
+  config = function()
+    require('hlsearch').setup()
+  end,
+})
+
+package({ 'phaazon/hop.nvim', event = 'BufRead', config = conf.hop })
