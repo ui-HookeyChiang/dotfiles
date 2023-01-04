@@ -27,7 +27,15 @@ vim.diagnostic.config({
 })
 
 local servers = {
-  'dockerls', 'bashls', 'pyright', 'rust_analyzer', 'tsserver', 'gopls', 'sumneko_lua', 'clangd', 'jsonls',
+  'dockerls',
+  'bashls',
+  'pyright',
+  'rust_analyzer',
+  'tsserver',
+  'gopls',
+  'sumneko_lua',
+  'clangd',
+  'jsonls',
 }
 
 -- Ensure the servers above are installed
