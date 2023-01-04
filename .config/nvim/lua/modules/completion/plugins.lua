@@ -21,10 +21,11 @@ package({
   ft = enable_lsp_filetype,
   config = conf.nvim_lsp,
   dependencies = {
-    { 'glepnir/lspsaga.nvim', config = conf.lspsaga },
-    { 'williamboman/mason-lspconfig.nvim',
-      dependencies= {'williamboman/mason.nvim'},
-    },
+    {'glepnir/lspsaga.nvim', config = conf.lspsaga },
+    {'williamboman/mason-lspconfig.nvim'},
+    {'williamboman/mason.nvim'},
+    {'jose-elias-alvarez/null-ls.nvim'},
+    {'jayp0521/mason-null-ls.nvim'},
   },
 })
 

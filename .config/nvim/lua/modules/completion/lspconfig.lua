@@ -50,6 +50,21 @@ for _, server in ipairs(servers) do
   })
 end
 
+require("mason-null-ls").setup({
+    ensure_installed = {
+        'sql_formatter'
+    },
+    automatic_installation = false,
+    automatic_setup = false, -- Recommended, but optional
+})
+
+--[[ Anything not supported by mason.
+require("null-ls").setup(
+    sources = {},
+)]]--
+
+require 'mason-null-ls'.setup_handlers() -- If `automatic_setup` is true.
+
 vim.lsp.handlers['workspace/diagnostic/refresh'] = function(_, _, ctx)
   local ns = vim.lsp.diagnostic.get_namespace(ctx.client_id)
   local bufnr = vim.api.nvim_get_current_buf()
