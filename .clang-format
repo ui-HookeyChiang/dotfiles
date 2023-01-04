@@ -1,0 +1,12 @@
+---
+BasedOnStyle: LLVM
+AccessModifierOffset: '-4'
+AllowShortLoopsOnASingleLine: 'true'
+BreakBeforeBraces: Attach
+ColumnLimit: '0'
+IndentCaseLabels: 'false'
+IndentWidth: '4'
+TabWidth: '4'
+UseTab: ForIndentation
+
+...
