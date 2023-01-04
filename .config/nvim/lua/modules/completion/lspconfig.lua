@@ -52,10 +52,11 @@ end
 
 require("mason-null-ls").setup({
     ensure_installed = {
-        'sql_formatter'
+        'sql_formatter',
+        'markdownlint'
     },
     automatic_installation = false,
-    automatic_setup = false, -- Recommended, but optional
+    automatic_setup = true, -- Recommended, but optional
 })
 
 --[[ Anything not supported by mason.

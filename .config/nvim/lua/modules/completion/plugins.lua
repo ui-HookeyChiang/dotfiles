@@ -14,6 +14,7 @@ local enable_lsp_filetype = {
   'json',
   'python',
   'proto',
+  'markdown',
 }
 
 package({
