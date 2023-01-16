@@ -59,7 +59,7 @@ opt.shiftwidth = 4
 opt.linebreak = true
 opt.whichwrap = 'h,l,<,>,[,],~'
 opt.breakindentopt = 'shift:2,min:20'
-opt.showbreak = '↳ '
+vim.wo.showbreak = 'NONE'
 
 opt.foldlevelstart = 99
 opt.foldmethod = 'marker'
@@ -72,10 +72,9 @@ opt.textwidth = 100
 opt.colorcolumn = '100'
 -- opt.conceallevel = 2
 -- opt.concealcursor = 'niv'
-
--- fonts
---opt.encoding = 'utf-8'
---opt.guifont = 'Hack Nerd Font 18'
+if vim.fn.has('nvim-0.9') == 1 then
+  opt.stc = '%{v:wrap ? repeat(" ", float2nr(ceil(log10(v:lnum))))."↳":v:lnum}%=%s%C'
+end
 
 if vim.loop.os_uname().sysname == 'Darwin' then
   vim.g.clipboard = {
@@ -90,6 +89,4 @@ if vim.loop.os_uname().sysname == 'Darwin' then
     },
     cache_enabled = 0,
   }
-  vim.g.python_host_prog = '/usr/bin/python'
-  vim.g.python3_host_prog = '/usr/local/bin/python3'
 end

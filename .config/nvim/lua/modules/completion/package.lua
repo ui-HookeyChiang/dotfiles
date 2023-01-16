@@ -22,7 +22,7 @@ package({
   ft = enable_lsp_filetype,
   config = conf.nvim_lsp,
   dependencies = {
-    {'glepnir/lspsaga.nvim', config = conf.lspsaga },
+    {'glepnir/lspsaga.nvim', event='BufRead', config = conf.lspsaga },
     {'williamboman/mason-lspconfig.nvim'},
     {'williamboman/mason.nvim'},
     {'jose-elias-alvarez/null-ls.nvim'},
@@ -42,6 +42,11 @@ package({
   },
 })
 
-package({ 'L3MON4D3/LuaSnip', event = 'InsertCharPre', config = conf.lua_snip })
+package({
+    'L3MON4D3/LuaSnip',
+    event = 'InsertCharPre',
+    config = conf.lua_snip,
+    dependencies = {'saadparwaiz1/cmp_luasnip'},
+})
 
 package({ 'windwp/nvim-autopairs', event = 'InsertEnter', config = conf.auto_pairs })

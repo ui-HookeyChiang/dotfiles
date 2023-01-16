@@ -5,8 +5,8 @@ local capabilities = vim.lsp.protocol.make_client_capabilities()
 capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
 
 local signs = {
-  Error = ' ',
-  Warn = ' ',
+  Error = ' ',
+  Warn = ' ',
   Info = ' ',
   Hint = ' ',
 }
@@ -25,23 +25,106 @@ vim.diagnostic.config({
     source = true,
   },
 })
+--[[
+lspconfig.gopls.setup({
+  cmd = { 'gopls', 'serve' },
+  capabilities = capabilities,
+  init_options = {
+    usePlaceholders = true,
+    completeUnimported = true,
+  },
+  settings = {
+    gopls = {
+      analyses = {
+        unusedparams = true,
+      },
+      staticcheck = true,
+    },
+  },
+})
+
+lspconfig.sumneko_lua.setup({
+  on_attach = function(client, _)
+    client.server_capabilities.semanticTokensProvider = nil
+  end,
+  capabilities = capabilities,
+  settings = {
+    Lua = {
+      diagnostics = {
+        enable = true,
+        globals = { 'vim' },
+      },
+      runtime = {
+        version = 'LuaJIT',
+        path = vim.split(package.path, ';'),
+      },
+      workspace = {
+        library = (function()
+          local lib = {}
+          for _, path in ipairs(vim.api.nvim_get_runtime_file('lua', true)) do
+            lib[#lib + 1] = path:sub(1, -5)
+          end
+          return lib
+        end)(),
+        checkThirdParty = false,
+      },
+      telemetry = {
+        enable = false,
+      },
+    },
+  },
+})
+
+lspconfig.clangd.setup({
+  capabilities = capabilities,
+  cmd = {
+    'clangd',
+    '--background-index',
+    '--suggest-missing-includes',
+    '--clang-tidy',
+    '--header-insertion=iwyu',
+  },
+})
+
+lspconfig.rust_analyzer.setup({
+  capabilities = capabilities,
+  settings = {
+    ['rust-analyzer'] = {
+      imports = {
+        granularity = {
+          group = 'module',
+        },
+        prefix = 'self',
+      },
+      cargo = {
+        buildScripts = {
+          enable = true,
+        },
+      },
+      procMacro = {
+        enable = true,
+      },
+    },
+  },
+})
+]]--
 
 local servers = {
   'dockerls',
-  'bashls',
   'pyright',
-  'rust_analyzer',
+  'bashls',
+  'zls',
+  'jsonls',
   'tsserver',
   'gopls',
   'sumneko_lua',
   'clangd',
-  'jsonls',
 }
 
--- Ensure the servers above are installed
+--- Ensure the servers above are installed
 require('mason').setup()
 require('mason-lspconfig').setup({
-  ensure_installed = servers,
+    ensure_installed = servers,
 })
 
 for _, server in ipairs(servers) do
@@ -50,21 +133,17 @@ for _, server in ipairs(servers) do
   })
 end
 
-require("mason-null-ls").setup({
+require('mason-null-ls').setup({
     ensure_installed = {
         'sql_formatter',
-        'markdownlint'
+        'markdownlint',
     },
     automatic_installation = false,
-    automatic_setup = true, -- Recommended, but optional
+    automatic_setup = true,
 })
 
---[[ Anything not supported by mason.
-require("null-ls").setup(
-    sources = {},
-)]]--
-
-require 'mason-null-ls'.setup_handlers() -- If `automatic_setup` is true.
+--- If `automatic_setup` is true
+require('mason-null-ls').setup_handlers()
 
 vim.lsp.handlers['workspace/diagnostic/refresh'] = function(_, _, ctx)
   local ns = vim.lsp.diagnostic.get_namespace(ctx.client_id)

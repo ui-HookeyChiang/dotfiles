@@ -27,17 +27,19 @@ nmap({
   { '[d', cmd('Lspsaga diagnostic_jump_next') },
   { ']d', cmd('Lspsaga diagnostic_jump_prev') },
   { '[c', cmd('Lspsaga show_cursor_diagnostics') },
-  { ']c', cmd('Lspsaga show_line_diagnostics') },
+  { '[b', cmd('Lspsaga show_buf_diagnostics') },
+  { ']b', cmd('Lspsaga show_buf_diagnostics') },
   { 'K', cmd('Lspsaga hover_doc') },
   { 'ga', cmd('Lspsaga code_action') },
   { 'gd', cmd('Lspsaga peek_definition') },
   { 'gs', cmd('Lspsaga signature_help') },
   { 'gr', cmd('Lspsaga rename') },
   { 'gh', cmd('Lspsaga lsp_finder') },
+  { 'gci', cmd('Lspsaga incoming_calls') },
+  { 'gco', cmd('Lspsaga outgoing_calls') },
   { 'gf', cmd('lua vim.lsp.buf.format()') },
   { 'gws', cmd('lua vim.lsp.buf.workspace_symbol()') },
-  { '<Leader>o', cmd('LSoutlineToggle') },
-  { '<Leader>g', cmd('Lspsaga open_floaterm lazygit') },
+  { '<Leader>o', cmd('Lspsaga outline') },
   -- dashboard create file
   { '<Leader>n', cmd('DashboardNewFile') },
   { '<Leader>ss', cmd('SessionSave') },
@@ -46,7 +48,7 @@ nmap({
   { '<Leader>d', cmd('DBUIToggle') },
   -- Telescope
   { '<Leader>a', cmd('Telescope app') },
-  { '<Leader>fb', cmd('Telescope buffers') },
+  { '<Leader>j', cmd('Telescope buffers') },
   { '<Leader>fa', cmd('Telescope live_grep') },
   { '<Leader>fs', cmd('Telescope grep_string') },
   {
@@ -64,7 +66,6 @@ nmap({
   { '<Leader>fo', cmd('Telescope oldfiles') },
   { '<Leader>gc', cmd('Telescope git_commits') },
   { '<Leader>fd', cmd('Telescope dotfiles') },
-  { '<Leader>/', cmd('Telescope current_buffer_fuzzy_find') },
   -- hop.nvim
   { 'f', cmd('HopWordAC') },
   { 'F', cmd('HopWordBC') },
@@ -83,7 +84,6 @@ xmap({ 'gcc', ':ComComment<CR>' })
 nmap({ 'gcj', cmd('ComAnnotation') })
 
 -- Lspsaga floaterminal
-nmap({ '<A-d>', cmd('Lspsaga open_floaterm') })
-tmap({ '<A-d>', [[<C-\><C-n>:Lspsaga close_floaterm<CR>]] })
+vim.keymap.set({ 'n', 't' }, '<A-d>', cmd('Lspsaga term_toggle'))
 
 xmap({ 'ga', cmd('Lspsaga code_action') })

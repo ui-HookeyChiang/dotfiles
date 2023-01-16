@@ -8,6 +8,7 @@ local cmd = keymap.cmd
 nmap({
   -- close buffer
   { '<C-x>k', cmd('bdelete') },
+  { '<C-e>', cmd('bdelete') },
   -- save
   { '<C-s>', cmd('write') },
   -- buffer jump
@@ -15,7 +16,6 @@ nmap({
   { '[b', cmd('bp') },
   -- force quit all
   { '<C-q>', cmd('qa!') },
-  { '<C-e>', cmd('q!') },
   -- remove trailing white space
   { '<Leader>t', cmd('TrimTrailingWhitespace') },
   -- window jump
@@ -26,10 +26,10 @@ nmap({
   -- resize window
   { '<A-[>', cmd('vertical resize -5') },
   { '<A-]>', cmd('vertical resize +5') },
-  { '<S-Left>', cmd('tabprevious') },
-  { '<S-Right>', cmd('tabnext') },
   { '<S-Up>', cmd('m .-2') },
   { '<S-Down>', cmd('m .+1') },
+  { '<S-Left>', cmd('tabprevious') },
+  { '<S-Right>', cmd('tabn') },
 })
 
 -- insertmode remap

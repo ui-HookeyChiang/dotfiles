@@ -19,13 +19,20 @@ function config.tokyonight()
   vim.cmd('colorscheme tokyonight')
 end
 
+--[[
+function config.zephyr()
+  vim.cmd.colorscheme('zephyr')
+end
+]]--
+
 function config.galaxyline()
   require('modules.ui.eviline')
 end
 
 function config.dashboard()
   local db = require('dashboard')
-  local z = require('zephyr')
+  --local z = require('zephyr')
+  local z = require('tokyonight')
   db.session_directory = vim.env.HOME .. '/.cache/nvim/session'
   db.preview_command = 'cat | lolcat -F 0.3'
   db.preview_file_path = vim.env.HOME .. '/.config/nvim/static/neovim.cat'
