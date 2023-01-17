@@ -13,7 +13,7 @@ local enable_lsp_filetype = {
   'typescriptreact',
   'json',
   'python',
-  'proto',
+ -- 'proto',
   'markdown',
 }
 
@@ -22,7 +22,7 @@ package({
   ft = enable_lsp_filetype,
   config = conf.nvim_lsp,
   dependencies = {
-    {'glepnir/lspsaga.nvim', event='BufRead', config = conf.lspsaga },
+    {'glepnir/lspsaga.nvim', event={'BufRead', 'BufReadPost'}, config = conf.lspsaga },
     {'williamboman/mason-lspconfig.nvim'},
     {'williamboman/mason.nvim'},
     {'jose-elias-alvarez/null-ls.nvim'},

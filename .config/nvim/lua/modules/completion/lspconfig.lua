@@ -110,15 +110,14 @@ lspconfig.rust_analyzer.setup({
 ]]--
 
 local servers = {
+  'clangd',
   'dockerls',
   'pyright',
   'bashls',
-  'zls',
   'jsonls',
   'tsserver',
   'gopls',
   'sumneko_lua',
-  'clangd',
 }
 
 --- Ensure the servers above are installed

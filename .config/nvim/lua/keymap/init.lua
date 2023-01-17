@@ -84,6 +84,6 @@ xmap({ 'gcc', ':ComComment<CR>' })
 nmap({ 'gcj', cmd('ComAnnotation') })
 
 -- Lspsaga floaterminal
-vim.keymap.set({ 'n', 't' }, '<A-d>', cmd('Lspsaga term_toggle'))
+vim.keymap.set({ 'n', 't' }, '<Leader>d', cmd('Lspsaga term_toggle'))
 
 xmap({ 'ga', cmd('Lspsaga code_action') })
