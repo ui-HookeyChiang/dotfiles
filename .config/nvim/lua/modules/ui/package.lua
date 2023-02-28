@@ -2,16 +2,14 @@ local package = require('core.pack').package
 local conf = require('modules.ui.config')
 
 package({
-  'glepnir/flipped.nvim',
-  dev = true,
+  'folke/tokyonight.nvim',
   config = function()
-    vim.cmd.colorscheme('flipped')
+    vim.cmd.colorscheme('tokyonight')
   end,
 })
 
 package({
   'glepnir/dashboard-nvim',
-  dev = true,
   event = 'VimEnter',
   config = conf.dashboard,
   dependencies = { 'nvim-tree/nvim-web-devicons' },
@@ -19,7 +17,6 @@ package({
 
 package({
   'glepnir/whiskyline.nvim',
-  dev = true,
   config = conf.whisky,
   dependencies = { 'nvim-tree/nvim-web-devicons' },
 })
@@ -45,7 +42,6 @@ package({
 
 package({
   'lewis6991/gitsigns.nvim',
-  dev = true,
   event = { 'BufRead', 'BufNewFile' },
   config = conf.gitsigns,
 })

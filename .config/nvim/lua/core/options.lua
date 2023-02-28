@@ -45,7 +45,7 @@ opt.cmdheight = 0
 opt.laststatus = 3
 opt.list = true
 --eol:↲
-opt.listchars = 'tab:»·,nbsp:+,trail:·,extends:→,precedes:←'
+opt.listchars = 'tab:» ,nbsp:+,trail:·,extends:→,precedes:←'
 opt.pumblend = 10
 opt.winblend = 10
 opt.undofile = true

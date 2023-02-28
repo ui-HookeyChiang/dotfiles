@@ -5,16 +5,8 @@ package({ 'glepnir/coman.nvim', dev = true, event = 'BufRead' })
 
 package({
   'glepnir/template.nvim',
-  dev = true,
   ft = { 'c', 'cpp', 'rust', 'lua', 'go' },
   config = conf.template_nvim,
-})
-
-package({
-  'glepnir/easyformat.nvim',
-  dev = true,
-  ft = { 'c', 'cpp', 'rust', 'lua', 'go', 'typescript' },
-  config = conf.easyformat,
 })
 
 package({
@@ -27,7 +19,6 @@ package({
 
 package({
   'glepnir/mutchar.nvim',
-  dev = true,
   ft = { 'c', 'cpp', 'go', 'rust', 'lua' },
   config = conf.mut_char,
 })

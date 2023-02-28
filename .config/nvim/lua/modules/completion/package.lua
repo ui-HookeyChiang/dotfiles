@@ -25,8 +25,8 @@ package({
     {'glepnir/lspsaga.nvim', event={'BufRead', 'BufReadPost'}, config = conf.lspsaga },
     {'williamboman/mason-lspconfig.nvim'},
     {'williamboman/mason.nvim'},
-    {'jose-elias-alvarez/null-ls.nvim'},
-    {'jayp0521/mason-null-ls.nvim'},
+--    {'jose-elias-alvarez/null-ls.nvim'},
+--    {'jayp0521/mason-null-ls.nvim'},
   },
 })
 

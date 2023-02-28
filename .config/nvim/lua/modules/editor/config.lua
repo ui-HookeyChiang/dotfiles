@@ -1,29 +1,5 @@
 local config = {}
 
-function config.lspsaga()
-  require('lspsaga').setup({
-    symbol_in_winbar = {
-      ignore_patterns = { '%w_spec' },
-    },
-  })
-end
-
-function config.lua_snip()
-  local ls = require('luasnip')
-  ls.config.set_config({
-    delete_check_events = 'TextChanged,InsertEnter',
-  })
-  require('luasnip.loaders.from_vscode').lazy_load({
-    paths = { './snippets/' },
-  })
-end
-
-function config.auto_pairs()
-  require('nvim-autopairs').setup({
-    map_cr = false,
-  })
-end
-
 function config.telescope()
   local fb_actions = require('telescope').extensions.file_browser.actions
   require('telescope').setup({

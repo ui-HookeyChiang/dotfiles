@@ -20,6 +20,9 @@ map.n({
   ['gD'] = cmd('lua vim.lsp.buf.definition()'),
   ['gr'] = cmd('Lspsaga rename'),
   ['gh'] = cmd('Lspsaga lsp_finder'),
+  ['gf'] = cmd('lua vim.lsp.buf.format()'),
+  ['gs'] = cmd('lua vim.lsp.buf.references()'),
+  ['gS'] = cmd('lua vim.lsp.buf.signature_help()'),
   ['<Leader>o'] = cmd('Lspsaga outline'),
   -- dbsession
   ['<Leader>ss'] = cmd('SessionSave'),
