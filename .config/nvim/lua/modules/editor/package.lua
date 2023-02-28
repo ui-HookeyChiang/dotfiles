@@ -1,6 +1,49 @@
 local package = require('core.pack').package
 local conf = require('modules.editor.config')
 
+local enable_lsp_filetype = {
+  'go',
+  'lua',
+  'sh',
+  'rust',
+  'c',
+  'cpp',
+  'zig',
+  'typescript',
+  'typescriptreact',
+  'json',
+  'python',
+  'elixir',
+}
+
+package({
+  'neovim/nvim-lspconfig',
+  dev = true,
+  ft = enable_lsp_filetype,
+  config = function()
+    require('modules.editor.lspconfig')
+  end,
+})
+
+package({
+  'glepnir/lspsaga.nvim',
+  ft = enable_lsp_filetype,
+  dev = true,
+  config = conf.lspsaga,
+})
+
+package({
+  'L3MON4D3/LuaSnip',
+  event = 'InsertCharPre',
+  config = conf.lua_snip,
+})
+
+package({
+  'windwp/nvim-autopairs',
+  event = 'InsertEnter',
+  config = conf.auto_pairs,
+})
+
 package({
   'nvim-telescope/telescope.nvim',
   cmd = 'Telescope',
@@ -23,17 +66,6 @@ package({
 })
 
 package({
-  'glepnir/mutchar.nvim',
-  ft = { 'c', 'cpp', 'go', 'rust', 'lua' },
-  config = conf.mut_char,
+  'ii14/emmylua-nvim',
+  ft = 'lua',
 })
-
-package({
-  'glepnir/hlsearch.nvim',
-  event = 'BufRead',
-  config = function()
-    require('hlsearch').setup()
-  end,
-})
-
-package({ 'phaazon/hop.nvim', event = 'BufRead', config = conf.hop })

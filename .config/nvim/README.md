@@ -34,7 +34,7 @@
 </p>
 
 <p align="center">
-  <img src="https://user-images.githubusercontent.com/41671631/177981299-0e935c5f-545a-4e9c-a3ce-431e3c079b76.png"
+  <img src="https://user-images.githubusercontent.com/41671631/218739020-a4f04ecc-7bfd-4672-9044-6779989d408b.png"
   height = "40%"
   widht = "40%"
   />
@@ -50,26 +50,41 @@
 
 - cli bot support
 
-## Neovim Bot usage
+## Usage
+
+check out the cli tool `dope`
 
 ```
 ~/.config/nvim/dope help
 ```
 
-## 💭 About
+## List
 
-Hi there is my personal neovim config with neovim nightly, because i'm neovim member
-
-If you like my config and want to use it, Please see my other project [Cosynvim](https://github.com/glepnir/cosynvim), Cosy based on
-
-my config and have a detailed documentation tutorial. I don't like install too many plugins,It will 
-
-make my neovim very slow and wired. so I prefer to write it by my self.
-
-Don't limit yourself.
-
-&nbsp;
-
+[glepnir/dashboard-nvim](https://github.com/glepnir/dashboard-nvim)  
+[glepnir/flipped.nvim](https://github.com/glepnir/flipped.nvim)  
+[glepnir/whiskyline.nvim](https://github.com/glepnir/whiskyline.nvim)  
+[glepnir/template.nvim](https://github.com/glepnir/template.nvim)  
+[glepnir/lspsaga.nvim](https://github.com/glepnir/lspsaga.nvim)  
+[glepnir/easyformat.nvim](https://github.com/glepnir/easyformat.nvim)  
+[glepnir/dbsession.nvim](https://github.com/glepnir/dbsession.nvim)  
+[glepnir/coman.nvim](https://github.com/glepnir/coman.nvim)  
+[glepnir/hlsearch.nvim](https://github.com/glepnir/hlsearch.nvim)  
+[glepnir/mutchar.nvim](https://github.com/glepnir/muchar.nvim)  
+[glepnir/gitsigns.nvim](https://github.com/glepnir/gitsigns.nvim)  
+[neovim/nvim-lspconfig](https://github.com/neovim/nvim-lspconfig)  
+[nvim-treesitter/nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter)  
+[nvim-treesitter/nvim-treesitter-textobjects](https://github.com/nvim-treesitter/nvim-treesitter-textobjects)  
+[lukas-reineke/indent-blankline.nvim](https://github.com/lukas-reineke/indent-blankline.nvim)  
+[nvim-telescope/telescope.nvim](https://github.com/nvim-telescope/telescope.nvim)  
+[nvim-telescope/telescope-file-browser.nvim](https://github.com/nvim-telescope/telescope-file-browser.nvim)  
+[nvim-telescope/telescope-fzy-native.nvim](https://github.com/nvim-telescope/telescope-fzy-native.nvim)  
+[nvim-lua/plenary.nvim](https://github.com/nvim-lua/plenary.nvim)  
+[nvim-tree/nvim-web-devicons](https://github.com/nvim-tree/nvim-web-devicons)  
+[L3MON4D3/LuaSnip](https;//github.com/L3MON4D3/LuaSnip)  
+[ii14/emmylua-nvim](https://github.com/ii14/emmylua-nvim)  
+[windwp/nvim-autopairs](https://github.com/windwp/nvim-autopairs)  
+[phazzon/hop.nvim](https://github.com/phazzon/hop.nvim)  
+[norcalli/nvim-colorizer.lua](https://github.com/norcalli/nvim-colorizer.lua)
 
 ## Donate
 [![](https://img.shields.io/badge/PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://paypal.me/bobbyhub)

@@ -23,6 +23,7 @@ opt.redrawtime = 1500
 opt.ignorecase = true
 opt.smartcase = true
 opt.infercase = true
+opt.cursorline = true
 
 if vim.fn.executable('rg') == 1 then
   opt.grepformat = '%f:%l:%c:%m,%f:%l:%m'
@@ -43,7 +44,8 @@ opt.showcmd = false
 opt.cmdheight = 0
 opt.laststatus = 3
 opt.list = true
-opt.listchars = 'tab:» ,nbsp:+,trail:·,extends:→,precedes:←'
+--eol:↲
+opt.listchars = 'tab:»·,nbsp:+,trail:·,extends:→,precedes:←'
 opt.pumblend = 10
 opt.winblend = 10
 opt.undofile = true
@@ -51,9 +53,8 @@ opt.undofile = true
 opt.smarttab = true
 opt.expandtab = true
 opt.autoindent = true
-opt.tabstop = 4
-opt.shiftwidth = 4
---opt.diffopt:append('linematch:50')
+opt.tabstop = 2
+opt.shiftwidth = 2
 
 -- wrap
 opt.linebreak = true
@@ -73,7 +74,32 @@ opt.colorcolumn = '100'
 -- opt.conceallevel = 2
 -- opt.concealcursor = 'niv'
 if vim.fn.has('nvim-0.9') == 1 then
-  opt.stc = '%{v:wrap ? repeat(" ", float2nr(ceil(log10(v:lnum))))."↳":v:lnum}%=%s%C'
+  local function get_signs()
+    local buf = vim.api.nvim_get_current_buf()
+    return vim.tbl_map(function(sign)
+      return vim.fn.sign_getdefined(sign.name)[1]
+    end, vim.fn.sign_getplaced(buf, { group = '*', lnum = vim.v.lnum })[1].signs)
+  end
+
+  function _G.show_stc()
+    local sign, git_sign
+    for _, s in ipairs(get_signs()) do
+      if s.name:find('GitSign') then
+        git_sign = s
+      else
+        sign = s
+      end
+    end
+    local components = {
+      sign and ('%#' .. sign.texthl .. '#' .. sign.text .. '%*') or ' ',
+      '%=',
+      [[%{v:virtnum ? repeat(" ", float2nr(ceil(log10(v:lnum))))."↳":v:lnum}]],
+      git_sign and ('%#' .. git_sign.texthl .. '#' .. git_sign.text .. '%*') or '  ',
+    }
+    return table.concat(components, '')
+  end
+
+  opt.stc = [[%!v:lua.show_stc()]]
 end
 
 if vim.loop.os_uname().sysname == 'Darwin' then

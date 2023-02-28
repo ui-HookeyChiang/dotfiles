@@ -1,15 +1,26 @@
 local package = require('core.pack').package
 local conf = require('modules.ui.config')
 
-package({ 'folke/tokyonight.nvim', config = conf.tokyonight })
-
---package({ 'glepnir/zephyr-nvim', config = conf.zephyr })
-
-package({ 'glepnir/dashboard-nvim', event = 'VimEnter', config = conf.dashboard })
+package({
+  'glepnir/flipped.nvim',
+  dev = true,
+  config = function()
+    vim.cmd.colorscheme('flipped')
+  end,
+})
 
 package({
-  'glepnir/galaxyline.nvim',
-  config = conf.galaxyline,
+  'glepnir/dashboard-nvim',
+  dev = true,
+  event = 'VimEnter',
+  config = conf.dashboard,
+  dependencies = { 'nvim-tree/nvim-web-devicons' },
+})
+
+package({
+  'glepnir/whiskyline.nvim',
+  dev = true,
+  config = conf.whisky,
   dependencies = { 'nvim-tree/nvim-web-devicons' },
 })
 
@@ -34,6 +45,7 @@ package({
 
 package({
   'lewis6991/gitsigns.nvim',
+  dev = true,
   event = { 'BufRead', 'BufNewFile' },
   config = conf.gitsigns,
 })

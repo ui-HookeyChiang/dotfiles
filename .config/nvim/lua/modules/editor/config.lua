@@ -1,10 +1,34 @@
 local config = {}
 
+function config.lspsaga()
+  require('lspsaga').setup({
+    symbol_in_winbar = {
+      ignore_patterns = { '%w_spec' },
+    },
+  })
+end
+
+function config.lua_snip()
+  local ls = require('luasnip')
+  ls.config.set_config({
+    delete_check_events = 'TextChanged,InsertEnter',
+  })
+  require('luasnip.loaders.from_vscode').lazy_load({
+    paths = { './snippets/' },
+  })
+end
+
+function config.auto_pairs()
+  require('nvim-autopairs').setup({
+    map_cr = false,
+  })
+end
+
 function config.telescope()
   local fb_actions = require('telescope').extensions.file_browser.actions
   require('telescope').setup({
     defaults = {
-      prompt_prefix = '🔭 ',
+      prompt_prefix = ' ',
       selection_caret = ' ',
       layout_config = {
         horizontal = { prompt_position = 'top', results_width = 0.6 },
@@ -96,62 +120,6 @@ function config.nvim_treesitter()
         },
       },
     },
-  })
-end
-
-function config.mut_char()
-  local filters = require('mutchar.filters')
-  require('mutchar').setup({
-    ['c'] = {
-      rules = { '-', '->' },
-      filter = filters.non_space_before,
-    },
-    ['cpp'] = {
-      rules = {
-        { ',', ' <!>' },
-        { '-', '->' },
-      },
-      filter = {
-        filters.generic_in_cpp,
-        filters.non_space_before,
-      },
-      one_to_one = true,
-    },
-    ['rust'] = {
-      rules = {
-        { ';', ': ' },
-        { '-', '->' },
-        { ',', '<!>' },
-      },
-      filter = {
-        filters.semicolon_in_rust,
-        filters.minus_in_rust,
-        filters.generic_in_rust,
-      },
-      one_to_one = true,
-    },
-    ['lua'] = {
-      rules = { ';', ':' },
-      filter = filters.semicolon_in_lua,
-    },
-    ['go'] = {
-      rules = {
-        { ';', ' :=' },
-        { ',', ' <-' },
-      },
-      filter = {
-        filters.find_diagnostic_msg({ 'initial', 'undeclare' }),
-        filters.go_arrow_symbol,
-      },
-      one_to_one = true,
-    },
-  })
-end
-
-function config.hop()
-  local hop = require('hop')
-  hop.setup({
-    keys = 'asdghklqwertyuiopzxcvbnmfj',
   })
 end
 
