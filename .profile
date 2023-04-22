@@ -13,14 +13,11 @@ else
   export TERM='screen-256color'
 fi
 
-if [ -f ~/.config/tmux/.tmux.conf.local ]; then
-  # to allow home/end key and osc52 in nvim
-  cat <<- EOF >> ~/.config/tmux/.tmux.conf.local
-set -g default-terminal "tmux-256color"
-set -s set-clipboard on 
-EOF
+if [ -f ~/.config/tmux.default/tmux.conf.local ]; then
+  cat ~/.config/tmux.default/tmux.conf.local >> ~/.config/tmux/.tmux.conf.local
   mv ~/.config/tmux/.tmux.conf.local ~/.config/tmux/tmux.conf.local
   mv ~/.config/tmux/.tmux.conf ~/.config/tmux/tmux.conf
+  rm -r ~/.config/tmux.default
 fi
 
 mesg n
