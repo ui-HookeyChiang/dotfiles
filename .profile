@@ -9,6 +9,7 @@ fi
 if [ -e /usr/share/terminfo/x/xterm-256color ]; then
   export TERM='xterm-256color'
 else
+  # this is to allow home/end key in nvim
   export TERM='screen-256color'
 fi
 
@@ -17,6 +18,8 @@ mesg n
 export PATH="/opt/local/bin:/opt/local/sbin:$PATH"
 
 if [ `command -v homebrew` ]; then
+  export PATH="/opt/homebrew/bin:$PATH"
+elif [[ -d /opt/homebrew/bin ]]; then
   export PATH="/opt/homebrew/bin:$PATH"
 fi
 
