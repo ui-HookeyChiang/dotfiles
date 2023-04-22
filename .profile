@@ -23,5 +23,11 @@ fi
 if [ `command -v go` ]; then
   gopath=`go env GOPATH`
   export PATH=$gopath:$gopath/bin:$PATH
+elif [[ ! "$PATH" == */home/${USER}/go/bin* ]]; then
+  export PATH="${PATH:+${PATH}:}/home/${USER}/go/bin"
 fi
 
+# Setup deb env
+DEBEMAIL="hookey.chiang@ui.com"
+DEBFULLNAME="HookeyChiang"
+export DEBEMAIL DEBFULLNAME
