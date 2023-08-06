@@ -28,3 +28,8 @@ bind-key -n M-Right if-shell "$is_vim" 'send-keys M-Right' 'resize-pane -R 3'
 bind -r Left  previous-window # select previous window
 bind -r Right next-window     # select next window
 bind -r Up    last-window     # select next window
+
+unbind C-Up
+unbind C-Down
+unbind C-Left
+unbind C-Right
