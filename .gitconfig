@@ -48,5 +48,7 @@
     branch = auto
 [branch]
     autosetuprebase = always
+[pull]
+    rebase = true
 [url "ssh://git@github.com/"]
     insteadOf = https://github.com/
