@@ -15,11 +15,11 @@ git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:
 git clone https://github.com/agkozak/zsh-z $ZSH_CUSTOM/plugins/zsh-z
 git clone https://github.com/zsh-users/zsh-completions ${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions
 ```
-3. Install nvim
+3. Install nvim and prerequisites for plugins
 ```
 curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim.appimage\nchmod u+x nvim.appimage\n./nvim.appimage
 sudo mv squashfs-root /\nsudo ln -s /squashfs-root/AppRun /usr/bin/nvim
-sudo apt install -y python3-venv clang npm unzip
+sudo apt install -y python3-venv clang npm unzip ripgrep
 sudo npm cache clean -f
 sudo npm install -g n
 sudo n stable
