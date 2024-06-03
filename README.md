@@ -31,3 +31,8 @@ npm install typescript
 ```
 apt install tmux
 ```
+5. aicommits
+```
+npm install -g aicommits
+aicommits config set OPENAI_KEY=<your token> max-length=60
+```
