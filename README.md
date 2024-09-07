@@ -31,8 +31,13 @@ npm install typescript
 ```
 apt install tmux
 ```
-5. aicommits
+5. Install [aicommits](https://github.com/Nutlope/aicommits)
 ```
 npm install -g aicommits
 aicommits config set OPENAI_KEY=<your token> max-length=60
+```
+6. Install [Latexmk](https://mg.readthedocs.io/latexmk.html),
+7. Install [PDF Reader](https://ejmastnak.com/tutorials/vim-latex/pdf-reader/#zathura-macos) for latex, e.g., skim
+```
+brew install skim
 ```
