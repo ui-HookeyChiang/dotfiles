@@ -37,7 +37,13 @@ npm install -g aicommits
 aicommits config set OPENAI_KEY=<your token> max-length=60
 ```
 6. Install [Latexmk](https://mg.readthedocs.io/latexmk.html),
-7. Install [PDF Reader](https://ejmastnak.com/tutorials/vim-latex/pdf-reader/#zathura-macos) for latex, e.g., skim
+7. Install [PDF Reader](https://ejmastnak.com/tutorials/vim-latex/pdf-reader/#zathura-macos) for latex
+- skim and texsync
 ```
 brew install skim
+PDF-TeX cmd=nvim args=--headless -c "VimtexInverseSearch %line '%file'"
+```
+- [zathura](https://github.com/zegervdv/homebrew-zathura)
+```
+nvim :help vimtex-faq-zathura-macos
 ```

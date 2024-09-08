@@ -24,10 +24,9 @@ mesg n
 
 export PATH="/opt/local/bin:/opt/local/sbin:$PATH"
 
-if [ `command -v homebrew` ]; then
+if [ `command -v homebrew` ] || [ -d /opt/homebrew/bin ]; then
   export PATH="/opt/homebrew/bin:$PATH"
-elif [[ -d /opt/homebrew/bin ]]; then
-  export PATH="/opt/homebrew/bin:$PATH"
+  export PATH="/opt/homebrew/opt/llvm/bin:$PATH"
 fi
 
 if [ `command -v go` ]; then
@@ -41,3 +40,7 @@ fi
 DEBEMAIL="hookey.chiang@ui.com"
 DEBFULLNAME="HookeyChiang"
 export DEBEMAIL DEBFULLNAME
+
+# zathura dbus setup
+DBUS_LAUNCHD_SESSION_BUS_SOCKET=`launchctl getenv DBUS_LAUNCHD_SESSION_BUS_SOCKET`
+export DBUS_SESSION_BUS_ADDRESS="unix:path=$DBUS_LAUNCHD_SESSION_BUS_SOCKET"
