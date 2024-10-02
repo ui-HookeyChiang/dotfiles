@@ -1,10 +1,12 @@
 [user]
     name = ui-HookeyChiang
     email = hookey.chiang@ui.com
+    ; signingkey = /home/hookey/.ssh/id_ed25519.pub
 [core]
     editor = nvim
 [commit]
     verbose = true
+    gpgsign = true
 [alias]
     au = add -u
     ap = add --patch
@@ -12,10 +14,10 @@
     bv = branch -vv
     ba = branch -ra
     bd = branch -d
-    ci = commit -v
-    cim = commit -m
-    cia = commit -v --amend
-    cian = commit -v --amend --no-edit
+    ci = commit -v -S
+    cim = commit -m -S
+    cia = commit -v --amend -S
+    cian = commit -v --amend --no-edit -S
     cb = checkout -b
     co = checkout
     cop = checkout --patch
@@ -52,3 +54,5 @@
     rebase = true
 [url "ssh://git@github.com/"]
     insteadOf = https://github.com/
+[gpg]
+    format = ssh
