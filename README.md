@@ -48,3 +48,6 @@ PDF-TeX cmd=nvim args=--headless -c "VimtexInverseSearch %line '%file'"
 nvim :help vimtex-faq-zathura-macos
 ```
 8. Update git signkey at `.gitconfig`
+```
+git config --global user.signingkey <path to the public key used to sign>
+```
