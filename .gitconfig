@@ -14,7 +14,7 @@
     bv = branch -vv
     ba = branch -ra
     bd = branch -d
-    ci = commit -v -S
+    ci = commit -v
     cia = commit -v --amend -S
     cian = commit -v --amend --no-edit -S
     cb = checkout -b
