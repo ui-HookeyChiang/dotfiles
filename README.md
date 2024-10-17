@@ -17,10 +17,13 @@ git clone https://github.com/zsh-users/zsh-completions ${ZSH_CUSTOM:-${ZSH:-~/.o
 ```
 3. Install nvim and prerequisites for plugins
 ```
-curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim.appimage
+curl -LO https://github.com/neovim/neovim/releases/download/nightly/nvim.appimage
 chmod u+x nvim.appimage
+./nvim.appimage --appimage-extract
+sudo rm -rf /squashfs-root
 sudo mv squashfs-root /
 sudo ln -s /squashfs-root/AppRun /usr/bin/nvim
+rm nvim.appimage
 sudo apt install -y python3-venv clang npm unzip ripgrep
 sudo npm cache clean -f
 sudo npm install -g n
