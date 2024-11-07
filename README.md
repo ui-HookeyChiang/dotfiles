@@ -24,7 +24,7 @@ sudo rm -rf /squashfs-root
 sudo mv squashfs-root /
 sudo ln -s /squashfs-root/AppRun /usr/bin/nvim
 rm nvim.appimage
-sudo apt install -y python3-venv clang npm unzip ripgrep fzf
+sudo apt install -y python3-venv clang npm unzip ripgrep fzf bat
 sudo npm cache clean -f
 sudo npm install -g n
 sudo n stable
