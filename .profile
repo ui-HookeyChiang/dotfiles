@@ -43,7 +43,7 @@ export DEBEMAIL DEBFULLNAME
 
 # zathura dbus setup
 os=`uname -s`
-if [ "$os" == "Darwin" ]; then
+if [ "$os" = "Darwin" ]; then
   DBUS_LAUNCHD_SESSION_BUS_SOCKET=`launchctl getenv DBUS_LAUNCHD_SESSION_BUS_SOCKET`
   export DBUS_SESSION_BUS_ADDRESS="unix:path=$DBUS_LAUNCHD_SESSION_BUS_SOCKET"
 fi
