@@ -6,24 +6,34 @@ And neovim config is mainly from:
 
 ## Usage
 
-1. Simply put files to ${HOME}
+1. Install zsh, oh-my-zsh
 ```
-git clone git@github.com:ui-HookeyChiang/dotfiles.git
-cd dotfiles
-git submodule update --init
-cp -r .* ~
-```
-2. Install zsh, oh-my-zsh
-```
-sudo apt install zsh
+sudo apt install zsh -y
+sudo chsh -s $(which zsh)
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
 git clone https://github.com/agkozak/zsh-z ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-z
 git clone https://github.com/zsh-users/zsh-completions ${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions
-sudo chsh -s $(which zsh)
+```
+2. Simply put files to ${HOME}
+```
+git clone git@github.com:ui-HookeyChiang/dotfiles.git
+cd dotfiles
+git submodule update --init
+cp -r .* ~
+cd ..
 ```
 3. Install nvim and prerequisites for plugins
+* if the host is arm64
+```
+sudo apt install -y cmake gettext clang
+git clone https://github.com/neovim/neovim.git
+cd neovim
+make CMAKE_BUILD_TYPE=RelWithDebInfo
+sudo make install
+```
+* if the host is x86_64
 ```
 curl -LO https://github.com/neovim/neovim/releases/download/nightly/nvim.appimage
 chmod u+x nvim.appimage
@@ -32,6 +42,9 @@ sudo rm -rf /squashfs-root
 sudo mv squashfs-root /
 sudo ln -s /squashfs-root/AppRun /usr/bin/nvim
 rm nvim.appimage
+```
+* Install the prerequisites
+```
 sudo apt install -y python3-venv clang npm unzip ripgrep fzf bat fd-find
 sudo npm cache clean -f
 sudo npm install -g n
