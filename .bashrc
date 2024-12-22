@@ -119,10 +119,3 @@ mvg (){
 }
 
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
-
-# Setup go
-# ---------
-if [[ ! "$PATH" == */home/${USER}/go/bin* ]]; then
-  export PATH="${PATH:+${PATH}:}/home/${USER}/go/bin"
-fi
-export PATH="${HOME}/.config/lsp/lua-language-server/bin:${PATH}"

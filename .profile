@@ -36,6 +36,10 @@ elif [[ ! "$PATH" == */home/${USER}/go/bin* ]]; then
   export PATH="${PATH:+${PATH}:}/home/${USER}/go/bin"
 fi
 
+if [[ ! "$PATH" == */home/${USER}/.cargo/bin* ]]; then
+  export PATH="${PATH:+${PATH}:}/home/${USER}/.cargo/bin"
+fi
+
 # Setup deb env
 DEBEMAIL="hookey.chiang@ui.com"
 DEBFULLNAME="HookeyChiang"
