@@ -84,6 +84,11 @@ sudo apt install git-buildpackage
 6. Install tmux
 ```
 sudo apt install tmux
+git clone https://github.com/gpakosz/.tmux.git ~/.oh-my-tmux
+mkdir -p ~/.config/tmux
+ln -s ~/.oh-my-tmux/.tmux.conf ~/.config/tmux/tmux.conf
+cp ~/.oh-my-tmux/.tmux.conf.local ~/.config/tmux/tmux.conf.local
+cat ~/.config/tmux.default/.tmux.conf.local >> ~/.config/tmux/tmux.conf.local
 ```
 7. Install [aicommits](https://github.com/Nutlope/aicommits)
 ```
