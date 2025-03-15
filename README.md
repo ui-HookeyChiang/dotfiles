@@ -70,7 +70,7 @@ rm nvim.appimage
 ```
 * Install the prerequisites
 ```
-sudo apt install -y python3-venv clang npm unzip ripgrep fzf bat fd-find
+sudo apt install -y python3-venv python3-pip clang npm unzip ripgrep fzf bat fd-find
 sudo npm cache clean -f
 sudo npm install -g n
 sudo n stable
