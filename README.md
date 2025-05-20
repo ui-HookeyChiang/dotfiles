@@ -90,13 +90,9 @@ ln -s ~/.oh-my-tmux/.tmux.conf ~/.config/tmux/tmux.conf
 cp ~/.oh-my-tmux/.tmux.conf.local ~/.config/tmux/tmux.conf.local
 cat ~/.config/tmux.default/.tmux.conf.local >> ~/.config/tmux/tmux.conf.local
 ```
-7. Install [aicommits](https://github.com/Nutlope/aicommits)
 ```
-npm install -g aicommits
-aicommits config set OPENAI_KEY=<your token> max-length=60
-```
-8. Install [Latexmk](https://mg.readthedocs.io/latexmk.html),
-9. Install [PDF Reader](https://ejmastnak.com/tutorials/vim-latex/pdf-reader/#zathura-macos) for latex
+7. Install [Latexmk](https://mg.readthedocs.io/latexmk.html),
+8. Install [PDF Reader](https://ejmastnak.com/tutorials/vim-latex/pdf-reader/#zathura-macos) for latex
 - skim and texsync
 ```
 brew install skim
