@@ -80,6 +80,7 @@ go install github.com/segmentio/golines@latest
 sudo apt install cargo
 cargo install stylua rustfmt
 sudo apt install git-buildpackage
+sh <(curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install) --no-daemon
 ```
 6. Install tmux
 ```
@@ -89,7 +90,6 @@ mkdir -p ~/.config/tmux
 ln -s ~/.oh-my-tmux/.tmux.conf ~/.config/tmux/tmux.conf
 cp ~/.oh-my-tmux/.tmux.conf.local ~/.config/tmux/tmux.conf.local
 cat ~/.config/tmux.default/.tmux.conf.local >> ~/.config/tmux/tmux.conf.local
-```
 ```
 7. Install [Latexmk](https://mg.readthedocs.io/latexmk.html),
 8. Install [PDF Reader](https://ejmastnak.com/tutorials/vim-latex/pdf-reader/#zathura-macos) for latex
