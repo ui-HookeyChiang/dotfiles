@@ -70,7 +70,7 @@ response=$(curl -s https://api.anthropic.com/v1/messages \
     -H "x-api-key: $ANTHROPIC_API_KEY" \
     -H "anthropic-version: 2023-06-01" \
     --data-raw "{
-        \"model\": \"claude-3-7-sonnet-20250219\",
+        \"model\": \"claude-sonnet-4-5-20250929\",
         \"max_tokens\": 1024,
         \"messages\": [
             {
