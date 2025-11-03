@@ -3,6 +3,7 @@
     email = hookey.chiang@ui.com
     signingkey = ~/.ssh/id_ed25519.pub
 [core]
+    filemode = true
     editor = nvim
 [commit]
     verbose = true
@@ -30,6 +31,7 @@
     dh = diff HEAD~1
     ll = log --pretty=format:"%C(yellow)%h%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --numstat
     ld = log --pretty=format:"%C(yellow)%h\\ %C(green)%ad%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --date=short --graph
+    lp = log -p
     ls = log --pretty=format:"%C(green)%h\\ %C(yellow)[%ad]%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --date=relative
     mm = merge --no-ff
     pu = push --follow-tags
@@ -63,3 +65,5 @@
     allowedSignersFile = ~/.git_allowed_signers
 [tag]
     gpgsign = true
+[url "git@github.com:"]
+    insteadOf = https://github.com/
