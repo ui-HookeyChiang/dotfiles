@@ -34,8 +34,8 @@
     lp = log -p
     ls = log --pretty=format:"%C(green)%h\\ %C(yellow)[%ad]%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --date=relative
     mm = merge --no-ff
+    pl = pull --rebase --autostash
     puo = push origin
-    pur = pull --rebase
     put = push --follow-tags
     puu = push -u origin HEAD
     re = rebase
