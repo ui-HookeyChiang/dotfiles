@@ -32,6 +32,8 @@ __prompt_command() {
 alias ll='ls -lh --color=auto --time-style="+%Y%m%d%H%M.%S"'
 alias ls='ls --color=auto'
 alias grep='grep --color=auto'
+alias n='nvim'
+alias avante='nvim -c "lua vim.defer_fn(function()require(\"avante.api\").zen_mode()end, 100)"'
 
 FQDN_DISABLED=$(sed -n '/!fqdn/p' /etc/sudoers | wc -l)
 GIT_PS1_SHOWUPSTREAM="auto"
