@@ -27,6 +27,9 @@ export PATH="/opt/local/bin:/opt/local/sbin:$PATH"
 if [ `command -v homebrew` ] || [ -d /opt/homebrew/bin ]; then
   export PATH="/opt/homebrew/bin:$PATH"
   export PATH="/opt/homebrew/opt/llvm/bin:$PATH"
+  export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
+  export CPPFLAGS="-I/opt/homebrew/opt/openjdk/include"
+  export PATH="/opt/homebrew/opt/rustup/bin:$PATH"
 fi
 
 if [ `command -v go` ]; then
@@ -41,9 +44,8 @@ if [[ ! "$PATH" == */home/${USER}/.cargo/bin* ]]; then
 fi
 
 # Setup deb env
-DEBEMAIL="hookey.chiang@ui.com"
-DEBFULLNAME="HookeyChiang"
-export DEBEMAIL DEBFULLNAME
+export DEBEMAIL="hookey.chiang@ui.com"
+export DEBFULLNAME="HookeyChiang"
 
 # zathura dbus setup
 os=`uname -s`
