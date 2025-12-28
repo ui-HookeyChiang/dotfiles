@@ -42,7 +42,7 @@ exec $SHELL
 ```bash
 sudo apt update
 sudo apt install -y python3-venv python3-pip clang npm unzip ripgrep fzf bat fd-find
-sudo apt install -y cmake gettext curl ca-certificates git-buildpackage cargo tmux zsh
+sudo apt install -y cmake gettext curl ca-certificates git-buildpackage cargo tmux zsh tldr
 ```
 
 ### 2. Shell Setup (Zsh + Oh-My-Zsh)
