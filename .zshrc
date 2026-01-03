@@ -83,8 +83,10 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 # git clone https://github.com/agkozak/zsh-z $ZSH_CUSTOM/plugins/zsh-z
 # git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
 # git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
-# git clone https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
-plugins=(git zsh-z zsh-syntax-highlighting zsh-autosuggestions zsh-completions tmux tig docker aliases)
+# git clone https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
+# git clone https://github.com/MichaelAquilina/zsh-you-should-use.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/you-should-use
+# git clone https://github.com/fdellwing/zsh-bat.git $ZSH_CUSTOM/plugins/zsh-bat
+plugins=(git zsh-z zsh-syntax-highlighting zsh-autosuggestions zsh-completions tmux tig docker aliases extract fzf you-should-use zsh-bat)
 
 source $ZSH/oh-my-zsh.sh
 
