@@ -76,12 +76,32 @@ ZSH_THEME="robbyrussell"
 # git clone https://github.com/agkozak/zsh-z $ZSH_CUSTOM/plugins/zsh-z
 # git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
 # git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
-plugins=(git zsh-z zsh-syntax-highlighting zsh-autosuggestions zsh-completions tmux tig docker aliases)
+plugins=(git extract zsh-z zsh-syntax-highlighting zsh-autosuggestions zsh-completions tmux tig docker aliases)
 
 source $ZSH/oh-my-zsh.sh
-source ~/.profile
+
+# History behavior
+setopt HIST_IGNORE_DUPS
+setopt HIST_SAVE_NO_DUPS
+setopt SHARE_HISTORY
 
 # User configuration
+alias v='$EDITOR'
+alias avante='nvim -c "lua vim.defer_fn(function()require(\"avante.api\").zen_mode()end, 100)"'
+alias ll='eza --all --long'
+alias ls='eza --all'
+alias grep='rg --color always --heading --line-number'
+
+# Just type the filename to open it with the associated program
+alias -s json=jless
+alias -s md='$EDITOR'
+alias -s go='$EDITOR'
+alias -s rs='$EDITOR'
+alias -s txt='$EDITOR'
+alias -s log='$EDITOR'
+alias -s py='$EDITOR'
+alias -s js='$EDITOR'
+alias -s ts='$EDITOR'
 
 # export MANPATH="/usr/local/man:$MANPATH"
 
@@ -89,7 +109,6 @@ source ~/.profile
 # export LANG=en_US.UTF-8
 
 # Preferred editor for local and remote sessions
-export EDITOR='nvim'
 # if [[ -n $SSH_CONNECTION ]]; then
 #   export EDITOR='vim'
 # else
@@ -108,5 +127,20 @@ export EDITOR='nvim'
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
+ZSH_AUTOSUGGEST_STRATEGY=( history completion)
+# >>> conda initialize >>>
+# !! Contents within this block are managed by 'conda init' !!
+__conda_setup="$('/opt/homebrew/Caskroom/miniconda/base/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+if [ $? -eq 0 ]; then
+    eval "$__conda_setup"
+else
+    if [ -f "/opt/homebrew/Caskroom/miniconda/base/etc/profile.d/conda.sh" ]; then
+        . "/opt/homebrew/Caskroom/miniconda/base/etc/profile.d/conda.sh"
+    else
+        export PATH="/opt/homebrew/Caskroom/miniconda/base/bin:$PATH"
+    fi
+fi
+unset __conda_setup
+# <<< conda initialize <<<
 bindkey "^P" history-beginning-search-backward
 bindkey "^N" history-beginning-search-forward

@@ -1,10 +1,8 @@
 # ~/.profile: executed by Bourne-compatible login shells.
 
-if [ "$BASH" ]; then
-  if [ -f ~/.bashrc ]; then
-    . ~/.bashrc
-  fi
-fi
+export EDITOR='nvim'
+export HISTFILESIZE=120000
+export USE_CCACHE=1
 
 if [ -e /usr/share/terminfo/x/xterm-256color ]; then
   export TERM='xterm-256color'
@@ -39,17 +37,10 @@ elif [[ ! "$PATH" == */home/${USER}/go/bin* ]]; then
   export PATH="${PATH:+${PATH}:}/home/${USER}/go/bin"
 fi
 
-if [[ ! "$PATH" == */home/${USER}/.cargo/bin* ]]; then
-  export PATH="${PATH:+${PATH}:}/home/${USER}/.cargo/bin"
-fi
-
 # Setup deb env
 export DEBEMAIL="hookey.chiang@ui.com"
 export DEBFULLNAME="HookeyChiang"
 
 # zathura dbus setup
-os=`uname -s`
-if [ "$os" = "Darwin" ]; then
-  DBUS_LAUNCHD_SESSION_BUS_SOCKET=`launchctl getenv DBUS_LAUNCHD_SESSION_BUS_SOCKET`
-  export DBUS_SESSION_BUS_ADDRESS="unix:path=$DBUS_LAUNCHD_SESSION_BUS_SOCKET"
-fi
+DBUS_LAUNCHD_SESSION_BUS_SOCKET=`launchctl getenv DBUS_LAUNCHD_SESSION_BUS_SOCKET`
+export DBUS_SESSION_BUS_ADDRESS="unix:path=$DBUS_LAUNCHD_SESSION_BUS_SOCKET"
