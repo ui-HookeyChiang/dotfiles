@@ -3,6 +3,7 @@
 export EDITOR='nvim'
 export HISTFILESIZE=120000
 export USE_CCACHE=1
+export FZF_DEFAULT_OPTS='--preview "bat --style=numbers --color=always {}"'
 
 if [ -e /usr/share/terminfo/x/xterm-256color ]; then
   export TERM='xterm-256color'
