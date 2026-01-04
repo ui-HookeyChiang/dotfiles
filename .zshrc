@@ -117,7 +117,7 @@ alias cat='bat'
 
 # 快速開啟檔案 (Suffix Aliases)
 alias -s {json,yaml,yml}=jless
-alias -s {md,txt,log,py,js,ts,go,rs,c,cpp,h,hpp}='$EDITOR'
+alias -s {md,txt,log,py,js,ts,go,rs,c,cpp,h,hpp,tex,html}='$EDITOR'
 
 # =============================================================================
 # 8. 環境變數與外部工具 (Exports & External)
