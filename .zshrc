@@ -1,12 +1,12 @@
 # =============================================================================
-# 1. Powerlevel10k Instant Prompt (必須放在最上方)
+# 1. Powerlevel10k Instant Prompt (保持最頂端，效能關鍵)
 # =============================================================================
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
 # =============================================================================
-# 2. Zinit 初始化 (Plugin Manager)
+# 2. Zinit 初始化
 # =============================================================================
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
 [ ! -d $ZINIT_HOME ] && mkdir -p "$(dirname $ZINIT_HOME)" && \
@@ -15,90 +15,117 @@ ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
 source "${ZINIT_HOME}/zinit.zsh"
 
 # =============================================================================
-# 3. 載入 Powerlevel10k 主題
+# 3. 核心體驗與主題 (Theme & Core)
 # =============================================================================
-# 使用 depth=1 加速下載
+# Powerlevel10k 主題
 zinit ice depth=1
 zinit light romkatv/powerlevel10k
 
-# =============================================================================
-# 4. 核心 OMZ 庫 (模擬 Oh-My-Zsh 的基礎功能)
-# =============================================================================
-# 如果你依賴 OMZ 的一些預設行為 (如剪貼簿處理、基本補全設定)，這些 Snippet很有用
+# OMZ 核心庫 (剪貼簿、目錄操作等基礎功能)
 zinit wait lucid for \
+    OMZ::lib/clipboard.zsh \
+    OMZ::lib/directories.zsh \
     OMZ::lib/git.zsh \
-    OMZ::lib/completion.zsh \
-    OMZ::lib/history.zsh \
-    OMZ::lib/key-bindings.zsh \
     OMZ::lib/theme-and-appearance.zsh
 
 # =============================================================================
-# 5. 載入插件 (Plugins)
+# 4. 現代化補全系統 (Completion & FZF-Tab)
 # =============================================================================
-# wait: 非同步加載 (Turbo mode)
-# lucid: 加載完成後不顯示報告 (靜默模式)
-# atload: 加載後執行的命令
-
-# --- 來自 GitHub 的插件 ---
+# 加載補全庫
 zinit wait lucid for \
-    agkozak/zsh-z \
-    MichaelAquilina/zsh-you-should-use \
-    fdellwing/zsh-bat \
-    zsh-users/zsh-completions \
-    zsh-users/zsh-autosuggestions
+    zsh-users/zsh-completions
 
-# --- 來自 Oh-My-Zsh 的插件 (Snippets) ---
-# Zinit 可以直接只抓取 OMZ 的特定插件資料夾，而不需下載整個框架
+# FZF-Tab: 用 fzf 取代傳統 Tab 補全選單 (強烈推薦)
+# 必須在 compinit 之後，autosuggestions 之前載入
+zinit ice wait lucid blockf
+zinit light Aloxaf/fzf-tab
+
+# FZF-Tab 配置: 預覽目錄內容、檔案內容
+zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --color=always $realpath'
+zstyle ':fzf-tab:complete:*:*' fzf-preview 'bat --color=always --style=numbers --line-range=:500 {}'
+
+# =============================================================================
+# 5. 功能插件 (Plugins)
+# =============================================================================
+
+# --- 工具類 ---
+# Zoxide: 比 z 更快的目錄跳轉工具 (需 brew install zoxide)
+zinit ice wait lucid as"command" from"gh-r" \
+    atclone"./zoxide init zsh > init.zsh" \
+    atpull"%atclone" src"init.zsh"
+zinit light ajeetdsouza/zoxide
+
+# Bat: 帶語法高亮的 cat (顯示檔案內容)
+zinit wait lucid for fdellwing/zsh-bat
+
+# You Should Use: 提醒你有更好的 alias 可以用
+zinit wait lucid for MichaelAquilina/zsh-you-should-use
+
+# Autosuggestions: 根據歷史紀錄建議指令
+zinit wait lucid for zsh-users/zsh-autosuggestions
+
+# --- OMZ 插件 (Snippets) ---
 zinit wait lucid for \
     OMZ::plugins/git/git.plugin.zsh \
     OMZ::plugins/tmux/tmux.plugin.zsh \
-    OMZ::plugins/tig/tig.plugin.zsh \
     OMZ::plugins/docker/docker.plugin.zsh \
     OMZ::plugins/extract/extract.plugin.zsh \
+    OMZ::plugins/sudo/sudo.plugin.zsh \
     OMZ::plugins/fzf/fzf.plugin.zsh
 
-# --- 語法高亮 (必須最後加載) ---
-# atinit: 初始化時執行
+# =============================================================================
+# 6. 高亮與 Vim 模式 (Syntax Highlighting & Vi Mode)
+# =============================================================================
+# 注意：順序很重要
+# 1. Syntax Highlighting 必須在 Autosuggestions 之後，但在 Vi-Mode 之前
+# 2. Vi-Mode 必須最後載入以正確覆蓋按鍵綁定
+
 zinit wait lucid atinit"ZINIT[COMPINIT_OPTS]=-C; zicompinit; zicdreplay" for \
     zsh-users/zsh-syntax-highlighting
 
-# =============================================================================
-# 6. 用戶自定義設定 (User Configuration)
-# =============================================================================
+zinit ice depth=1
+zinit light jeffreytse/zsh-vi-mode
 
-# History behavior
-setopt HIST_IGNORE_DUPS
-setopt HIST_SAVE_NO_DUPS
-setopt SHARE_HISTORY
+# 修復 Vi-Mode 與 Autosuggestions 的衝突
+function zvm_after_init() {
+  zvm_bindkey viins '^F' autosuggest-accept
+  zvm_bindkey viins '^P' history-search-backward
+  zvm_bindkey viins '^N' history-search-forward
+}
 
-# Aliases
+# =============================================================================
+# 7. 一般設定 (Settings)
+# =============================================================================
+# 歷史紀錄設定
+HISTSIZE=50000
+SAVEHIST=50000
+setopt HIST_IGNORE_ALL_DUPS  # 移除重複紀錄
+setopt HIST_SAVE_NO_DUPS     # 不儲存重複紀錄
+setopt HIST_REDUCE_BLANKS    # 移除多餘空白
+setopt SHARE_HISTORY         # 視窗間共享歷史
+setopt INC_APPEND_HISTORY    # 立即寫入歷史檔案
+
+# 一般 Aliases
 alias v='$EDITOR'
 alias avante='nvim -c "lua vim.defer_fn(function()require(\"avante.api\").zen_mode()end, 100)"'
-alias ll='eza --all --long'
-alias ls='eza --all'
+# 使用 eza 替代 ls (加上圖示與 git 狀態)
+alias ls='eza --icons --git --group-directories-first'
+alias ll='eza --all --long --icons --git --group-directories-first'
+alias tree='eza --tree --icons'
 alias grep='rg --color always --heading --line-number'
+alias cat='bat'
 
-# Suffix aliases (直接輸入檔名開啟)
-alias -s json=jless
-alias -s md='$EDITOR'
-alias -s go='$EDITOR'
-alias -s rs='$EDITOR'
-alias -s txt='$EDITOR'
-alias -s log='$EDITOR'
-alias -s py='$EDITOR'
-alias -s js='$EDITOR'
-alias -s ts='$EDITOR'
-
-# Keybindings
-bindkey "^P" history-beginning-search-backward
-bindkey "^N" history-beginning-search-forward
-
-# Autosuggest 設定
-ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+# 快速開啟檔案 (Suffix Aliases)
+alias -s {json,yaml,yml}=jless
+alias -s {md,txt,log,py,js,ts,go,rs,c,cpp,h,hpp}='$EDITOR'
 
 # =============================================================================
-# 7. Conda 初始化
+# 8. 環境變數與外部工具 (Exports & External)
 # =============================================================================
+export EDITOR='nvim'
+export LANG=en_US.UTF-8
+
+# Conda 初始化
 __conda_setup="$('/opt/homebrew/Caskroom/miniconda/base/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
 if [ $? -eq 0 ]; then
     eval "$__conda_setup"
@@ -111,8 +138,5 @@ else
 fi
 unset __conda_setup
 
-# =============================================================================
-# 8. P10k 設定檔讀取
-# =============================================================================
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+# P10k 設定
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
