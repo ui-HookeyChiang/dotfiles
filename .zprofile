@@ -42,6 +42,8 @@ fi
 export DEBEMAIL="hookey.chiang@ui.com"
 export DEBFULLNAME="HookeyChiang"
 
-# zathura dbus setup
-DBUS_LAUNCHD_SESSION_BUS_SOCKET=`launchctl getenv DBUS_LAUNCHD_SESSION_BUS_SOCKET`
-export DBUS_SESSION_BUS_ADDRESS="unix:path=$DBUS_LAUNCHD_SESSION_BUS_SOCKET"
+# zathura dbus setup (macOS only)
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  DBUS_LAUNCHD_SESSION_BUS_SOCKET=`launchctl getenv DBUS_LAUNCHD_SESSION_BUS_SOCKET`
+  export DBUS_SESSION_BUS_ADDRESS="unix:path=$DBUS_LAUNCHD_SESSION_BUS_SOCKET"
+fi
