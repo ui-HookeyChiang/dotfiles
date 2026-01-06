@@ -7,7 +7,9 @@ A comprehensive dotfiles repository providing optimized configurations for shell
 - **Shell Environment**: Zsh with oh-my-zsh, custom bash configuration
 - **Editors**: Neovim (primary) with LSP support, Vim fallback configuration
 - **Development Tools**: Git with extensive aliases, tmux with oh-my-tmux
-- **AI Integration**: Claude-powered commit message generation
+- **AI Integration**: 
+  - Claude Code CLI for AI-assisted development
+  - Claude-powered commit message generation
 - **Language Support**: Go, Rust, JavaScript/TypeScript, Python, C/C++
 
 > **Note**: Neovim configuration is based on [glepnir-nvim](https://github.com/glepnir-nvim)
@@ -103,13 +105,48 @@ rm nvim.appimage
 
 ### 4. Development Tools Setup
 
-#### Node.js and TypeScript
+#### Node.js and npm
 ```bash
+# Install Node.js LTS via NodeSource repository (recommended)
+curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Verify installation
+node --version
+npm --version
+
+# Alternative: Update npm to latest version
+sudo npm install -g npm@latest
+
+# Alternative: Use n version manager (if you need multiple Node versions)
 sudo npm cache clean -f
 sudo npm install -g n
 sudo n stable
-npm install typescript
 ```
+
+#### TypeScript and Language Servers
+```bash
+# Install TypeScript globally
+npm install -g typescript typescript-language-server
+
+# Install other useful development tools
+npm install -g prettier eslint
+```
+
+#### Claude Code (AI-powered CLI)
+```bash
+# Install claude-code globally via npm
+npm install -g @anthropic-ai/claude-code
+
+# Verify installation
+claude-code --version
+
+# Setup API key (required for AI features)
+export ANTHROPIC_API_KEY="your-api-key-here"
+echo 'export ANTHROPIC_API_KEY="your-api-key-here"' >> ~/.zshrc
+```
+
+> **Note**: Get your API key from [Anthropic Console](https://console.anthropic.com/)
 
 #### Go and Tools
 ```bash
@@ -174,11 +211,52 @@ sudo useradd --system -p PASSWORD -G sudo `whoami`2
 
 > ⚠️ **Warning**: Replace `PASSWORD` with an actual secure password before running this command.
 
-## 🤖 AI-Powered Git Workflow
+## 🤖 AI-Powered Development Workflow
 
-This dotfiles setup includes intelligent commit message generation using Claude API, automatically creating conventional commit messages based on your code changes.
+This dotfiles setup provides two powerful AI tools for enhanced development productivity.
 
-### Setup
+### Claude Code CLI
+
+An AI-powered command-line interface that helps with coding tasks, code review, refactoring, and more.
+
+#### Installation
+```bash
+# Install via npm (see "Development Tools Setup" section)
+npm install -g @anthropic-ai/claude-code
+
+# Configure API key
+export ANTHROPIC_API_KEY="your-api-key-here"
+```
+
+#### Usage Examples
+```bash
+# Start interactive session
+claude-code
+
+# Execute specific tasks
+claude-code "refactor this function for better readability"
+claude-code "explain this codebase"
+claude-code "add tests for module X"
+
+# Code review
+claude-code "review my staged changes"
+
+# Work with specific files
+claude-code "optimize performance in ./src/main.rs"
+```
+
+#### Key Features
+- **Context-Aware**: Understands your entire codebase
+- **Multi-Language**: Supports all languages configured in Neovim
+- **Interactive**: Conversational interface for complex tasks
+- **File Operations**: Can read, write, and modify files
+- **Tool Integration**: Works with git, npm, cargo, and other dev tools
+
+### AI-Powered Git Commits
+
+Intelligent commit message generation using Claude API, automatically creating conventional commit messages based on your code changes.
+
+#### Setup
 
 1. **Get Anthropic API Key**:
    - Visit [Anthropic Console](https://console.anthropic.com/)
@@ -193,15 +271,15 @@ This dotfiles setup includes intelligent commit message generation using Claude 
    ```bash
    # Stage your changes first
    git add .
-   
+
    # Generate AI commit message for staged changes
    ~/.ai-commit.sh
-   
+
    # Rewrite a historic commit with AI-generated message
    ~/.ai-commit.sh <commit-hash>
    ```
 
-### ✨ Features
+#### Features
 - **Smart Analysis**: Analyzes git diff and recent commit history for context
 - **Conventional Commits**: Follows standard format (feat:, fix:, docs:, etc.)
 - **Context-Aware**: Generates messages that reflect actual code changes
