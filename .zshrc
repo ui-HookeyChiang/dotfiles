@@ -40,7 +40,10 @@ zinit wait lucid for \
     agkozak/zsh-z \
     MichaelAquilina/zsh-you-should-use \
     fdellwing/zsh-bat \
-    zsh-users/zsh-completions \
+    zsh-users/zsh-completions
+
+# 注意：zsh-autosuggestions 需要在 syntax-highlighting 之前載入
+zinit wait lucid atload"_zsh_autosuggest_start" for \
     zsh-users/zsh-autosuggestions
 
 # --- 來自 Oh-My-Zsh 的插件 (Snippets) ---
@@ -56,23 +59,22 @@ zinit wait lucid for \
 # 6. 高亮與 Vim 模式 (必須放在最後)
 # =============================================================================
 
-# 1. Syntax Highlighting (必須在 autosuggestions 之後)
-zinit wait lucid atinit"ZINIT[COMPINIT_OPTS]=-C; zicompinit; zicdreplay" for \
+# 1. Syntax Highlighting (必須在 autosuggestions 之後，並在最後初始化補全)
+zinit wait lucid atinit"zicompinit; zicdreplay" for \
     zsh-users/zsh-syntax-highlighting
 
 # 2. Zsh-Vi-Mode (必須最後載入，以正確覆蓋按鍵)
 zinit ice depth=1
 zinit light jeffreytse/zsh-vi-mode
 
-# 3. Vim Mode 初始化 Hook (處理按鍵綁定衝突)
-function zvm_after_init() {
-  # 讓 Autosuggestions 的補全鍵 (Ctrl+F) 在 Insert Mode 生效
+# Define an init function and append to zvm_after_init_commands
+function my_init() {
   zvm_bindkey viins '^F' autosuggest-accept
-  
   # 恢復原本的歷史搜尋按鍵 (Ctrl+P / Ctrl+N)
   zvm_bindkey viins '^P' history-beginning-search-backward
   zvm_bindkey viins '^N' history-beginning-search-forward
 }
+zvm_after_init_commands+=(my_init)
 
 # =============================================================================
 # 7. 用戶自定義設定 (User Configuration)
@@ -102,17 +104,35 @@ ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 # =============================================================================
 # 8. Conda 初始化
 # =============================================================================
-__conda_setup="$('/opt/homebrew/Caskroom/miniconda/base/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
-else
-    if [ -f "/opt/homebrew/Caskroom/miniconda/base/etc/profile.d/conda.sh" ]; then
-        . "/opt/homebrew/Caskroom/miniconda/base/etc/profile.d/conda.sh"
-    else
-        export PATH="/opt/homebrew/Caskroom/miniconda/base/bin:$PATH"
-    fi
+# 根據系統自動偵測 conda 路徑
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS
+    CONDA_BASE="/opt/homebrew/Caskroom/miniconda/base"
+elif [[ -d "$HOME/miniconda3" ]]; then
+    # Linux - 用戶安裝的 miniconda
+    CONDA_BASE="$HOME/miniconda3"
+elif [[ -d "$HOME/anaconda3" ]]; then
+    # Linux - 用戶安裝的 anaconda
+    CONDA_BASE="$HOME/anaconda3"
+elif [[ -d "/opt/miniconda3" ]]; then
+    # Linux - 系統級安裝
+    CONDA_BASE="/opt/miniconda3"
 fi
-unset __conda_setup
+
+if [[ -n "$CONDA_BASE" && -f "$CONDA_BASE/bin/conda" ]]; then
+    __conda_setup="$('$CONDA_BASE/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+    if [ $? -eq 0 ]; then
+        eval "$__conda_setup"
+    else
+        if [ -f "$CONDA_BASE/etc/profile.d/conda.sh" ]; then
+            . "$CONDA_BASE/etc/profile.d/conda.sh"
+        else
+            export PATH="$CONDA_BASE/bin:$PATH"
+        fi
+    fi
+    unset __conda_setup
+fi
+unset CONDA_BASE
 
 # =============================================================================
 # 9. P10k 設定檔讀取
