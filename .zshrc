@@ -37,6 +37,7 @@ zinit snippet OMZ::lib/theme-and-appearance.zsh
 
 # --- 來自 GitHub 的插件 ---
 zinit wait lucid for \
+    Aloxaf/fzf-tab \
     agkozak/zsh-z \
     MichaelAquilina/zsh-you-should-use \
     fdellwing/zsh-bat \
@@ -50,10 +51,9 @@ zinit wait lucid atload"_zsh_autosuggest_start" for \
 zinit wait lucid for \
     OMZ::plugins/git/git.plugin.zsh \
     OMZ::plugins/tmux/tmux.plugin.zsh \
-    OMZ::plugins/tig/tig.plugin.zsh \
     OMZ::plugins/docker/docker.plugin.zsh \
-    OMZ::plugins/extract/extract.plugin.zsh \
-    OMZ::plugins/fzf/fzf.plugin.zsh
+    OMZ::plugins/fzf/fzf.plugin.zsh \
+    OMZ::plugins/extract/extract.plugin.zsh
 
 # =============================================================================
 # 6. 高亮與 Vim 模式 (必須放在最後)
@@ -120,7 +120,7 @@ elif [[ -d "/opt/miniconda3" ]]; then
 fi
 
 if [[ -n "$CONDA_BASE" && -f "$CONDA_BASE/bin/conda" ]]; then
-    __conda_setup="$('$CONDA_BASE/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+    __conda_setup="$("$CONDA_BASE/bin/conda" 'shell.zsh' 'hook' 2> /dev/null)"
     if [ $? -eq 0 ]; then
         eval "$__conda_setup"
     else
