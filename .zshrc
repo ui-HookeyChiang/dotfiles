@@ -94,7 +94,7 @@ alias grep='rg --color always --heading --line-number'
 alias cat='bat'
 
 # Suffix aliases
-alias -s {md,txt,log,py,js,ts,go,rs,c,cpp,h,hpp,tex,html}='$EDITOR'
+alias -s {md,txt,log,py,js,ts,go,rs,c,cpp,h,hpp,tex,html,config}='$EDITOR'
 
 # 注意：原本這裡的 bindkey 已經移到上面的 zvm_after_init 函數中了
 
