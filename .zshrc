@@ -30,6 +30,7 @@ zinit snippet OMZ::lib/completion.zsh
 zinit snippet OMZ::lib/history.zsh
 zinit snippet OMZ::lib/key-bindings.zsh
 zinit snippet OMZ::lib/theme-and-appearance.zsh
+zinit snippet OMZ::lib/clipboard.zsh
 
 # =============================================================================
 # 5. 載入插件 (Plugins)
