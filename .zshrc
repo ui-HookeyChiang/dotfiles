@@ -72,8 +72,9 @@ zinit light jeffreytse/zsh-vi-mode
 function my_init() {
   zvm_bindkey viins '^F' autosuggest-accept
   # 恢復原本的歷史搜尋按鍵 (Ctrl+P / Ctrl+N)
-  zvm_bindkey viins '^P' history-beginning-search-backward
-  zvm_bindkey viins '^N' history-beginning-search-forward
+  # 使用 up-line-or-search 可以根據已輸入的前綴搜尋歷史
+  zvm_bindkey viins '^P' up-line-or-search
+  zvm_bindkey viins '^N' down-line-or-search
 }
 zvm_after_init_commands+=(my_init)
 
