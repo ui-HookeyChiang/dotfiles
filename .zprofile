@@ -21,7 +21,13 @@ fi
 
 mesg n
 
-export PATH="/opt/local/bin:/opt/local/sbin:$PATH"
+export PATH="$HOME/.local/bin:/opt/local/bin:/opt/local/sbin:$PATH"
+
+# Ubuntu ships bat as batcat - create symlink if needed
+if command -v batcat &>/dev/null && ! command -v bat &>/dev/null; then
+  mkdir -p "$HOME/.local/bin"
+  ln -sf "$(command -v batcat)" "$HOME/.local/bin/bat"
+fi
 
 if [ `command -v homebrew` ] || [ -d /opt/homebrew/bin ]; then
   export PATH="/opt/homebrew/bin:$PATH"
