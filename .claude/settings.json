@@ -1,5 +1,18 @@
 {
   "model": "opus",
   "alwaysThinkingEnabled": false,
-  "defaultMode": "plan"
+  "defaultMode": "plan",
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "FileEdit(*)",
+      "FileView(*)",
+      "Git(*)",
+      "WebSearch"
+    ],
+    "deny": [],
+    "ask": [
+      "Bash(rm:*)"
+    ]
+  }
 }
