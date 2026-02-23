@@ -1,7 +1,4 @@
 {
-  "model": "opus",
-  "alwaysThinkingEnabled": false,
-  "defaultMode": "plan",
   "permissions": {
     "allow": [
       "Bash(*)",
@@ -14,5 +11,9 @@
     "ask": [
       "Bash(rm:*)"
     ]
-  }
+  },
+  "model": "opus",
+  "alwaysThinkingEnabled": false,
+  "defaultMode": "plan",
+  "dangerouslySkipPermissions": true
 }
