@@ -6,16 +6,16 @@ if [ -z "$ANTHROPIC_API_KEY" ]; then
   exit 1
 fi
 
-if [ -z $1 ]; then
+if [ -z "${1:-}" ]; then
   diffopt="--cached"
   range="HEAD"
 else
-  hash=$(git rev-parse $1)
+  hash=$(git rev-parse "$1")
   range="$hash~1..$hash"
 fi
 
 # Get git diff context
-diff_context=$(git diff $diffopt --diff-algorithm=minimal $range)
+diff_context=$(git diff ${diffopt:-} --diff-algorithm=minimal "$range")
 
 if [ -z "$diff_context" ]; then
   echo "Error: No staged changes found" >&2
@@ -70,7 +70,7 @@ response=$(curl -s https://api.anthropic.com/v1/messages \
     -H "x-api-key: $ANTHROPIC_API_KEY" \
     -H "anthropic-version: 2023-06-01" \
     --data-raw "{
-        \"model\": \"claude-sonnet-4-5-20250929\",
+        \"model\": \"claude-sonnet-4-6\",
         \"max_tokens\": 1024,
         \"messages\": [
             {
