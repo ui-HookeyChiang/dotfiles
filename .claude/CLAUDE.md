@@ -1,54 +1,51 @@
 # Task Planning
 
-For tasks with 4+ steps or significant complexity, enter plan mode first before implementing. This ensures alignment and prevents wasted effort.
+**When you don't have a clear plan for the next steps, enter plan mode first.** This includes:
+- Complex or ambiguous requests where the approach isn't obvious
+- Tasks touching unfamiliar code or multiple systems
+- Anytime you'd otherwise guess and iterate — plan instead
 
-Persist task progress to the project's `TASK.md` (at the project root) so work can resume after agent restarts or context resets:
+If the task is straightforward and you know exactly what to do, skip planning and execute directly.
+
+## TASK.md as checkpoint file
+
+Persist task progress to `TASK.md` (at the project root) so work can resume after agent restarts or context resets. Write state at every step transition, not just task completion.
+
+- Per-task status inline: `[ ]` pending, `[>]` active, `[x]` done — multiple tasks can be `[>]` simultaneously
+- Per-task: current step, blockers/notes, and any IDs needed to resume (PR numbers, branch names, etc.)
+- Enough context to reconstruct subagent prompts without re-reading the codebase
 - **On start:** Check `TASK.md` for in-progress work and resume where left off
-- **During work:** Update `TASK.md` as tasks are completed or new ones discovered
-- **On completion:** Remove finished tasks from `TASK.md`
+- **On feature completion:** Mark all tasks `[x]` done. Do not remove `TASK.md` — it may track multiple features or serve as a record
+
+# Agent Delegation
+
+The main agent is an **orchestrator** — it delegates everything and only makes decisions.
+
+**Delegate to subagents:** all work — research, implementation, testing, review, analysis, builds, data collection, skill-triggered tasks. Present subagent results to the user and decide next steps.
+
+**Keep on main agent:** planning, decisions, user communication, simple commands (git push, PR create).
+
+**Handoff pattern:** pass all context in the subagent's prompt — agents don't share context. Do not use file-based handoff between agents (agents return results directly). `TASK.md` is for crash recovery, not inter-agent communication.
 
 # Skills
 
 Before invoking a skill or running its scripts, read the SKILL.md first to understand what it does, its prerequisites, and expected output. Do not blindly execute.
 
-When a skill or task will produce large output or run for a long time (builds, bulk data collection, test runs, log gathering), delegate it to a subagent to prevent context pollution. Keep the main conversation context clean for decision-making.
-
 After running a skill, if any problems occur (wrong output, missing steps, outdated commands, unclear instructions), fix the skill's SKILL.md, scripts, or references to prevent the issue from recurring. Use `skill-creator` to validate changes.
 
 # Git Feature Development
 
-When developing features under git, use **stacked PRs** as the default workflow:
+When developing features under git, use **stacked PRs** as the default workflow. See the `stacking-feature-dev` skill for the full workflow (task decomposition, worktrees, PR stacking, review, merging, crash recovery) and `code-review:review-pr` for the review process.
 
-1. **Split** the feature into small, independent tasks (each <500 lines changed)
-2. **Use git worktrees** — one per task, so the main working tree stays undisturbed
-3. **Stack PRs** — each task's PR targets the previous task's branch (task-1 → main, task-2 → task-1, etc.)
-4. **Review in parallel** — launch `code-review:review-pr` agents for each PR plus one overall feature review
+# Shell Tools
 
-See the `stacking-feature-dev` skill for the full workflow, and `code-review:review-pr` for the review process.
+Use these instead of traditional Unix commands (install if missing):
 
-# Shell Tools Usage Guidelines
-
-**IMPORTANT**: Use the following specialized tools instead of traditional Unix commands (install if missing):
-
-| Task Type | Must Use | Do Not Use |
-|-----------|----------|------------|
-| Find Files | `fd` (fd-find) | `find`, `ls -R` |
-| Search Text | `rg` (ripgrep) | `grep`, `ag` |
-| Analyze Code Structure | `ast-grep` | `grep`, `sed` |
-| Interactive Selection | `fzf` | Manual filtering |
-| Process JSON | `jq` | `python -m json.tool` |
-| Process YAML/XML | `yq` | Manual parsing |
-
-## Installation (macOS)
-
-```bash
-brew install fd ripgrep ast-grep fzf jq yq
-```
-
-## Installation (Ubuntu/Debian)
-
-```bash
-sudo apt install fd-find ripgrep fzf jq
-# For ast-grep and yq, use cargo or download binaries
-```
-
+| Task | Use | Not |
+|------|-----|-----|
+| Find files | `fd` | `find`, `ls -R` |
+| Search text | `rg` | `grep`, `ag` |
+| Code structure | `ast-grep` | `grep`, `sed` |
+| Interactive select | `fzf` | manual filtering |
+| JSON | `jq` | `python -m json.tool` |
+| YAML/XML | `yq` | manual parsing |
