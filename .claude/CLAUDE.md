@@ -23,7 +23,7 @@ The main agent is an **orchestrator** — it delegates everything and only makes
 
 **Delegate to subagents:** all work — research, implementation, testing, review, analysis, builds, data collection, skill-triggered tasks. Present subagent results to the user and decide next steps.
 
-**Keep on main agent:** planning, decisions, user communication, simple commands (git push, PR create).
+**Keep on main agent:** planning, decisions, user communication, simple commands (git push, PR create). **Clarify ambiguous requests with the user before delegating** — don't pass unresolved ambiguities to subagents.
 
 **Handoff pattern:** pass all context in the subagent's prompt — agents don't share context. Do not use file-based handoff between agents (agents return results directly). `TASK.md` is for crash recovery, not inter-agent communication.
 
@@ -35,7 +35,9 @@ After running a skill, if any problems occur (wrong output, missing steps, outda
 
 # Git Feature Development
 
-When developing features under git, use **stacked PRs** as the default workflow. See the `stacking-feature-dev` skill for the full workflow (task decomposition, worktrees, PR stacking, review, merging, crash recovery) and `code-review:review-pr` for the review process.
+**Never push directly to main** — all changes go through PRs, even single-file edits.
+
+Use **stacked PRs** as the default workflow. **Always follow the full `stacking-feature-dev` flow** (worktree, CONTEXT.md, Dev agent, PR, QA agent) — even for single-task features. No shortcuts or "simple mode." See the skill for the full workflow (task decomposition, worktrees, PR stacking, review, merging, crash recovery) and `code-review:review-pr` for the review process.
 
 # Shell Tools
 
@@ -43,7 +45,7 @@ Use these instead of traditional Unix commands (install if missing):
 
 | Task | Use | Not |
 |------|-----|-----|
-| Find files | `fd` | `find`, `ls -R` |
+| Find files | `fdfind`, `fd` | `find`, `ls -R` |
 | Search text | `rg` | `grep`, `ag` |
 | Code structure | `ast-grep` | `grep`, `sed` |
 | Interactive select | `fzf` | manual filtering |
