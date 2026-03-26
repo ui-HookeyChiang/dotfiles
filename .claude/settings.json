@@ -12,8 +12,20 @@
       "Bash(rm:*)"
     ]
   },
-  "model": "opus",
+  "model": "opus[1m]",
+  "enabledPlugins": {
+    "skill-creator@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "document-skills@anthropic-agent-skills": true,
+    "code-simplifier@claude-plugins-official": true,
+    "clangd-lsp@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true
+  },
   "alwaysThinkingEnabled": false,
   "defaultMode": "plan",
-  "dangerouslySkipPermissions": true
+  "dangerouslySkipPermissions": true,
+  "statusLine": {
+    "type": "command",
+    "command": "bash ~/.claude/statusline-command.sh"
+  }
 }
