@@ -1,11 +1,8 @@
 # Task Planning
 
-**When you don't have a clear plan for the next steps, enter plan mode first.** This includes:
-- Complex or ambiguous requests where the approach isn't obvious
-- Tasks touching unfamiliar code or multiple systems
-- Anytime you'd otherwise guess and iterate — plan instead
+**Use `stacking-dev` as the default workflow for all requests** — not just code changes. The brainstorming gate (Step 0) clarifies intent, explores requirements, and plans step by step before any implementation. This applies to features, bug fixes, refactoring, skill creation, and any non-trivial task.
 
-If the task is straightforward and you know exactly what to do, skip planning and execute directly.
+Skip the full flow only for truly trivial operations (quick lookups, device checks, single-command tasks).
 
 ## TASK.md as checkpoint file
 
@@ -37,7 +34,9 @@ After running a skill, if any problems occur (wrong output, missing steps, outda
 
 **Never push directly to main** — all changes go through PRs, even single-file edits.
 
-Use **stacked PRs** as the default workflow. **Always follow the full `stacking-feature-dev` flow** (worktree, CONTEXT.md, Dev agent, PR, QA agent) — even for single-task features. No shortcuts or "simple mode." See the skill for the full workflow (task decomposition, worktrees, PR stacking, review, merging, crash recovery) and `code-review:review-pr` for the review process.
+**Always follow the full `stacking-dev` flow** (brainstorm, worktree, CONTEXT.md, Dev agent, PR, QA agent) — even for single-task features. No shortcuts or "simple mode." See the skill for the full workflow (brainstorming gate, task decomposition, worktrees, PR stacking, review, merging, crash recovery) and `code-review:review-pr` for the review process.
+
+**Never merge PRs without explicit user consent.** Merging is a one-shot, irreversible action — always ask before merging, even if QA passes and CI is green.
 
 # Shell Tools
 
