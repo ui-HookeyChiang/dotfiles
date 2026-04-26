@@ -16,9 +16,13 @@ The main agent orchestrates — it delegates and decides, never executes directl
 
 When using Bash for tasks without a dedicated tool:
 
-| Task | Use |
-|------|-----|
-| Code structure | `ast-grep` |
-| JSON | `jq` |
-| YAML/XML | `yq` |
-| Interactive select | `fzf` |
+| Task | Use | Never use |
+|------|-----|-----------|
+| Search file contents | `Grep` tool (ripgrep) or `rg` | `grep`, `egrep`, `fgrep` (denied) |
+| Find files by name | `fdfind` | `find` (denied) |
+| Code structure | `ast-grep` | |
+| JSON | `jq` | |
+| YAML/XML | `yq` | |
+| Interactive select | `fzf` | |
+
+`grep`/`find` are denied in settings.json. Don't try `bash -c` or pipeline workarounds — use the alternatives above.
