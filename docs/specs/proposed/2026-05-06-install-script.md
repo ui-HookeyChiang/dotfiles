@@ -1,3 +1,8 @@
+---
+kind: spec
+status: proposed
+---
+
 # Design: dotfiles install.sh + repo improvements
 
 **Date:** 2026-05-06
