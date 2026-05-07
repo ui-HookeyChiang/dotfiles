@@ -1,6 +1,6 @@
 ---
 kind: spec
-status: proposed
+status: done
 ---
 
 # Design: dotfiles install.sh + repo improvements
