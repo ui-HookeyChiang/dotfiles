@@ -24,6 +24,7 @@ WITH_GO=0
 WITH_RUST=0
 WITH_DOCKER=0
 WITH_LATEX=0
+WITH_SKILLS=0
 
 OS=""             # "linux" | "macos"
 DISTRO_ID=""      # e.g. "ubuntu", "debian"
@@ -88,6 +89,7 @@ Optional modules:
   --with-rust     rustup + stylua + rustfmt (Task 2)
   --with-docker   Docker Engine, Linux only (Task 2)
   --with-latex    MacTeX, macOS only (Task 2)
+  --with-skills   Claude Code skills via npx skills CLI (huashu-nuwa, darwin-skill)
   --all           Enable all OS-compatible optional modules
 
 Flags:
@@ -111,12 +113,14 @@ parse_flags() {
       --with-rust)    WITH_RUST=1 ;;
       --with-docker)  WITH_DOCKER=1 ;;
       --with-latex)   WITH_LATEX=1 ;;
+      --with-skills)  WITH_SKILLS=1 ;;
       --all)
         WITH_NODE=1
         WITH_GO=1
         WITH_RUST=1
         WITH_DOCKER=1
         WITH_LATEX=1
+        WITH_SKILLS=1
         ;;
       -h|--help)
         usage
@@ -539,6 +543,21 @@ install_latex() {
   run brew install --cask mactex-no-gui
 }
 
+install_skills() {
+  log "install_skills"
+  if ! command -v npx >/dev/null 2>&1; then
+    note "npx missing — install Node first (try --with-node)"
+    return 0
+  fi
+  # Skills CLI auto-symlinks into ~/.claude/skills/. Skip if both are linked.
+  if [[ -L "$HOME/.claude/skills/huashu-nuwa" && -L "$HOME/.claude/skills/darwin-skill" ]]; then
+    note "skip skills (huashu-nuwa + darwin-skill already linked)"
+    return 0
+  fi
+  note "installing nuwa-skill + darwin-skill via npx skills CLI"
+  run npx --yes skills add -g -y alchaincyf/nuwa-skill alchaincyf/darwin-skill
+}
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -564,6 +583,7 @@ main() {
   (( WITH_RUST ))   && install_rust   || true
   (( WITH_DOCKER )) && install_docker || true
   (( WITH_LATEX ))  && install_latex  || true
+  (( WITH_SKILLS )) && install_skills || true
 
   log "done"
 }
