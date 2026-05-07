@@ -34,6 +34,7 @@ exec $SHELL                           # reload
 | `--with-rust` | `rustup` + `stylua` + `rustfmt` |
 | `--with-docker` | Docker Engine (Linux only) |
 | `--with-latex` | MacTeX (macOS only) |
+| `--with-skills` | Claude Code skills (huashu-nuwa, darwin-skill) via `npx skills` CLI; auto-symlinks into `~/.claude/skills/` |
 | `--all` | All OS-compatible optional modules |
 
 The core symlink step uses an explicit whitelist (`.zshrc`, `.vimrc`, `.gitconfig`, `.tmux.conf.local`, etc.) — no more recursive copy of every dotfile (which used to drag in `.git` and overwrite arbitrary files). Existing files are moved to `~/.dotfiles-backup-<timestamp>/` before linking.
