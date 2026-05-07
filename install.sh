@@ -207,7 +207,13 @@ ensure_pkg_manager() {
         note "brew already installed"
       else
         note "installing Homebrew"
-        run /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        if (( DRY_RUN )); then
+          # Dry-run prints the literal command; expansion is intentional.
+          # shellcheck disable=SC2016
+          printf '+ /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"\n' >&2
+        else
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        fi
         # Add brew to PATH for current session (Apple Silicon vs Intel).
         if [[ -x /opt/homebrew/bin/brew ]]; then
           eval "$(/opt/homebrew/bin/brew shellenv)"
@@ -296,7 +302,13 @@ setup_zsh() {
       # On macOS, zsh from Homebrew may not be in /etc/shells yet.
       if ! grep -qx "$zsh_path" /etc/shells 2>/dev/null; then
         note "adding $zsh_path to /etc/shells (sudo)"
-        run sudo sh -c "printf '%s\n' '$zsh_path' >> /etc/shells"
+        # Use stdin via heredoc to avoid quoting hazards if $zsh_path
+        # ever contained special characters.
+        if (( DRY_RUN )); then
+          printf '+ sudo tee -a /etc/shells <<< %q\n' "$zsh_path" >&2
+        else
+          printf '%s\n' "$zsh_path" | sudo tee -a /etc/shells >/dev/null
+        fi
       fi
       run chsh -s "$zsh_path"
       ;;
@@ -362,8 +374,10 @@ link_one() {
   if [[ -L "$dst" ]]; then
     local target
     target="$(readlink "$dst")"
-    # If symlink already points into the repo (resolves to $src or starts with REPO_ROOT), skip.
-    if [[ "$target" == "$src" ]] || [[ "$target" == "$REPO_ROOT/"* ]]; then
+    # If symlink already points into the repo (resolves to $src or starts with REPO_ROOT)
+    # AND the target actually exists, skip. A dangling symlink falls through to backup so
+    # we don't keep a broken link pointing at a deleted/renamed repo file.
+    if { [[ "$target" == "$src" ]] || [[ "$target" == "$REPO_ROOT/"* ]]; } && [[ -e "$src" ]]; then
       note "skip $rel (already linked)"
       return 0
     fi
