@@ -421,36 +421,122 @@ symlink_dotfiles() {
 # ---------------------------------------------------------------------------
 
 install_node() {
-  log "install_node (stub)"
-  note "Task 2 will implement: NodeSource LTS + @anthropic-ai/claude-code"
+  log "install_node"
+  if command -v node >/dev/null 2>&1; then
+    note "skip node (installed: $(node --version 2>/dev/null || echo present))"
+  else
+    case "$OS" in
+      linux)
+        note "installing Node.js LTS via NodeSource"
+        run bash -c "curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -"
+        run sudo apt-get install -y nodejs
+        ;;
+      macos)
+        if is_installed_brew node; then
+          note "skip node (brew formula present)"
+        else
+          note "installing node via brew"
+          run brew install node
+        fi
+        ;;
+    esac
+  fi
+  # The npm package @anthropic-ai/claude-code installs a binary named `claude`,
+  # not `claude-code`. Probe via the npm global registry for an accurate skip.
+  if npm ls -g --depth=0 @anthropic-ai/claude-code >/dev/null 2>&1; then
+    note "skip @anthropic-ai/claude-code (already installed)"
+  else
+    note "installing @anthropic-ai/claude-code globally"
+    run npm install -g @anthropic-ai/claude-code
+  fi
 }
 
 install_go() {
-  log "install_go (stub)"
-  note "Task 2 will implement: Go + golines"
+  log "install_go"
+  if command -v go >/dev/null 2>&1; then
+    note "skip go (installed: $(go version 2>/dev/null || echo present))"
+  else
+    case "$OS" in
+      linux)
+        note "installing golang-go via apt"
+        run sudo apt-get install -y golang-go
+        ;;
+      macos)
+        if is_installed_brew go; then
+          note "skip go (brew formula present)"
+        else
+          note "installing go via brew"
+          run brew install go
+        fi
+        ;;
+    esac
+  fi
+  if command -v golines >/dev/null 2>&1; then
+    note "skip golines (installed)"
+  else
+    note "installing golines via go install"
+    run go install github.com/segmentio/golines@latest
+    note "ensure \$(go env GOPATH)/bin is on PATH (e.g. export PATH=\$PATH:\$(go env GOPATH)/bin)"
+  fi
 }
 
 install_rust() {
-  log "install_rust (stub)"
-  note "Task 2 will implement: rustup + stylua + rustfmt"
+  log "install_rust"
+  if command -v rustup >/dev/null 2>&1; then
+    note "skip rustup (installed)"
+  else
+    note "installing rustup (stable, --no-modify-path)"
+    run bash -c "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --no-modify-path"
+  fi
+  # Source cargo env so subsequent cargo/rustup calls work in the same script run.
+  if [[ -f "$HOME/.cargo/env" ]]; then
+    # shellcheck disable=SC1091
+    . "$HOME/.cargo/env"
+  fi
+  note "ensuring rustfmt component is installed"
+  run rustup component add rustfmt
+  if command -v stylua >/dev/null 2>&1; then
+    note "skip stylua (installed)"
+  else
+    note "installing stylua via cargo"
+    run cargo install stylua
+  fi
+  note "ensure \$HOME/.cargo/bin is on PATH (rustup --no-modify-path skips shell rc edits)"
 }
 
 install_docker() {
-  log "install_docker (stub)"
+  log "install_docker"
   if [[ "$OS" != "linux" ]]; then
     note "Docker Engine is Linux-only; on macOS install Docker Desktop manually"
     return 0
   fi
-  note "Task 2 will implement: Docker Engine"
+  if command -v docker >/dev/null 2>&1; then
+    note "skip docker (installed: $(docker --version 2>/dev/null || echo present))"
+    return 0
+  fi
+  note "installing Docker Engine via official apt repo"
+  run sudo install -m 0755 -d /etc/apt/keyrings
+  run sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+  run sudo chmod a+r /etc/apt/keyrings/docker.asc
+  run bash -c 'echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null'
+  run sudo apt-get update
+  run sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  run sudo usermod -aG docker "$USER"
+  note "log out / back in (or 'newgrp docker') for the docker group to take effect"
 }
 
 install_latex() {
-  log "install_latex (stub)"
+  log "install_latex"
   if [[ "$OS" != "macos" ]]; then
     note "MacTeX is macOS-only; on Linux use texlive via apt"
     return 0
   fi
-  note "Task 2 will implement: MacTeX"
+  if command -v latexmk >/dev/null 2>&1; then
+    note "skip latex (latexmk installed)"
+    return 0
+  fi
+  note "WARNING: mactex-no-gui cask is ~5GB; download may take a while"
+  run brew install --cask mactex-no-gui
 }
 
 # ---------------------------------------------------------------------------
