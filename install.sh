@@ -441,7 +441,9 @@ install_node() {
         ;;
     esac
   fi
-  if command -v claude-code >/dev/null 2>&1 || claude-code --version >/dev/null 2>&1; then
+  # The npm package @anthropic-ai/claude-code installs a binary named `claude`,
+  # not `claude-code`. Probe via the npm global registry for an accurate skip.
+  if npm ls -g --depth=0 @anthropic-ai/claude-code >/dev/null 2>&1; then
     note "skip @anthropic-ai/claude-code (already installed)"
   else
     note "installing @anthropic-ai/claude-code globally"
