@@ -23,6 +23,10 @@ export USE_CCACHE=1
 # fzf preview using bat (bat available via batcat symlink on Linux; native on macOS)
 export FZF_DEFAULT_OPTS='--preview "bat --style=numbers --color=always {}"'
 
+# tmux: tell oh-my-tmux to load user override from ~/.tmux.conf.local (a symlink
+# to dotfiles/.tmux.conf.local) rather than the submodule's vanilla template.
+export TMUX_CONF_LOCAL="$HOME/.tmux.conf.local"
+
 # TERM — feature-detect via terminfo presence (works on both macOS and Linux paths)
 if [[ -z "$TERM" || "$TERM" == "dumb" ]]; then
   if infocmp xterm-256color >/dev/null 2>&1; then

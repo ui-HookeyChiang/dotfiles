@@ -1,0 +1,20 @@
+# ~/.tmux.conf.local — user-owned override for oh-my-tmux.
+# Loaded via TMUX_CONF_LOCAL env var (set in ~/.zshenv).
+# Do NOT edit ~/.config/tmux/.tmux.conf.local (that's the submodule's vanilla template).
+
+# -- clipboard ----------------------------------------------------------------
+# Cross-platform clipboard: pbcopy on macOS, xclip on Linux.
+# Detected at runtime via uname so the same file works on both.
+
+if-shell 'command -v pbcopy >/dev/null 2>&1' \
+    "set -gq @copy_use_osc52_fallback off ; \
+     bind-key -T copy-mode-vi y send-keys -X copy-pipe-and-cancel 'pbcopy' ; \
+     bind-key -T copy-mode-vi Enter send-keys -X copy-pipe-and-cancel 'pbcopy'"
+
+if-shell 'command -v xclip >/dev/null 2>&1 && [ -z \"${SSH_CONNECTION:-}\" ]' \
+    "bind-key -T copy-mode-vi y send-keys -X copy-pipe-and-cancel 'xclip -in -selection clipboard' ; \
+     bind-key -T copy-mode-vi Enter send-keys -X copy-pipe-and-cancel 'xclip -in -selection clipboard'"
+
+# -- placeholder for future user customization --------------------------------
+# Append your tweaks below this line. See ~/.config/tmux/.tmux.conf.local for
+# the full list of oh-my-tmux variables you can override (prefix, theme, etc.).
