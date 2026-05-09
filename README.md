@@ -35,7 +35,14 @@ exec $SHELL                           # reload
 | `--with-docker` | Docker Engine (Linux only) |
 | `--with-latex` | MacTeX (macOS only) |
 | `--with-skills` | Claude Code skills (huashu-nuwa, darwin-skill) via `npx skills` CLI; auto-symlinks into `~/.claude/skills/` |
+| `--with-projects` | Personal projects (llm-wiki, stock-target-finder, telegram-claude-bridge). Auto-enables `--with-node`. Override path: `DOTFILES_PROJECTS_DIR`. |
 | `--all` | All OS-compatible optional modules |
+
+### Preconditions for `--with-projects`
+- GitHub SSH key configured (llm-wiki includes a submodule cloned via SSH)
+- `uv` installed for stock-target-finder (https://astral.sh/uv/install.sh)
+
+If a precondition is missing, that repo's install fails-soft with a WARN and the others continue.
 
 The core symlink step uses an explicit whitelist (`.zshrc`, `.vimrc`, `.gitconfig`, `.tmux.conf.local`, etc.) — no more recursive copy of every dotfile (which used to drag in `.git` and overwrite arbitrary files). Existing files are moved to `~/.dotfiles-backup-<timestamp>/` before linking.
 
