@@ -1,3 +1,6 @@
+# Canonical compdump path — prevents race-suffix dumps (~/.zcompdump.host.pid) from accumulating
+: ${ZSH_COMPDUMP:=$HOME/.zcompdump-${ZSH_VERSION}}
+
 # =============================================================================
 # 1. Powerlevel10k Instant Prompt (必須放在最上方)
 # =============================================================================
@@ -45,7 +48,7 @@ zinit wait lucid for \
     zsh-users/zsh-completions
 
 # 注意：zsh-autosuggestions 需要在 syntax-highlighting 之前載入
-zinit wait lucid atload"_zsh_autosuggest_start" for \
+zinit wait lucid atload'!_zsh_autosuggest_start' for \
     zsh-users/zsh-autosuggestions
 
 # --- 來自 Oh-My-Zsh 的插件 (Snippets) ---
@@ -93,6 +96,11 @@ alias avante='nvim -c "lua vim.defer_fn(function()require(\"avante.api\").zen_mo
 alias ll='eza --all --long'
 alias ls='eza --all'
 alias grep='rg --color always --heading --line-number'
+
+# Linux: bridge Ubuntu/Debian's renamed fd binary (fdfind) to the universal name
+if ! command -v fd >/dev/null 2>&1 && command -v fdfind >/dev/null 2>&1; then
+  alias fd='fdfind'
+fi
 
 # Suffix aliases
 alias -s {md,txt,log,py,js,ts,go,rs,c,cpp,h,hpp,tex,html,config}='$EDITOR'
