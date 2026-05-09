@@ -1,36 +1,12 @@
-# ~/.profile: executed by Bourne-compatible login shells.
+# ~/.zprofile — sourced by login zsh shells only. Cheap env exports live in ~/.zshenv.
+# This file is for login-only setup: heavy commands (forks, IPC), tty operations, and
+# session-boundary behaviors that don't belong in every shell invocation.
 
-export EDITOR='nvim'
-export HISTFILESIZE=120000
-export USE_CCACHE=1
-export FZF_DEFAULT_OPTS='--preview "bat --style=numbers --color=always {}"'
-
-if [ -e /usr/share/terminfo/x/xterm-256color ]; then
-  export TERM='xterm-256color'
-else
-  # to allow home/end key in nvim
-  export TERM='screen-256color'
-fi
-
-if [ -f ~/.config/tmux.default/tmux.conf.local ]; then
-  cat ~/.config/tmux.default/tmux.conf.local >> ~/.config/tmux/.tmux.conf.local
-  mv ~/.config/tmux/.tmux.conf.local ~/.config/tmux/tmux.conf.local
-  mv ~/.config/tmux/.tmux.conf ~/.config/tmux/tmux.conf
-  rm -r ~/.config/tmux.default
-fi
-
-# mesg is Linux util-linux only; tty-guard avoids "Inappropriate ioctl" in non-tty contexts.
+# Linux util-linux mesg: deny terminal write/wall messages. Tty-guarded so non-tty login
+# contexts (ssh Command=, scripts) don't error.
 [[ "$OSTYPE" == linux* ]] && [ -t 0 ] && command -v mesg >/dev/null && mesg n 2>/dev/null
 
-export PATH="$HOME/.local/bin:/opt/local/bin:/opt/local/sbin:$PATH"
-
-# Ubuntu ships bat as batcat - create symlink if needed
-if command -v batcat &>/dev/null && ! command -v bat &>/dev/null; then
-  mkdir -p "$HOME/.local/bin"
-  ln -sf "$(command -v batcat)" "$HOME/.local/bin/bat"
-fi
-
-# macOS-only optional Homebrew toolchains (login-shell heavy paths). brew shellenv is in .zshenv.
+# macOS-only optional Homebrew toolchains (heavy paths). brew shellenv is in .zshenv.
 if [[ "$OSTYPE" == darwin* ]]; then
   for d in /opt/homebrew/opt/llvm/bin /opt/homebrew/opt/openjdk/bin /opt/homebrew/opt/rustup/bin; do
     [[ -d "$d" ]] && export PATH="$d:$PATH"
@@ -38,19 +14,18 @@ if [[ "$OSTYPE" == darwin* ]]; then
   [[ -d /opt/homebrew/opt/openjdk/include ]] && export CPPFLAGS="-I/opt/homebrew/opt/openjdk/include"
 fi
 
-if [ `command -v go` ]; then
-  gopath=`go env GOPATH`
-  export PATH=$gopath:$gopath/bin:$PATH
-elif [[ ! "$PATH" == */home/${USER}/go/bin* ]]; then
+# Go: use `go env GOPATH` (forks the go binary, heavy → login-only). Fix: only $gopath/bin
+# belongs on PATH; the bare $gopath was a GOPATH-root pollution bug.
+if command -v go >/dev/null 2>&1; then
+  gopath="$(go env GOPATH)"
+  export PATH="$gopath/bin:$PATH"
+  unset gopath
+elif [[ ! "$PATH" == *"/home/${USER}/go/bin"* ]]; then
   export PATH="${PATH:+${PATH}:}/home/${USER}/go/bin"
 fi
 
-# Setup deb env
-export DEBEMAIL="hookey.chiang@ui.com"
-export DEBFULLNAME="HookeyChiang"
-
-# zathura dbus setup (macOS only)
-if [[ "$OSTYPE" == "darwin"* ]]; then
-  DBUS_LAUNCHD_SESSION_BUS_SOCKET=`launchctl getenv DBUS_LAUNCHD_SESSION_BUS_SOCKET`
+# macOS-only: zathura dbus setup
+if [[ "$OSTYPE" == darwin* ]]; then
+  DBUS_LAUNCHD_SESSION_BUS_SOCKET="$(launchctl getenv DBUS_LAUNCHD_SESSION_BUS_SOCKET)"
   export DBUS_SESSION_BUS_ADDRESS="unix:path=$DBUS_LAUNCHD_SESSION_BUS_SOCKET"
 fi
