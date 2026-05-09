@@ -19,7 +19,8 @@ if [ -f ~/.config/tmux.default/tmux.conf.local ]; then
   rm -r ~/.config/tmux.default
 fi
 
-mesg n
+# mesg is Linux util-linux only; tty-guard avoids "Inappropriate ioctl" in non-tty contexts.
+[[ "$OSTYPE" == linux* ]] && [ -t 0 ] && command -v mesg >/dev/null && mesg n 2>/dev/null
 
 export PATH="$HOME/.local/bin:/opt/local/bin:/opt/local/sbin:$PATH"
 
@@ -29,12 +30,12 @@ if command -v batcat &>/dev/null && ! command -v bat &>/dev/null; then
   ln -sf "$(command -v batcat)" "$HOME/.local/bin/bat"
 fi
 
-if [ `command -v homebrew` ] || [ -d /opt/homebrew/bin ]; then
-  export PATH="/opt/homebrew/bin:$PATH"
-  export PATH="/opt/homebrew/opt/llvm/bin:$PATH"
-  export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
-  export CPPFLAGS="-I/opt/homebrew/opt/openjdk/include"
-  export PATH="/opt/homebrew/opt/rustup/bin:$PATH"
+# macOS-only optional Homebrew toolchains (login-shell heavy paths). brew shellenv is in .zshenv.
+if [[ "$OSTYPE" == darwin* ]]; then
+  for d in /opt/homebrew/opt/llvm/bin /opt/homebrew/opt/openjdk/bin /opt/homebrew/opt/rustup/bin; do
+    [[ -d "$d" ]] && export PATH="$d:$PATH"
+  done
+  [[ -d /opt/homebrew/opt/openjdk/include ]] && export CPPFLAGS="-I/opt/homebrew/opt/openjdk/include"
 fi
 
 if [ `command -v go` ]; then
