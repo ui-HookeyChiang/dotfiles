@@ -255,6 +255,34 @@ is_installed_apt() {
   dpkg -s "$1" >/dev/null 2>&1
 }
 
+# Map apt package name -> space-separated binary names that count as "present".
+# Used by is_present_apt so install_core_packages skips packages whose binary
+# is already in PATH (e.g. nvim built from PPA/source, not tracked by dpkg).
+# Packages not listed default to "binary name == pkg name".
+declare -A PKG_BINARIES=(
+  [neovim]="nvim"
+  [ripgrep]="rg"
+  [fd-find]="fdfind fd"
+  [bat]="batcat bat"
+)
+
+# is_present_apt <pkg>
+# Returns 0 if installed via apt OR any of its known binaries is in PATH.
+is_present_apt() {
+  local pkg="$1"
+  if is_installed_apt "$pkg"; then
+    return 0
+  fi
+  local bins="${PKG_BINARIES[$pkg]:-$pkg}"
+  local b
+  for b in $bins; do
+    if command -v "$b" >/dev/null 2>&1; then
+      return 0
+    fi
+  done
+  return 1
+}
+
 # is_installed_brew <pkg>
 is_installed_brew() {
   brew list --formula "$1" >/dev/null 2>&1
@@ -268,7 +296,7 @@ install_core_packages() {
       pkgs=(zsh tmux neovim ripgrep fd-find fzf bat jq zoxide tldr git)
       local missing=()
       for p in "${pkgs[@]}"; do
-        if is_installed_apt "$p"; then
+        if is_present_apt "$p"; then
           note "skip $p (installed)"
         else
           missing+=("$p")
