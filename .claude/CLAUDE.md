@@ -33,7 +33,7 @@ Reply to the user in **Traditional Chinese (繁體中文)** rather than Simplifi
 
 # Sandbox: protected paths
 
-Claude Code's built-in sensitive-file detection (not settings.json `deny`) gates `Edit`/`Write` and `> redirect`/`sed -i` on these paths: `<repo>/.claude/skills/<name>/`, `~/.claude/CLAUDE.md`, `~/.claude/settings*.json`.
+Claude Code's built-in sensitive-file detection (not settings.json `deny`) gates `Edit`/`Write` and `> redirect`/`sed -i` on all paths.
 
 | Action on protected path | Result |
 |---|---|
