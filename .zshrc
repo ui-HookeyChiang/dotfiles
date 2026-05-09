@@ -93,7 +93,6 @@ alias avante='nvim -c "lua vim.defer_fn(function()require(\"avante.api\").zen_mo
 alias ll='eza --all --long'
 alias ls='eza --all'
 alias grep='rg --color always --heading --line-number'
-alias cat='bat'
 
 # Suffix aliases
 alias -s {md,txt,log,py,js,ts,go,rs,c,cpp,h,hpp,tex,html,config}='$EDITOR'
