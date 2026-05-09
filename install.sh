@@ -25,6 +25,15 @@ WITH_RUST=0
 WITH_DOCKER=0
 WITH_LATEX=0
 WITH_SKILLS=0
+WITH_PROJECTS=0
+PROJECTS_DIR="${DOTFILES_PROJECTS_DIR:-$HOME}"
+PROJECT_NAMES=(llm-wiki stock-target-finder telegram-claude-bridge)
+PROJECT_URLS=(
+  https://github.com/ui-HookeyChiang/llm-wiki
+  https://github.com/ui-HookeyChiang/stock-target-finder
+  https://github.com/ui-HookeyChiang/telegram-claude-bridge
+)
+PROJECT_INSTALL=(repo-script repo-script npm)
 
 OS=""             # "linux" | "macos"
 DISTRO_ID=""      # e.g. "ubuntu", "debian"
@@ -103,6 +112,8 @@ Optional modules:
   --with-docker   Docker Engine, Linux only (Task 2)
   --with-latex    MacTeX, macOS only (Task 2)
   --with-skills   Claude Code skills via npx skills CLI (huashu-nuwa, darwin-skill)
+  --with-projects Personal projects (llm-wiki, stock-target-finder, telegram-claude-bridge)
+                  Auto-enables --with-node. Override clone dir with DOTFILES_PROJECTS_DIR (default: $HOME).
   --all           Enable all OS-compatible optional modules
 
 Flags:
@@ -127,6 +138,7 @@ parse_flags() {
       --with-docker)  WITH_DOCKER=1 ;;
       --with-latex)   WITH_LATEX=1 ;;
       --with-skills)  WITH_SKILLS=1 ;;
+      --with-projects) WITH_PROJECTS=1 ;;
       --all)
         WITH_NODE=1
         WITH_GO=1
@@ -134,6 +146,7 @@ parse_flags() {
         WITH_DOCKER=1
         WITH_LATEX=1
         WITH_SKILLS=1
+        WITH_PROJECTS=1
         ;;
       -h|--help)
         usage
@@ -147,6 +160,12 @@ parse_flags() {
     esac
     shift
   done
+
+  # Auto-flip WITH_NODE when WITH_PROJECTS is set (telegram-claude-bridge needs npm).
+  if (( WITH_PROJECTS )) && (( ! WITH_NODE )); then
+    WITH_NODE=1
+    note "--with-projects auto-enabled --with-node (telegram-claude-bridge needs npm)"
+  fi
 }
 
 # ---------------------------------------------------------------------------
@@ -607,6 +626,115 @@ install_skills() {
   run npx --yes skills add -g -y alchaincyf/nuwa-skill alchaincyf/darwin-skill
 }
 
+# seed_env <envfile> <example>
+# If $envfile already exists: leave as-is. Otherwise cp $example -> $envfile and
+# rewrite each KEY=VALUE line so VALUE becomes FIXME-PLEASE-FILL. Comments
+# (lines starting with optional whitespace then '#') and blank lines pass
+# through untouched. Trailing inline comments (KEY=val # comment) are NOT
+# preserved — the whole RHS becomes FIXME-PLEASE-FILL.
+#
+# Uses the BSD-awk-portable temp-file pattern (NOT GNU `awk -i inplace`).
+seed_env() {
+  local envfile="$1"
+  local example="$2"
+  if [[ -f "$envfile" ]]; then
+    note "$(basename "$(dirname "$envfile")")/.env present, leaving as-is"
+    return 0
+  fi
+  if (( DRY_RUN )); then
+    printf '+ cp %q %q && awk-rewrite %q\n' "$example" "$envfile" "$envfile" >&2
+    return 0
+  fi
+  cp "$example" "$envfile"
+  local tmpfile
+  tmpfile="$(mktemp "${envfile}.XXXXXX")"
+  awk '/^[[:space:]]*#/ || /^[[:space:]]*$/ {print; next}
+       /=/ {sub(/=.*/,"=FIXME-PLEASE-FILL"); print; next}
+       {print}' "$envfile" > "$tmpfile" && mv "$tmpfile" "$envfile"
+  note "created $envfile from .env.example with FIXME-PLEASE-FILL sentinels — fill in before first run"
+}
+
+# install_one_project <name> <url> <method> <dst>
+install_one_project() {
+  local name="$1" url="$2" method="$3" dst="$4"
+
+  # 1. Clone (idempotent).
+  if [[ -d "$dst/.git" ]]; then
+    note "skip clone $name (already cloned at $dst)"
+  else
+    note "cloning $name -> $dst"
+    run git clone "$url" "$dst"
+  fi
+
+  # 2. Submodules (idempotent: no-op if all initialized).
+  if [[ -f "$dst/.gitmodules" ]]; then
+    run git -C "$dst" submodule update --init --recursive
+  fi
+
+  # 3. Install dispatch.
+  case "$method" in
+    repo-script)
+      if [[ -f "$dst/install.sh" ]]; then
+        note "running $name/install.sh"
+        run bash -c "cd '$dst' && bash install.sh"
+      else
+        err "$name expected install.sh but none found"
+        return 1
+      fi
+      ;;
+    npm)
+      if ! command -v npm >/dev/null 2>&1; then
+        err "$name needs npm but it's not on PATH (was --with-node skipped or did install_node fail?)"
+        return 1
+      fi
+      if [[ -d "$dst/node_modules" ]]; then
+        note "skip $name npm install (node_modules present)"
+      else
+        note "running npm install in $name"
+        run bash -c "cd '$dst' && npm install"
+      fi
+      ;;
+    *)
+      err "$name has unknown install method: $method"
+      return 1
+      ;;
+  esac
+
+  # 4. .env seed.
+  if [[ -f "$dst/.env.example" ]]; then
+    seed_env "$dst/.env" "$dst/.env.example"
+  fi
+}
+
+install_projects() {
+  log "install_projects"
+  note "PROJECTS_DIR=$PROJECTS_DIR"
+  if [[ ! -d "$PROJECTS_DIR" ]]; then
+    note "creating $PROJECTS_DIR"
+    run mkdir -p "$PROJECTS_DIR"
+  fi
+
+  local failures=()
+  local i name url method dst
+  for i in "${!PROJECT_NAMES[@]}"; do
+    name="${PROJECT_NAMES[$i]}"
+    url="${PROJECT_URLS[$i]}"
+    method="${PROJECT_INSTALL[$i]}"
+    dst="$PROJECTS_DIR/$name"
+
+    if ! ( install_one_project "$name" "$url" "$method" "$dst" ); then
+      err "$name install failed (continuing)"
+      failures+=("$name")
+    fi
+  done
+
+  if (( ${#failures[@]} > 0 )); then
+    err "failed: ${failures[*]} (installed $((${#PROJECT_NAMES[@]} - ${#failures[@]}))/${#PROJECT_NAMES[@]})"
+    return 1
+  fi
+  note "installed all: ${PROJECT_NAMES[*]}"
+}
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -633,6 +761,7 @@ main() {
   (( WITH_DOCKER )) && install_docker || true
   (( WITH_LATEX ))  && install_latex  || true
   (( WITH_SKILLS )) && install_skills || true
+  (( WITH_PROJECTS )) && install_projects || true
 
   log "done"
 }
