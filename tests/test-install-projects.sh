@@ -22,7 +22,7 @@ tmp_dir="$(mktemp -d -t install-projects-test.XXXXXX)"
 trap 'rm -rf -- "$tmp_dir"' EXIT
 
 # ---------- TAP helpers ------------------------------------------------------
-plan_count=8
+plan_count=9
 echo "1..$plan_count"
 echo "# repo_root=$repo_root"
 
@@ -258,6 +258,23 @@ EOF
   ok "$desc"
 }
 
+# T9: --with-projects --dry-run produces zero ERROR lines.
+# Regression for the QA finding where install_one_project probed
+# $dst/install.sh on disk even in dry-run mode (clone is simulated, $dst
+# doesn't exist), which printed "ERROR: <repo> expected install.sh but none
+# found". Fixed by trusting the dispatch table under DRY_RUN.
+test_T9() {
+  local desc="--with-projects --dry-run produces zero ERROR lines"
+  local out count
+  out="$(run_dryrun "" --with-projects --dry-run)"
+  count="$(printf '%s\n' "$out" | grep -c '^ERROR' || true)"
+  if [[ "$count" == "0" ]]; then
+    ok "$desc"
+  else
+    nok "$desc" "expected 0 ERROR lines, got $count; output: $out"
+  fi
+}
+
 # ---------- run --------------------------------------------------------------
 test_T1
 test_T2
@@ -267,6 +284,7 @@ test_T5
 test_T6
 test_T7
 test_T8
+test_T9
 
 echo "# passed=$((n - fail)) failed=$fail of $n"
 exit "$fail"

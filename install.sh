@@ -34,6 +34,11 @@ PROJECT_URLS=(
   https://github.com/ui-HookeyChiang/telegram-claude-bridge
 )
 PROJECT_INSTALL=(repo-script repo-script npm)
+# Parallel array: 1 if the project has git submodules (drives `git submodule
+# update --init --recursive` post-clone). Source-of-truth lookup table — used
+# in both real-run and --dry-run, so we don't need to probe `$dst/.gitmodules`
+# (which doesn't exist in dry-run since the clone is simulated).
+PROJECT_HAS_SUBMODULES=(1 0 0)
 
 OS=""             # "linux" | "macos"
 DISTRO_ID=""      # e.g. "ubuntu", "debian"
@@ -654,9 +659,15 @@ seed_env() {
   note "created $envfile from .env.example with FIXME-PLEASE-FILL sentinels — fill in before first run"
 }
 
-# install_one_project <name> <url> <method> <dst>
+# install_one_project <name> <url> <method> <dst> <has_submodules>
+#
+# In --dry-run mode the clone is simulated, so $dst doesn't actually exist on
+# disk. Filesystem probes (`-f $dst/install.sh`, `-f $dst/.gitmodules`,
+# `-f $dst/.env.example`) would all fail and produce misleading errors. We
+# therefore trust the dispatch table (`method`, `has_submodules`) under
+# DRY_RUN and only probe the filesystem on a real run.
 install_one_project() {
-  local name="$1" url="$2" method="$3" dst="$4"
+  local name="$1" url="$2" method="$3" dst="$4" has_submodules="$5"
 
   # 1. Clone (idempotent).
   if [[ -d "$dst/.git" ]]; then
@@ -667,14 +678,18 @@ install_one_project() {
   fi
 
   # 2. Submodules (idempotent: no-op if all initialized).
-  if [[ -f "$dst/.gitmodules" ]]; then
+  # Trust the dispatch table — works for both dry-run and real-run.
+  if (( has_submodules )); then
     run git -C "$dst" submodule update --init --recursive
   fi
 
   # 3. Install dispatch.
   case "$method" in
     repo-script)
-      if [[ -f "$dst/install.sh" ]]; then
+      if (( DRY_RUN )); then
+        note "would run $name/install.sh"
+        run bash -c "cd '$dst' && bash install.sh"
+      elif [[ -f "$dst/install.sh" ]]; then
         note "running $name/install.sh"
         run bash -c "cd '$dst' && bash install.sh"
       else
@@ -683,11 +698,13 @@ install_one_project() {
       fi
       ;;
     npm)
-      if ! command -v npm >/dev/null 2>&1; then
+      if (( DRY_RUN )); then
+        note "would run npm install in $name"
+        run bash -c "cd '$dst' && npm install"
+      elif ! command -v npm >/dev/null 2>&1; then
         err "$name needs npm but it's not on PATH (was --with-node skipped or did install_node fail?)"
         return 1
-      fi
-      if [[ -d "$dst/node_modules" ]]; then
+      elif [[ -d "$dst/node_modules" ]]; then
         note "skip $name npm install (node_modules present)"
       else
         note "running npm install in $name"
@@ -701,7 +718,12 @@ install_one_project() {
   esac
 
   # 4. .env seed.
-  if [[ -f "$dst/.env.example" ]]; then
+  # In dry-run we can't know whether .env.example exists; the seed_env helper
+  # already short-circuits under DRY_RUN with a clearly-formatted "+ cp ..."
+  # plan line, so it's safe to call unconditionally there.
+  if (( DRY_RUN )); then
+    seed_env "$dst/.env" "$dst/.env.example"
+  elif [[ -f "$dst/.env.example" ]]; then
     seed_env "$dst/.env" "$dst/.env.example"
   fi
 }
@@ -715,14 +737,15 @@ install_projects() {
   fi
 
   local failures=()
-  local i name url method dst
+  local i name url method has_submodules dst
   for i in "${!PROJECT_NAMES[@]}"; do
     name="${PROJECT_NAMES[$i]}"
     url="${PROJECT_URLS[$i]}"
     method="${PROJECT_INSTALL[$i]}"
+    has_submodules="${PROJECT_HAS_SUBMODULES[$i]}"
     dst="$PROJECTS_DIR/$name"
 
-    if ! ( install_one_project "$name" "$url" "$method" "$dst" ); then
+    if ! ( install_one_project "$name" "$url" "$method" "$dst" "$has_submodules" ); then
       err "$name install failed (continuing)"
       failures+=("$name")
     fi
