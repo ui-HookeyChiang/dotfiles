@@ -35,7 +35,7 @@ BACKUP_TS=""      # UTC timestamp captured once at start
 DOTFILES=(
   .zshrc .zprofile .vimrc .gitconfig .gitignore .inputrc
   .p10k.zsh .clang-format .clangd .ctags.sh
-  .ai-commit.sh .ai-commit-msg.sh
+  .ai-commit.sh .ai-commit-msg.sh .tmux.reset.sh
   .git-completion.sh .git-prompt.sh .git_allowed_signers
 )
 
