@@ -43,7 +43,20 @@ DOTFILES=(
 DIRS=(
   .config/nvim
   .config/tmux
-  .claude
+)
+
+# Whitelisted files inside ~/.claude/ (live at $HOME/.claude/<name>).
+#
+# ~/.claude/ is a mixed directory: it holds repo-managed config (this list)
+# plus Claude Code runtime state (.credentials.json, sessions/, projects/,
+# history.jsonl, skills/, plugins/, commands/, mcp.json, settings.local.json,
+# pua/, statsig/, todos/, ...). We MUST NOT directory-symlink ~/.claude into
+# the repo — that would clobber the runtime state into the backup dir on
+# install. Instead symlink only these files.
+CLAUDE_FILES=(
+  CLAUDE.md
+  settings.json
+  statusline-command.sh
 )
 
 # ---------------------------------------------------------------------------
@@ -414,6 +427,14 @@ symlink_dotfiles() {
   done
   for entry in "${DIRS[@]}"; do
     link_one "$entry"
+  done
+  # ~/.claude/ must exist as a real dir (Claude Code runtime writes here);
+  # link_one creates the parent via `mkdir -p` per entry, but make it explicit.
+  if [[ ! -d "$HOME/.claude" ]]; then
+    run mkdir -p "$HOME/.claude"
+  fi
+  for entry in "${CLAUDE_FILES[@]}"; do
+    link_one ".claude/$entry"
   done
   if [[ -z "$BACKUP_DIR" ]]; then
     note "no conflicts; no backup dir created"
