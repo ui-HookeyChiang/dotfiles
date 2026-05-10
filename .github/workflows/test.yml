@@ -1,0 +1,63 @@
+name: tests
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, macos-14]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install deps (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq zsh bat shellcheck
+
+      - name: Install deps (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install --quiet zsh bat shellcheck bash
+
+      - name: Provide bat symlink (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          ln -sf "$(command -v batcat)" "$HOME/.local/bin/bat"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: bash -n (syntax check)
+        run: bash -n .ctags.sh .ai-commit.sh .ai-commit-msg.sh install.sh
+
+      - name: shellcheck (bash files)
+        run: shellcheck -S error .ai-commit.sh .ai-commit-msg.sh install.sh
+
+      - name: shellcheck (sh dialect, .ctags.sh)
+        run: shellcheck -s sh -S error .ctags.sh
+
+      - name: tests/test-zsh-init.sh
+        run: bash tests/test-zsh-init.sh
+
+      - name: tests/test-install-projects.sh
+        run: bash tests/test-install-projects.sh
+
+      - name: tests/test-install-secrets.sh
+        run: bash tests/test-install-secrets.sh
+
+      - name: tests/test-install-os.sh
+        run: bash tests/test-install-os.sh
