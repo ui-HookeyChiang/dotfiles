@@ -1,6 +1,6 @@
 ---
 kind: spec
-status: active
+status: done
 created: 2026-05-10
 slug: env-secrets-keychain
 ---
