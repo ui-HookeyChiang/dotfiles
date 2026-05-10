@@ -28,11 +28,8 @@ zinit light romkatv/powerlevel10k
 # =============================================================================
 # 建議將 history/key-bindings/completion 改為 snippet (立即載入)
 # 以避免剛啟動時沒有歷史紀錄或補全的問題
-zinit snippet OMZ::lib/git.zsh
 zinit snippet OMZ::lib/completion.zsh
 zinit snippet OMZ::lib/history.zsh
-zinit snippet OMZ::lib/key-bindings.zsh
-zinit snippet OMZ::lib/theme-and-appearance.zsh
 zinit snippet OMZ::lib/clipboard.zsh
 
 # =============================================================================
@@ -55,7 +52,6 @@ zinit wait lucid atload'!_zsh_autosuggest_start' for \
 zinit wait lucid for \
     OMZ::plugins/git/git.plugin.zsh \
     OMZ::plugins/tmux/tmux.plugin.zsh \
-    OMZ::plugins/docker/docker.plugin.zsh \
     OMZ::plugins/fzf/fzf.plugin.zsh \
     OMZ::plugins/extract/extract.plugin.zsh
 
@@ -73,11 +69,51 @@ zinit light jeffreytse/zsh-vi-mode
 
 # Define an init function and append to zvm_after_init_commands
 function my_init() {
+  # Existing user bindings
   zvm_bindkey viins '^F' autosuggest-accept
-  # 恢復原本的歷史搜尋按鍵 (Ctrl+P / Ctrl+N)
-  # 使用 up-line-or-search 可以根據已輸入的前綴搜尋歷史
   zvm_bindkey viins '^P' up-line-or-search
   zvm_bindkey viins '^N' down-line-or-search
+
+  # Restore productive bindings previously from OMZ::lib/key-bindings.zsh
+  # (verified safe by PTY A/B test — 0 viins/vicmd regression)
+
+  autoload -U edit-command-line; zle -N edit-command-line
+  zvm_bindkey viins '^X^E' edit-command-line
+  bindkey -M vicmd '^X^E' edit-command-line
+
+  autoload -U up-line-or-beginning-search; zle -N up-line-or-beginning-search
+  zvm_bindkey viins '^[[A' up-line-or-beginning-search
+  zvm_bindkey viins '^[OA' up-line-or-beginning-search
+  bindkey -M vicmd '^[[A' up-line-or-beginning-search
+  bindkey -M vicmd '^[OA' up-line-or-beginning-search
+
+  autoload -U down-line-or-beginning-search; zle -N down-line-or-beginning-search
+  zvm_bindkey viins '^[[B' down-line-or-beginning-search
+  zvm_bindkey viins '^[OB' down-line-or-beginning-search
+  bindkey -M vicmd '^[[B' down-line-or-beginning-search
+  bindkey -M vicmd '^[OB' down-line-or-beginning-search
+
+  if [[ -n "${terminfo[kcbt]}" ]]; then
+    zvm_bindkey viins "${terminfo[kcbt]}" reverse-menu-complete
+    bindkey -M vicmd "${terminfo[kcbt]}" reverse-menu-complete
+  fi
+
+  zvm_bindkey viins '^[[3;5~' kill-word
+  bindkey -M vicmd '^[[3;5~' kill-word
+
+  zvm_bindkey viins '^[[1;5C' forward-word
+  zvm_bindkey viins '^[[1;5D' backward-word
+  bindkey -M vicmd '^[[1;5C' forward-word
+  bindkey -M vicmd '^[[1;5D' backward-word
+
+  if [[ -n "${terminfo[kpp]}" ]]; then
+    zvm_bindkey viins "${terminfo[kpp]}" up-line-or-history
+    bindkey -M vicmd "${terminfo[kpp]}" up-line-or-history
+  fi
+  if [[ -n "${terminfo[knp]}" ]]; then
+    zvm_bindkey viins "${terminfo[knp]}" down-line-or-history
+    bindkey -M vicmd "${terminfo[knp]}" down-line-or-history
+  fi
 }
 zvm_after_init_commands+=(my_init)
 
