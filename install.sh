@@ -26,6 +26,8 @@ WITH_DOCKER=0
 WITH_LATEX=0
 WITH_SKILLS=0
 WITH_PROJECTS=0
+WITH_SECRETS=0
+SEED_SECRETS_MISSING=()  # (repo|KEY|service) tuples accumulated across run
 PROJECTS_DIR="${DOTFILES_PROJECTS_DIR:-$HOME}"
 PROJECT_NAMES=(llm-wiki stock-target-finder telegram-claude-bridge)
 PROJECT_URLS=(
@@ -119,6 +121,8 @@ Optional modules:
   --with-skills   Claude Code skills via npx skills CLI (huashu-nuwa, darwin-skill)
   --with-projects Personal projects (llm-wiki, stock-target-finder, telegram-claude-bridge)
                   Auto-enables --with-node. Override clone dir with DOTFILES_PROJECTS_DIR (default: $HOME).
+  --with-secrets  Materialize per-project .env from committed .env.tpl via macOS Keychain
+                  (security find-generic-password). Auto-enables --with-projects. macOS only.
   --all           Enable all OS-compatible optional modules
 
 Flags:
@@ -144,6 +148,7 @@ parse_flags() {
       --with-latex)   WITH_LATEX=1 ;;
       --with-skills)  WITH_SKILLS=1 ;;
       --with-projects) WITH_PROJECTS=1 ;;
+      --with-secrets) WITH_SECRETS=1 ;;
       --all)
         WITH_NODE=1
         WITH_GO=1
@@ -152,6 +157,7 @@ parse_flags() {
         WITH_LATEX=1
         WITH_SKILLS=1
         WITH_PROJECTS=1
+        WITH_SECRETS=1
         ;;
       -h|--help)
         usage
@@ -165,6 +171,12 @@ parse_flags() {
     esac
     shift
   done
+
+  # Auto-flip WITH_PROJECTS when WITH_SECRETS is set (need projects cloned to seed .env into).
+  if (( WITH_SECRETS )) && (( ! WITH_PROJECTS )); then
+    WITH_PROJECTS=1
+    note "--with-secrets auto-enabled --with-projects (need projects to seed .env into)"
+  fi
 
   # Auto-flip WITH_NODE when WITH_PROJECTS is set (telegram-claude-bridge needs npm).
   if (( WITH_PROJECTS )) && (( ! WITH_NODE )); then
@@ -656,7 +668,117 @@ seed_env() {
   awk '/^[[:space:]]*#/ || /^[[:space:]]*$/ {print; next}
        /=/ {sub(/=.*/,"=FIXME-PLEASE-FILL"); print; next}
        {print}' "$envfile" > "$tmpfile" && mv "$tmpfile" "$envfile"
+  chmod 600 "$envfile" 2>/dev/null || note "$(basename "$(dirname "$envfile")")/.env: chmod 600 failed (FS may not support; default umask used)"
   note "created $envfile from .env.example with FIXME-PLEASE-FILL sentinels — fill in before first run"
+}
+
+# seed_one_env_tpl <repo-name> <tpl-path> <env-path>
+# Per-line strict matcher (S10): comment/blank, security cmd substitution, literal.
+# Pattern 4 (unrecognized) fail-soft pass-through with note. Dry-run extracts
+# `-s <service>` tokens via awk match() — does NOT call security.
+# Resolved values use `security find-generic-password -s <service> -a $USER -w`.
+# Misses: write KEY= and append (repo|KEY|service) to global SEED_SECRETS_MISSING.
+seed_one_env_tpl() {
+  local repo="$1" tpl="$2" env="$3"
+
+  if [[ "$OS" != "macos" ]]; then
+    note "skip $repo .env.tpl (Keychain is macOS-only)"
+    return 0
+  fi
+
+  if [[ ! -f "$tpl" ]]; then
+    note "skip $repo (no .env.tpl)"
+    return 0
+  fi
+
+  if (( DRY_RUN )); then
+    # Static parse of -s <service> tokens via bash regex (BSD-awk-portable);
+    # do NOT call security.
+    local services="" line svc
+    while IFS= read -r line || [[ -n "$line" ]]; do
+      if [[ "$line" =~ -s[[:space:]]+([^[:space:]]+)[[:space:]]+-w ]]; then
+        svc="${BASH_REMATCH[1]}"
+        services+="${services:+, }$svc"
+      fi
+    done < "$tpl"
+    if [[ -n "$services" ]]; then
+      note "+ would inject from $repo/.env.tpl using keychain entries: $services"
+    else
+      note "+ would inject from $repo/.env.tpl (no keychain lookups detected)"
+    fi
+    return 0
+  fi
+
+  if [[ -f "$env" ]]; then
+    note "$repo/.env present, leaving as-is"
+    return 0
+  fi
+
+  local tmp
+  tmp="$(mktemp "${env}.XXXXXX")"
+
+  local lineno=0 line key service val
+  local local_missing=0
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    lineno=$((lineno + 1))
+    # Pattern 1: comment or blank.
+    if [[ "$line" =~ ^[[:space:]]*# ]] || [[ "$line" =~ ^[[:space:]]*$ ]]; then
+      printf '%s\n' "$line" >> "$tmp"
+      continue
+    fi
+    # Pattern 2: KEY=$(security find-generic-password -s <service> -w)
+    if [[ "$line" =~ ^([A-Z_][A-Z0-9_]*)=\$\(security[[:space:]]+find-generic-password[[:space:]]+-s[[:space:]]+([^[:space:]]+)[[:space:]]+-w\)$ ]]; then
+      key="${BASH_REMATCH[1]}"
+      service="${BASH_REMATCH[2]}"
+      if val="$(security find-generic-password -s "$service" -a "$USER" -w 2>/dev/null)"; then
+        printf '%s=%s\n' "$key" "$val" >> "$tmp"
+      else
+        printf '%s=\n' "$key" >> "$tmp"
+        local_missing=$((local_missing + 1))
+        SEED_SECRETS_MISSING+=("$repo|$key|$service")
+      fi
+      continue
+    fi
+    # Pattern 3: KEY=<literal> (no command substitution).
+    if [[ "$line" =~ ^[A-Z_][A-Z0-9_]*=[^$\(]*$ ]]; then
+      printf '%s\n' "$line" >> "$tmp"
+      continue
+    fi
+    # Pattern 4: unrecognized — pass through with note.
+    note "$repo/.env.tpl line $lineno has unrecognized shape, passing through as-is"
+    printf '%s\n' "$line" >> "$tmp"
+  done < "$tpl"
+
+  mv "$tmp" "$env"
+  chmod 600 "$env" 2>/dev/null || note "$repo/.env: chmod 600 failed (FS may not support; default umask used)"
+
+  if (( local_missing > 0 )); then
+    note "$repo/.env created with $local_missing missing keychain entries (see end-of-run block)"
+  else
+    note "$repo/.env created from .env.tpl, all keychain entries resolved"
+  fi
+}
+
+# seed_secrets — end-of-run reporter. macOS-only. Prints copy-pasteable
+# `security add-generic-password` lines for accumulated misses.
+seed_secrets() {
+  log "seed_secrets"
+  if [[ "$OS" != "macos" ]]; then
+    note "Keychain is macOS-only; skipping bootstrap-block reporter"
+    return 0
+  fi
+  if (( ${#SEED_SECRETS_MISSING[@]} == 0 )); then
+    note "all keychain entries resolved (or no .env.tpl files processed)"
+    return 0
+  fi
+  err "missing keychain entries — add them to populate .env on next run:"
+  err "(after adding, run: rm <repo>/.env && ./install.sh --with-secrets)"
+  local entry repo key service
+  for entry in "${SEED_SECRETS_MISSING[@]}"; do
+    IFS='|' read -r repo key service <<< "$entry"
+    printf "security add-generic-password -s %q -a %q -w 'YOUR_VALUE_HERE'  # %s/%s\n" \
+      "$service" "$USER" "$repo" "$key" >&2
+  done
 }
 
 # install_one_project <name> <url> <method> <dst> <has_submodules>
@@ -717,12 +839,18 @@ install_one_project() {
       ;;
   esac
 
-  # 4. .env seed.
-  # In dry-run we can't know whether .env.example exists; the seed_env helper
-  # already short-circuits under DRY_RUN with a clearly-formatted "+ cp ..."
-  # plan line, so it's safe to call unconditionally there.
+  # 4. .env seed (S4 cascade: existing .env wins; .env.tpl beats .env.example).
+  # In dry-run we can't know whether .env.tpl/.env.example exist; both helpers
+  # short-circuit cleanly under DRY_RUN. F2: dry-run prints both branches.
   if (( DRY_RUN )); then
+    if (( WITH_SECRETS )); then
+      seed_one_env_tpl "$name" "$dst/.env.tpl" "$dst/.env"
+    fi
     seed_env "$dst/.env" "$dst/.env.example"
+  elif [[ -f "$dst/.env" ]]; then
+    note "$name/.env present, leaving as-is"
+  elif (( WITH_SECRETS )) && [[ -f "$dst/.env.tpl" ]]; then
+    seed_one_env_tpl "$name" "$dst/.env.tpl" "$dst/.env"
   elif [[ -f "$dst/.env.example" ]]; then
     seed_env "$dst/.env" "$dst/.env.example"
   fi
@@ -785,6 +913,7 @@ main() {
   (( WITH_LATEX ))  && install_latex  || true
   (( WITH_SKILLS )) && install_skills || true
   (( WITH_PROJECTS )) && install_projects || true
+  (( WITH_SECRETS )) && seed_secrets || true
 
   log "done"
 }
