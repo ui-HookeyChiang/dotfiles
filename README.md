@@ -36,7 +36,22 @@ exec $SHELL                           # reload
 | `--with-latex` | MacTeX (macOS only) |
 | `--with-skills` | Claude Code skills (huashu-nuwa, darwin-skill) via `npx skills` CLI; auto-symlinks into `~/.claude/skills/` |
 | `--with-projects` | Personal projects (llm-wiki, stock-target-finder, telegram-claude-bridge). Auto-enables `--with-node`. Override path: `DOTFILES_PROJECTS_DIR`. |
+| `--with-secrets` | Materialize per-project `.env` from committed `.env.tpl` via macOS Keychain. Auto-enables `--with-projects`. macOS only. |
 | `--all` | All OS-compatible optional modules |
+
+### Bootstrap secrets via macOS Keychain
+
+`--with-secrets` reads each project's `.env.tpl` and resolves `$(security find-generic-password ...)` lookups against your macOS Keychain. iCloud Keychain syncs entries across your Macs; bootstrap once per secret value with:
+
+```bash
+security add-generic-password -s <repo>-<key-slug> -a "$USER" -w 'YOUR_VALUE'
+```
+
+Missing entries are reported at the end of the run with copy-pasteable `security add-generic-password` lines. The end-state on a fresh Mac:
+
+```bash
+./install.sh --with-secrets   # = --with-projects + --with-node + .env from Keychain
+```
 
 ### Preconditions for `--with-projects`
 - GitHub SSH key configured (llm-wiki includes a submodule cloned via SSH)
