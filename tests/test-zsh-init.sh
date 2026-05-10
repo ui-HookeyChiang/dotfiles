@@ -95,13 +95,46 @@ test_T1() {
   if [[ "$out" == "nvim" ]]; then ok "$desc"; else nok "$desc" "expected 'nvim', got '$out'"; fi
 }
 
+# Why this normalization (used by T2 + T3 below):
+#
+# Both tests probe `echo $EDITOR` from an interactive zsh and compare the
+# captured stdout against the literal string "nvim". On warm zinit caches the
+# stdout is just "nvim\n" and a trivial compare works. On a *cold* zinit cache
+# (CI fresh runners, or any host whose `~/.local/share/zinit` was just wiped)
+# zinit's plugin clone + instant-prompt path emits substantial noise on
+# stdout *before* the user's `echo` line:
+#   * ANSI CSI escapes:  \e[<params><letter>   (color, cursor save/restore,
+#                                                cursor hide \e[?25l, etc.)
+#   * ANSI OSC escapes:  \e]<params>\a         (terminal title pushes)
+#   * Carriage returns:  \r                    (progress-bar overwrites from
+#                                                git clone / zinit downloader)
+# Because `\r` is *not* `\n`, naive `tail -n1` sees a single physical line
+# that ends in `...\rnvim` and returns `\rnvim` — which fails the
+# `[[ "$out" == "nvim" ]]` compare. (The TAP diag printer then renders the
+# `\r` as a column-zero return, which is why PR #27's CI log showed the
+# misleading `expected 'nvim', got '\nnvim'`.)
+#
+# Fresh CI runners always hit this regime: there is no warm-up to suppress
+# the clone progress, so every job sees full cold-cache noise.
+#
+# The pipeline below normalizes that noise:
+#   1. sed strips CSI sequences  (\e[…<letter>)
+#   2. sed strips OSC sequences  (\e]…\a)
+#   3. sed converts \r → \n      (so embedded CR splits into separate lines)
+#   4. awk picks the last NON-EMPTY line (`NF { last = $0 }` — preferable to
+#      `tail -n1`, which would return a trailing blank line if any).
+# Pure POSIX, works under both GNU sed/awk (Linux) and BSD sed/awk (macOS).
+
 # T2: non-login interactive inherits EDITOR.
 test_T2() {
   local desc="zsh -ic inherits EDITOR=nvim (interactive non-login)"
   local out
   out="$(zrun -ic 'echo $EDITOR' 2>/dev/null)"
-  # Plugins (zinit) may print noise on stdout via instant-prompt; grep last line.
-  out="$(printf '%s\n' "$out" | tail -n1)"
+  out="$(
+    printf '%s\n' "$out" \
+      | sed -E $'s/\x1b\\[[0-9;?]*[a-zA-Z]//g; s/\x1b\\][^\x07]*\x07//g; s/\r/\\n/g' \
+      | awk 'NF { last = $0 } END { print last }'
+  )"
   if [[ "$out" == "nvim" ]]; then ok "$desc"; else nok "$desc" "expected 'nvim', got '$out'"; fi
 }
 
@@ -110,7 +143,11 @@ test_T3() {
   local desc="zsh -lic inherits EDITOR=nvim (login interactive)"
   local out
   out="$(zrun -lic 'echo $EDITOR' 2>/dev/null)"
-  out="$(printf '%s\n' "$out" | tail -n1)"
+  out="$(
+    printf '%s\n' "$out" \
+      | sed -E $'s/\x1b\\[[0-9;?]*[a-zA-Z]//g; s/\x1b\\][^\x07]*\x07//g; s/\r/\\n/g' \
+      | awk 'NF { last = $0 } END { print last }'
+  )"
   if [[ "$out" == "nvim" ]]; then ok "$desc"; else nok "$desc" "expected 'nvim', got '$out'"; fi
 }
 
