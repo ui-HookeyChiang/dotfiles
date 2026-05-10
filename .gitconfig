@@ -64,13 +64,13 @@
     autosetuprebase = always
 [pull]
     rebase = true
-[url "ssh://git@github.com/"]
-    insteadOf = https://github.com/
 [gpg]
     format = ssh
 [gpg "ssh"]
     allowedSignersFile = ~/.git_allowed_signers
 [tag]
     gpgsign = true
-[url "git@github.com:"]
-    insteadOf = https://github.com/
+# Optional: rewrite all GitHub https URLs to SSH form. Useful if you push via
+# SSH key. Comment out if you clone via HTTPS + credential helper (default).
+# [url "git@github.com:"]
+#     insteadOf = https://github.com/
