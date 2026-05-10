@@ -1,9 +1,12 @@
 #!/bin/bash
 
-# Check if ANTHROPIC_API_KEY is set
-if [ -z "$ANTHROPIC_API_KEY" ]; then
-  echo "Error: ANTHROPIC_API_KEY environment variable is not set" >&2
-  exit 1
+# Graceful fallback: if no API key, exit 0 so the wrapper falls through to
+# standard `git commit -v` (editor flow). This lets users without the env var
+# still commit normally without seeing two layered errors.
+if [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
+  echo "note: ANTHROPIC_API_KEY not set — skipping AI commit message generation." >&2
+  echo "      (set ANTHROPIC_API_KEY in your shell to enable, or use 'git commit' directly.)" >&2
+  exit 0
 fi
 
 # Model selection (override with CLAUDE_MODEL env var)
@@ -82,6 +85,24 @@ response=$(curl -s https://api.anthropic.com/v1/messages \
             }
         ]
     }")
+
+# Detect API error response shape (e.g. {"type":"error","error":{...}})
+api_error=$(echo "$response" | jq -r '.error.message // empty')
+if [[ -n "$api_error" ]]; then
+  echo "Error: Anthropic API returned an error:" >&2
+  echo "  $api_error" >&2
+  echo "" >&2
+  echo "Full response:" >&2
+  (echo "$response" | jq '.' >&2 2>/dev/null) || echo "$response" >&2
+  exit 1
+fi
+
+# Defensive: also bail if .content[0].text is missing (malformed response)
+if ! echo "$response" | jq -e '.content[0].text' >/dev/null 2>&1; then
+  echo "Error: API response missing .content[0].text:" >&2
+  (echo "$response" | jq '.' >&2 2>/dev/null) || echo "$response" >&2
+  exit 1
+fi
 
 # Extract the commit message from the response
 commit_message=$(echo "$response" | jq -r '.content[0].text')

@@ -6,6 +6,18 @@ hash=${1:-}
 # Get AI-generated commit message
 commit_message=$(~/.ai-commit-msg.sh "$hash")
 
+# F5 fallback: if .ai-commit-msg.sh bailed (e.g. missing API key), fall back
+# to standard editor-driven commit. Only works for the "current commit" path —
+# historic reword (hash supplied) has no graceful fallback.
+if [[ -z "$commit_message" ]]; then
+  echo "note: AI commit message not available — opening editor for manual commit." >&2
+  if [ -z "$hash" ]; then
+    exec git commit -v "$@"
+  fi
+  echo "Error: cannot reword historic commit $hash without AI message; aborting." >&2
+  exit 1
+fi
+
 # Commit staged changes
 if [ -z "$hash" ]; then
   git commit -m "$commit_message"
