@@ -6,6 +6,9 @@ if [ -z "$ANTHROPIC_API_KEY" ]; then
   exit 1
 fi
 
+# Model selection (override with CLAUDE_MODEL env var)
+CLAUDE_MODEL="${CLAUDE_MODEL:-claude-sonnet-4-7}"
+
 if [ -z "${1:-}" ]; then
   diffopt="--cached"
   range="HEAD"
@@ -70,7 +73,7 @@ response=$(curl -s https://api.anthropic.com/v1/messages \
     -H "x-api-key: $ANTHROPIC_API_KEY" \
     -H "anthropic-version: 2023-06-01" \
     --data-raw "{
-        \"model\": \"claude-sonnet-4-6\",
+        \"model\": \"${CLAUDE_MODEL}\",
         \"max_tokens\": 1024,
         \"messages\": [
             {

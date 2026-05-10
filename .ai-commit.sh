@@ -32,8 +32,19 @@ git reset --hard "$newhash"
 if [ -n "$commits" ]; then
   for c in $commits; do
     if ! git cherry-pick "$c"; then
-      echo "Warning: cherry-pick conflict on $c, skipping" >&2
-      git cherry-pick --skip
+      echo "ERROR: cherry-pick conflict on $c during AI-rewrite" >&2
+      echo "  The commit chain has been partially rewritten. To recover:" >&2
+      echo "    1. Resolve conflicts in the affected files" >&2
+      echo "    2. git add <resolved-files>" >&2
+      echo "    3. git cherry-pick --continue" >&2
+      echo "    4. Manually replay any remaining commits: $commits" >&2
+      echo "  Or to fully abort and restore the original branch:" >&2
+      echo "    git cherry-pick --abort && git reset --hard $branch@{1}" >&2
+      git cherry-pick --abort
+      if [ "$stashed" = 1 ]; then
+        git stash pop || true
+      fi
+      exit 1
     fi
   done
 fi
