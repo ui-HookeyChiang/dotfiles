@@ -183,3 +183,4 @@ unset CONDA_BASE
 # 9. P10k 設定檔讀取
 # =============================================================================
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+POWERLEVEL9K_DISABLE_CONFIGURATION_WIZARD=true
