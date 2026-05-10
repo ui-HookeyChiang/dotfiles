@@ -7,3 +7,30 @@
 *build/
 build/*
 coverage/
+
+# Shell / interpreter history
+.zsh_history
+.zsh_sessions/
+.bash_history
+.lesshst
+.viminfo
+.python_history
+.node_repl_history
+
+# Network / auth state
+.netrc
+.ssh/
+.aws/
+.gnupg/
+.config/gh/
+
+# Compiled zsh completion cache
+.zcompdump*
+
+# Env files / secrets
+.env
+.env.*
+*.pem
+*.key
+id_*
+*.kdbx
