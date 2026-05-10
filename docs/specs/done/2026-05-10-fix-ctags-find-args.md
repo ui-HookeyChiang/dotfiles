@@ -1,6 +1,6 @@
 ---
 kind: spec
-status: active
+status: done
 created: 2026-05-10
 slug: fix-ctags-find-args
 ---
@@ -8,7 +8,7 @@ slug: fix-ctags-find-args
 # Design: fix `.ctags.sh` find-args silent skip
 
 **Date:** 2026-05-10
-**Status:** Active (brainstorming bypassed — see Background)
+**Status:** Done (brainstorming bypassed — see Background)
 **Owner:** hookey.chiang@ui.com
 **Stack position:** task-1 of 3 in `fix/silent-failure-bugs/`
 

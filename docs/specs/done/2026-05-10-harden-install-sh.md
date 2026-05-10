@@ -1,6 +1,6 @@
 ---
 kind: spec
-status: active
+status: done
 created: 2026-05-10
 slug: harden-install-sh
 ---
@@ -8,7 +8,7 @@ slug: harden-install-sh
 # Design: harden `install.sh` — loud module failure, source-safe, Debian-aware
 
 **Date:** 2026-05-10
-**Status:** Active (brainstorming bypassed — see Background)
+**Status:** Done (brainstorming bypassed — see Background)
 **Owner:** hookey.chiang@ui.com
 **Stack position:** task-3 of 3 in `fix/silent-failure-bugs/`
 

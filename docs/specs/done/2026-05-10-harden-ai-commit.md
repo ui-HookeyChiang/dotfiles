@@ -1,6 +1,6 @@
 ---
 kind: spec
-status: active
+status: done
 created: 2026-05-10
 slug: harden-ai-commit
 ---
@@ -8,7 +8,7 @@ slug: harden-ai-commit
 # Design: harden `.ai-commit*.sh` — loud cherry-pick failure + envify model
 
 **Date:** 2026-05-10
-**Status:** Active (brainstorming bypassed — see Background)
+**Status:** Done (brainstorming bypassed — see Background)
 **Owner:** hookey.chiang@ui.com
 **Stack position:** task-2 of 3 in `fix/silent-failure-bugs/`
 
