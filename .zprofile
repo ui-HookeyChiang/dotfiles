@@ -20,8 +20,8 @@ if command -v go >/dev/null 2>&1; then
   gopath="$(go env GOPATH)"
   export PATH="$gopath/bin:$PATH"
   unset gopath
-elif [[ ! "$PATH" == *"/home/${USER}/go/bin"* ]]; then
-  export PATH="${PATH:+${PATH}:}/home/${USER}/go/bin"
+elif [[ ! "$PATH" == *"$HOME/go/bin"* ]]; then
+  export PATH="${PATH:+${PATH}:}$HOME/go/bin"
 fi
 
 # macOS-only: zathura dbus setup
