@@ -592,10 +592,16 @@ install_docker() {
     return 0
   fi
   note "installing Docker Engine via official apt repo"
+  local docker_distro=""
+  case " $DISTRO_ID " in
+    *ubuntu*) docker_distro="ubuntu" ;;
+    *debian*) docker_distro="debian" ;;
+    *)        err "install_docker: unsupported distro '$DISTRO_ID'; expected ubuntu or debian"; return 1 ;;
+  esac
   run sudo install -m 0755 -d /etc/apt/keyrings
-  run sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+  run sudo curl -fsSL "https://download.docker.com/linux/${docker_distro}/gpg" -o /etc/apt/keyrings/docker.asc
   run sudo chmod a+r /etc/apt/keyrings/docker.asc
-  run bash -c 'echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null'
+  run bash -c "echo \"deb [arch=\$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/${docker_distro} \$(. /etc/os-release && echo \\\"\$VERSION_CODENAME\\\") stable\" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null"
   run sudo apt-get update
   run sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
   run sudo usermod -aG docker "$USER"
@@ -778,15 +784,19 @@ main() {
   init_submodules
   symlink_dotfiles
 
-  (( WITH_NODE ))   && install_node   || true
-  (( WITH_GO ))     && install_go     || true
-  (( WITH_RUST ))   && install_rust   || true
-  (( WITH_DOCKER )) && install_docker || true
-  (( WITH_LATEX ))  && install_latex  || true
-  (( WITH_SKILLS )) && install_skills || true
-  (( WITH_PROJECTS )) && install_projects || true
+  if (( WITH_NODE )); then install_node; fi
+  if (( WITH_GO )); then install_go; fi
+  if (( WITH_RUST )); then install_rust; fi
+  if (( WITH_DOCKER )); then install_docker; fi
+  if (( WITH_LATEX )); then install_latex; fi
+  if (( WITH_SKILLS )); then install_skills; fi
+  if (( WITH_PROJECTS )); then install_projects; fi
 
   log "done"
 }
 
-main "$@"
+# Run main only when invoked directly. Sourcing the file (e.g. for unit tests
+# that want to extract individual functions like seed_env) skips main.
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  main "$@"
+fi
