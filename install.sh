@@ -295,29 +295,41 @@ is_installed_apt() {
 # Used by is_present_apt so install_core_packages skips packages whose binary
 # is already in PATH (e.g. nvim built from PPA/source, not tracked by dpkg).
 # Packages not listed default to "binary name == pkg name".
-declare -A PKG_BINARIES=(
-  [neovim]="nvim"
-  [ripgrep]="rg"
-  [fd-find]="fdfind fd"
-  [bat]="batcat bat"
-)
+#
+# Linux-only guard: `declare -A` (associative array) requires bash 4.0+, but
+# macOS ships /bin/bash 3.2 (Apple GPLv3 freeze). Under bash 3.2 this line is
+# parsed as an indexed array and `[neovim]` becomes an arithmetic expression,
+# evaluating `neovim` as a variable — which under `set -u` (line 11) aborts
+# the script at load time, before detect_os runs. is_present_apt is only
+# called on the apt path, so guarding both the array and the function on
+# Linux keeps macOS load-time clean without rewriting either.
+# `$OS` is not set yet at this point (detect_os runs at line 907), so we
+# probe `uname -s` directly.
+if [[ "$(uname -s)" == "Linux" ]]; then
+  declare -A PKG_BINARIES=(
+    [neovim]="nvim"
+    [ripgrep]="rg"
+    [fd-find]="fdfind fd"
+    [bat]="batcat bat"
+  )
 
-# is_present_apt <pkg>
-# Returns 0 if installed via apt OR any of its known binaries is in PATH.
-is_present_apt() {
-  local pkg="$1"
-  if is_installed_apt "$pkg"; then
-    return 0
-  fi
-  local bins="${PKG_BINARIES[$pkg]:-$pkg}"
-  local b
-  for b in $bins; do
-    if command -v "$b" >/dev/null 2>&1; then
+  # is_present_apt <pkg>
+  # Returns 0 if installed via apt OR any of its known binaries is in PATH.
+  is_present_apt() {
+    local pkg="$1"
+    if is_installed_apt "$pkg"; then
       return 0
     fi
-  done
-  return 1
-}
+    local bins="${PKG_BINARIES[$pkg]:-$pkg}"
+    local b
+    for b in $bins; do
+      if command -v "$b" >/dev/null 2>&1; then
+        return 0
+      fi
+    done
+    return 1
+  }
+fi
 
 # is_installed_brew <pkg>
 is_installed_brew() {
