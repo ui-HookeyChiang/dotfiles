@@ -61,3 +61,6 @@ jobs:
 
       - name: tests/test-install-os.sh
         run: bash tests/test-install-os.sh
+
+      - name: tests/test-install-symlinks.sh
+        run: bash tests/test-install-symlinks.sh

@@ -470,7 +470,10 @@ link_one() {
     # If symlink already points into the repo (resolves to $src or starts with REPO_ROOT)
     # AND the target actually exists, skip. A dangling symlink falls through to backup so
     # we don't keep a broken link pointing at a deleted/renamed repo file.
-    if { [[ "$target" == "$src" ]] || [[ "$target" == "$REPO_ROOT/"* ]]; } && [[ -e "$src" ]]; then
+    # `-e "$dst"` follows the symlink: false when $dst dangles (e.g. points into a
+    # removed worktree under $REPO_ROOT/.worktrees/...), so we fall through to repair.
+    if { [[ "$target" == "$src" ]] || [[ "$target" == "$REPO_ROOT/"* ]]; } \
+       && [[ -e "$src" ]] && [[ -e "$dst" ]]; then
       note "skip $rel (already linked)"
       return 0
     fi
