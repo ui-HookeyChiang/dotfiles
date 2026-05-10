@@ -60,7 +60,7 @@ zinit wait lucid for \
 # =============================================================================
 
 # 1. Syntax Highlighting (必須在 autosuggestions 之後，並在最後初始化補全)
-zinit wait lucid atinit"zicompinit; zicdreplay" for \
+zinit wait lucid atinit"zicompinit -C -d \"\$ZSH_COMPDUMP\"; zicdreplay" for \
     zsh-users/zsh-syntax-highlighting
 
 # 2. Zsh-Vi-Mode (必須最後載入，以正確覆蓋按鍵)

@@ -42,7 +42,7 @@ path=("$HOME/.local/bin" $path)
 
 # macOS Homebrew shellenv (also handles Intel via /usr/local fallback).
 # This belongs here (not .zprofile) so IDE-spawned shells on macOS get brew on PATH.
-if (( IS_MAC )); then
+if (( IS_MAC )) && [[ -z "${HOMEBREW_PREFIX:-}" ]]; then
   if [[ -x /opt/homebrew/bin/brew ]]; then
     eval "$(/opt/homebrew/bin/brew shellenv)"
   elif [[ -x /usr/local/bin/brew ]]; then
