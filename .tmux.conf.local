@@ -15,6 +15,25 @@ if-shell 'command -v xclip >/dev/null 2>&1 && [ -z "${SSH_CONNECTION:-}" ] && [ 
     "bind-key -T copy-mode-vi y send-keys -X copy-pipe-and-cancel 'xclip -in -selection clipboard' ; \
      bind-key -T copy-mode-vi Enter send-keys -X copy-pipe-and-cancel 'xclip -in -selection clipboard'"
 
+# -- OSC 52 fallback for SSH-without-X ----------------------------------------
+# When neither pbcopy nor xclip applies (typical SSH session into a Linux host
+# with no $DISPLAY), fall through to tmux's built-in OSC 52 path. The terminal
+# emulator on the local end receives the escape sequence and writes the
+# selection into the system clipboard. Requires:
+#   - set-clipboard on  (default in tmux 3.2+; explicit here)
+#   - terminal-features tells tmux the outer terminal can decode OSC 52
+#   - iTerm2: enable "Applications in terminal may access clipboard"
+#     (Preferences > General > Selection)
+set -gq set-clipboard on
+set -ag terminal-features ",tmux-256color:clipboard"
+set -ag terminal-features ",xterm-256color:clipboard"
+
+# -- mouse --------------------------------------------------------------------
+# Enable mouse so drag-select routes through tmux (pane-aware), and the
+# MouseDragEnd1Pane binding fires copy-pipe-and-cancel — which then either
+# pbcopy/xclips above, or falls through to OSC 52.
+set -g mouse on
+
 # -- placeholder for future user customization --------------------------------
 # Append your tweaks below this line. See ~/.config/tmux/.tmux.conf.local for
 # the full list of oh-my-tmux variables you can override (prefix, theme, etc.).
