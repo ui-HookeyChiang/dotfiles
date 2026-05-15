@@ -1,6 +1,6 @@
 ---
 kind: spec
-status: proposed
+status: done
 created: 2026-05-15
 date: 2026-05-15
 title: tmux conf.local routing fix + smart-splits tmux integration
