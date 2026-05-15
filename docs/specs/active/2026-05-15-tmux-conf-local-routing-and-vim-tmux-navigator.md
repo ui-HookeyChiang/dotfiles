@@ -2,6 +2,8 @@
 kind: spec
 status: proposed
 created: 2026-05-15
+date: 2026-05-15
+title: tmux conf.local routing fix + smart-splits tmux integration
 slug: tmux-conf-local-routing-and-vim-tmux-navigator
 ---
 
