@@ -48,4 +48,3 @@ Claude Code's built-in sensitive-file detection (not settings.json `deny`) gates
 3. Chat "allow" ≠ dialog click; stop retrying after first deny — switch tool, don't tweak parameters.
 4. Always backup first: `cp <file> /tmp/<file>.bak-$(date +%s)` before Python rewrite, since there's no dialog safety net.
 5. Skill rewrites: park at `docs/specs/proposed/<slug>-DRAFT.md` with BEGIN/END markers — Python rewrite of skill files still works but DRAFT-then-merge keeps history clean.
-
