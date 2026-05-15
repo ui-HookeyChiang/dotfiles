@@ -74,3 +74,4 @@
 # SSH key. Comment out if you clone via HTTPS + credential helper (default).
 # [url "git@github.com:"]
 #     insteadOf = https://github.com/
+[url "ssh://git@github.com/"]

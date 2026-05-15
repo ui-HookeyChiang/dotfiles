@@ -10,7 +10,7 @@ if [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
 fi
 
 # Model selection (override with CLAUDE_MODEL env var)
-CLAUDE_MODEL="${CLAUDE_MODEL:-claude-sonnet-4-7}"
+CLAUDE_MODEL="${CLAUDE_MODEL:-claude-opus-4-7}"
 
 if [ -z "${1:-}" ]; then
   diffopt="--cached"
