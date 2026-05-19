@@ -51,7 +51,7 @@ BACKUP_TS=""      # UTC timestamp captured once at start
 DOTFILES=(
   .zshenv .zshrc .zprofile .vimrc .gitconfig .gitignore .inputrc
   .p10k.zsh .clang-format .clangd .ctags.sh
-  .ai-commit.sh .ai-commit-msg.sh .tmux.reset.sh .tmux.conf.local
+  .ai-commit.sh .ai-commit-msg.sh .tmux.reset.sh
   .git-completion.sh .git-prompt.sh .git_allowed_signers
 )
 
@@ -59,6 +59,20 @@ DOTFILES=(
 DIRS=(
   .config/nvim
   .config/tmux
+)
+
+# Files inside a submodule directory that we override with our own version.
+# Format: "src_in_dotfiles:dest_in_HOME". The submodule's loader picks up our
+# file at the destination path. Must run AFTER init_submodules (the vanilla
+# template file from the submodule is what gets backed up on first install).
+#
+# .tmux.conf.local: oh-my-tmux's main .tmux.conf forces TMUX_CONF_LOCAL=
+# "$TMUX_CONF.local" at startup (where $TMUX_CONF resolves to
+# ~/.config/tmux/.tmux.conf), so tmux always reads ~/.config/tmux/.tmux.conf.local
+# regardless of any external env var. Symlinking our override into that exact
+# path is the only way to make user customizations take effect.
+SUBMODULE_OVERRIDES=(
+  ".tmux.conf.local:.config/tmux/.tmux.conf.local"
 )
 
 # Whitelisted files inside ~/.claude/ (live at $HOME/.claude/<name>).
@@ -520,6 +534,103 @@ symlink_dotfiles() {
   fi
 }
 
+# link_submodule_override <src_rel>:<dst_rel>
+#
+# Mirrors link_one's file/symlink/missing branching, but the destination is
+# decoupled from the source path: src lives at $REPO_ROOT/$src_rel and dst lives
+# at $HOME/$dst_rel (typically inside a submodule's working tree like
+# ~/.config/tmux/.tmux.conf.local). The submodule's own loader then picks up
+# our override at the canonical path it expects.
+#
+# Branch behaviour (matches link_one):
+#   - missing dst: ln -s
+#   - existing symlink into $REPO_ROOT (resolves): skip (idempotent)
+#   - existing symlink elsewhere or dangling: backup + re-link
+#   - existing regular file (the submodule's vanilla template on first install):
+#     backup + re-link
+link_submodule_override() {
+  local entry="$1"
+  local src_rel="${entry%%:*}"
+  local dst_rel="${entry#*:}"
+  local src="$REPO_ROOT/$src_rel"
+  local dst="$HOME/$dst_rel"
+
+  if [ ! -e "$src" ] && [ ! -L "$src" ]; then
+    note "skip $src_rel -> $dst_rel (src not in repo)"
+    return 0
+  fi
+
+  # Ensure parent dir of $dst exists (matches link_one).
+  local parent
+  parent="$(dirname "$dst")"
+  if [ ! -d "$parent" ]; then
+    run mkdir -p "$parent"
+  fi
+
+  if [ ! -e "$dst" ] && [ ! -L "$dst" ]; then
+    # Branch 1: target missing.
+    note "link submodule override $src_rel -> $dst"
+    run ln -s "$src" "$dst"
+    return 0
+  fi
+
+  if [ -L "$dst" ]; then
+    local target
+    target="$(readlink "$dst")"
+    # Already points into the repo AND resolves: idempotent skip.
+    case "$target" in
+      "$src"|"$REPO_ROOT"/*)
+        if [ -e "$src" ] && [ -e "$dst" ]; then
+          note "skip $src_rel -> $dst (already linked)"
+          return 0
+        fi
+        ;;
+    esac
+    # Foreign or dangling: back up and re-link.
+    ensure_backup_dir
+    note "backup foreign symlink $dst -> $target"
+    run mkdir -p "$BACKUP_DIR/$(dirname "$dst_rel")"
+    run mv "$dst" "$BACKUP_DIR/$dst_rel"
+    run ln -s "$src" "$dst"
+    return 0
+  fi
+
+  # Branch 3: regular file (typically the submodule's vanilla template).
+  ensure_backup_dir
+  note "backup $dst -> $BACKUP_DIR/$dst_rel"
+  run mkdir -p "$BACKUP_DIR/$(dirname "$dst_rel")"
+  run mv "$dst" "$BACKUP_DIR/$dst_rel"
+  run ln -s "$src" "$dst"
+}
+
+symlink_submodule_overrides() {
+  log "symlink_submodule_overrides"
+  if (( NO_SYMLINK )); then
+    note "--no-symlink set; skip"
+    return 0
+  fi
+  local entry
+  for entry in "${SUBMODULE_OVERRIDES[@]}"; do
+    link_submodule_override "$entry"
+  done
+
+  # Cleanup the old dead symlink left over from the previous install layout
+  # ($HOME/.tmux.conf.local pointed into $REPO_ROOT but was never read by tmux
+  # because oh-my-tmux overrides TMUX_CONF_LOCAL at startup). Conservative:
+  # only touch it when it's a symlink whose target is inside $REPO_ROOT. If
+  # the user has hand-managed file or a symlink pointing elsewhere, leave it.
+  if [ -L "$HOME/.tmux.conf.local" ]; then
+    local target
+    target="$(readlink "$HOME/.tmux.conf.local")"
+    case "$target" in
+      "$REPO_ROOT"/*)
+        note "removing stale symlink $HOME/.tmux.conf.local (target $target)"
+        run rm "$HOME/.tmux.conf.local"
+        ;;
+    esac
+  fi
+}
+
 # ---------------------------------------------------------------------------
 # Optional modules (stubs; filled in by Task 2)
 # ---------------------------------------------------------------------------
@@ -926,6 +1037,7 @@ main() {
   setup_zsh
   init_submodules
   symlink_dotfiles
+  symlink_submodule_overrides
 
   if (( WITH_NODE ));     then install_node;     fi
   if (( WITH_GO ));       then install_go;       fi
