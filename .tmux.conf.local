@@ -34,6 +34,19 @@ set -ag terminal-features ",xterm-256color:clipboard"
 # pbcopy/xclips above, or falls through to OSC 52.
 set -g mouse on
 
+# Force mouse drag to ALWAYS enter tmux copy-mode, even when the application
+# in the pane (nvim, claude code TUI, less) has requested mouse reporting.
+# Without this override, tmux's default `bind -T root MouseDrag1Pane if-shell
+# ... { send-keys -M } { copy-mode -M }` forwards the drag into the app, which
+# then handles it however it likes (nvim: move cursor; claude TUI: ignored);
+# the user cannot copy text from app panes to the system clipboard.
+#
+# Trade-off: app-internal mouse interactions (nvim split focus on click,
+# scrollback in less, etc.) stop working in mouse-enabled panes — users must
+# use keyboard equivalents (Ctrl-W for nvim splits, vi-keys for less). This is
+# an explicit prioritization of "copy text to clipboard" over "app mouse UX".
+bind-key -T root MouseDrag1Pane if-shell -F '#{pane_in_mode}' 'send-keys -M' 'copy-mode -M'
+
 # -- vim-tmux-navigator -------------------------------------------------------
 # Ctrl-h/j/k/l navigate splits in vim/nvim AND panes in tmux, seamlessly.
 # When the current pane runs vim/nvim, forward the key into the editor so the
