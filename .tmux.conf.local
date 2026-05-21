@@ -76,3 +76,7 @@ bind-key -T copy-mode-vi C-l select-pane -R
 # -- placeholder for future user customization --------------------------------
 # Append your tweaks below this line. See ~/.config/tmux/.tmux.conf.local for
 # the full list of oh-my-tmux variables you can override (prefix, theme, etc.).
+
+# oh-my-tmux defaults to 5000 lines, which fills up fast and makes
+# `prefix + [` scroll-back feel broken. 50000 is ~10x with negligible RAM.
+set -g history-limit 50000
