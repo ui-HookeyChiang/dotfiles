@@ -1,6 +1,6 @@
 {
   "$schema": "https://example.com/docs-lifecycle.schema.json",
-  "version": 3,
+  "version": 4,
   "specs": {
     "proposed": "docs/specs/proposed/",
     "active": "docs/specs/active/",
@@ -13,7 +13,8 @@
   },
   "tracking": {
     "todo_file": "TODO.md",
-    "milestones_file": "MILESTONES.md"
+    "milestones_file": "docs/MILESTONES.md",
+    "milestones_mode": "generated"
   },
   "frontmatter": {
     "kind_field": "kind",
@@ -26,5 +27,6 @@
     "project": null,
     "detected_from": "non_ubiquiti",
     "configured_at": "2026-05-06T11:18:15Z"
-  }
+  },
+  "exclude_paths": []
 }
