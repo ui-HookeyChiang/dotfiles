@@ -775,7 +775,11 @@ install_skills() {
   fi
   note "installing nuwa-skill + darwin-skill + find-skills via npx skills CLI"
   run npx --yes skills add -g -y alchaincyf/nuwa-skill alchaincyf/darwin-skill
-  run npx --yes skills add -g -y -s find-skills vercel-labs/skills
+  # `vercel-labs/skills` is a multi-skill repo, so we use `-s find-skills`
+  # to pick a single entry. The source positional must precede the flags —
+  # `skills add -s X SRC` makes the CLI swallow SRC as `-s`'s value and
+  # exit with `Missing required argument: source`.
+  run npx --yes skills add vercel-labs/skills -g -y -s find-skills
 }
 
 # seed_env <envfile> <example>
