@@ -132,7 +132,7 @@ Optional modules:
   --with-rust     rustup + stylua + rustfmt (Task 2)
   --with-docker   Docker Engine, Linux only (Task 2)
   --with-latex    MacTeX, macOS only (Task 2)
-  --with-skills   Claude Code skills via npx skills CLI (huashu-nuwa, darwin-skill)
+  --with-skills   Claude Code skills via npx skills CLI (huashu-nuwa, darwin-skill, find-skills)
   --with-projects Personal projects (llm-wiki, stock-target-finder, telegram-claude-bridge)
                   Auto-enables --with-node. Override clone dir with DOTFILES_PROJECTS_DIR (default: $HOME).
   --with-secrets  Materialize per-project .env from committed .env.tpl via macOS Keychain
@@ -766,13 +766,16 @@ install_skills() {
     note "npx missing — install Node first (try --with-node)"
     return 0
   fi
-  # Skills CLI auto-symlinks into ~/.claude/skills/. Skip if both are linked.
-  if [[ -L "$HOME/.claude/skills/huashu-nuwa" && -L "$HOME/.claude/skills/darwin-skill" ]]; then
-    note "skip skills (huashu-nuwa + darwin-skill already linked)"
+  # Skills CLI auto-symlinks into ~/.claude/skills/. Skip if all are linked.
+  if [[ -L "$HOME/.claude/skills/huashu-nuwa" \
+     && -L "$HOME/.claude/skills/darwin-skill" \
+     && -L "$HOME/.claude/skills/find-skills" ]]; then
+    note "skip skills (huashu-nuwa + darwin-skill + find-skills already linked)"
     return 0
   fi
-  note "installing nuwa-skill + darwin-skill via npx skills CLI"
+  note "installing nuwa-skill + darwin-skill + find-skills via npx skills CLI"
   run npx --yes skills add -g -y alchaincyf/nuwa-skill alchaincyf/darwin-skill
+  run npx --yes skills add -g -y -s find-skills vercel-labs/skills
 }
 
 # seed_env <envfile> <example>
