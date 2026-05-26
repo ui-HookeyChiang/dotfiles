@@ -1,6 +1,14 @@
 # Rules
 
-Invoke `stacking-dev` for all requests. Always delegate execution to subagents.
+## Workflow routing
+
+For code changes, invoke `stacking-dev` (it handles spec creation if missing).
+For tiny single-file fixes < 20 lines, use `stacking-dev-tiny`.
+For non-code work (questions, debug, config, deploy, perspective audits), use the matching domain skill — not stacking-dev.
+superpowers skills are subordinate — used within stacking-dev's phases, not directly.
+Always delegate execution to subagents.
+
+## Safety
 
 **Never push directly to main** — all changes go through PRs.
 
