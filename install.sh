@@ -132,7 +132,7 @@ Optional modules:
   --with-rust     rustup + stylua + rustfmt (Task 2)
   --with-docker   Docker Engine, Linux only (Task 2)
   --with-latex    MacTeX, macOS only (Task 2)
-  --with-skills   Claude Code skills via npx skills CLI (huashu-nuwa, darwin-skill, find-skills)
+  --with-skills   Claude Code skills via npx skills CLI (huashu-nuwa, darwin-skill, find-skills, caveman)
   --with-projects Personal projects (llm-wiki, stock-target-finder, telegram-claude-bridge)
                   Auto-enables --with-node. Override clone dir with DOTFILES_PROJECTS_DIR (default: $HOME).
   --with-secrets  Materialize per-project .env from committed .env.tpl via macOS Keychain
@@ -769,17 +769,19 @@ install_skills() {
   # Skills CLI auto-symlinks into ~/.claude/skills/. Skip if all are linked.
   if [[ -L "$HOME/.claude/skills/huashu-nuwa" \
      && -L "$HOME/.claude/skills/darwin-skill" \
-     && -L "$HOME/.claude/skills/find-skills" ]]; then
-    note "skip skills (huashu-nuwa + darwin-skill + find-skills already linked)"
+     && -L "$HOME/.claude/skills/find-skills" \
+     && -L "$HOME/.claude/skills/caveman" ]]; then
+    note "skip skills (huashu-nuwa + darwin-skill + find-skills + caveman already linked)"
     return 0
   fi
-  note "installing nuwa-skill + darwin-skill + find-skills via npx skills CLI"
+  note "installing nuwa-skill + darwin-skill + find-skills + caveman via npx skills CLI"
   run npx --yes skills add -g -y alchaincyf/nuwa-skill alchaincyf/darwin-skill
-  # `vercel-labs/skills` is a multi-skill repo, so we use `-s find-skills`
-  # to pick a single entry. The source positional must precede the flags —
-  # `skills add -s X SRC` makes the CLI swallow SRC as `-s`'s value and
-  # exit with `Missing required argument: source`.
+  # `vercel-labs/skills` and `juliusbrussee/caveman` are multi-skill repos, so
+  # we use `-s <name>` to pick a single entry. The source positional must
+  # precede the flags — `skills add -s X SRC` makes the CLI swallow SRC as
+  # `-s`'s value and exit with `Missing required argument: source`.
   run npx --yes skills add vercel-labs/skills -g -y -s find-skills
+  run npx --yes skills add juliusbrussee/caveman -g -y -s caveman
 }
 
 # seed_env <envfile> <example>
