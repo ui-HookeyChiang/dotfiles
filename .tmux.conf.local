@@ -28,6 +28,19 @@ set -gq set-clipboard on
 set -ag terminal-features ",tmux-256color:clipboard"
 set -ag terminal-features ",xterm-256color:clipboard"
 
+# -- alternate-screen scrollback ----------------------------------------------
+# Disable the alternate screen (smcup/rmcup) for ALL full-screen TUI apps so
+# their output lands in the normal scrollback buffer. Without this, apps like
+# Claude Code, nvim, less, and htop run in tmux's alternate screen — which has
+# NO scrollback (history_size stays ~2 lines), so `prefix + [` enters copy-mode
+# on an empty buffer and appears broken. The `@` suffix clears the smcup/rmcup
+# capabilities, forcing those apps to render inline.
+#
+# Trade-off: apps no longer restore the previous screen on exit, so their full
+# output stays in scrollback (visible clutter after quitting nvim/less). This
+# prioritizes "scroll Claude Code output with prefix + [" over a clean restore.
+set -ga terminal-overrides ',*:smcup@:rmcup@'
+
 # -- mouse --------------------------------------------------------------------
 # Enable mouse so drag-select routes through tmux (pane-aware), and the
 # MouseDragEnd1Pane binding fires copy-pipe-and-cancel — which then either
