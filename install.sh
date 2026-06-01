@@ -132,7 +132,8 @@ Optional modules:
   --with-rust     rustup + stylua + rustfmt (Task 2)
   --with-docker   Docker Engine, Linux only (Task 2)
   --with-latex    MacTeX, macOS only (Task 2)
-  --with-skills   Claude Code skills via npx skills CLI (huashu-nuwa, darwin-skill, find-skills, caveman)
+  --with-skills   Claude Code skills via npx skills CLI (huashu-nuwa, darwin-skill, find-skills)
+                  plus caveman as a Claude Code plugin (ships its SessionStart hook)
   --with-projects Personal projects (llm-wiki, stock-target-finder, telegram-claude-bridge)
                   Auto-enables --with-node. Override clone dir with DOTFILES_PROJECTS_DIR (default: $HOME).
   --with-secrets  Materialize per-project .env from committed .env.tpl via macOS Keychain
@@ -769,19 +770,30 @@ install_skills() {
   # Skills CLI auto-symlinks into ~/.claude/skills/. Skip if all are linked.
   if [[ -L "$HOME/.claude/skills/huashu-nuwa" \
      && -L "$HOME/.claude/skills/darwin-skill" \
-     && -L "$HOME/.claude/skills/find-skills" \
-     && -L "$HOME/.claude/skills/caveman" ]]; then
-    note "skip skills (huashu-nuwa + darwin-skill + find-skills + caveman already linked)"
-    return 0
+     && -L "$HOME/.claude/skills/find-skills" ]]; then
+    note "skip skills (huashu-nuwa + darwin-skill + find-skills already linked)"
+  else
+    note "installing nuwa-skill + darwin-skill + find-skills via npx skills CLI"
+    run npx --yes skills add -g -y alchaincyf/nuwa-skill alchaincyf/darwin-skill
+    # `vercel-labs/skills` is a multi-skill repo, so we use `-s <name>` to pick a
+    # single entry. The source positional must precede the flags — `skills add
+    # -s X SRC` makes the CLI swallow SRC as `-s`'s value and exit with
+    # `Missing required argument: source`.
+    run npx --yes skills add vercel-labs/skills -g -y -s find-skills
   fi
-  note "installing nuwa-skill + darwin-skill + find-skills + caveman via npx skills CLI"
-  run npx --yes skills add -g -y alchaincyf/nuwa-skill alchaincyf/darwin-skill
-  # `vercel-labs/skills` and `juliusbrussee/caveman` are multi-skill repos, so
-  # we use `-s <name>` to pick a single entry. The source positional must
-  # precede the flags — `skills add -s X SRC` makes the CLI swallow SRC as
-  # `-s`'s value and exit with `Missing required argument: source`.
-  run npx --yes skills add vercel-labs/skills -g -y -s find-skills
-  run npx --yes skills add juliusbrussee/caveman -g -y -s caveman
+
+  # caveman ships as a Claude Code plugin (not a bare skill) so its SessionStart
+  # hook auto-activates caveman mode each session. The skills-CLI route only
+  # links the passive SKILL.md with no hook. Idempotent: skip if already installed.
+  if ! command -v claude >/dev/null 2>&1; then
+    note "claude CLI missing — skip caveman plugin (install Node + claude-code first)"
+  elif grep -q '"caveman@caveman"' "$HOME/.claude/plugins/installed_plugins.json" 2>/dev/null; then
+    note "skip caveman plugin (already installed)"
+  else
+    note "installing caveman as a Claude Code plugin"
+    run claude plugin marketplace add JuliusBrussee/caveman
+    run claude plugin install caveman@caveman
+  fi
 }
 
 # seed_env <envfile> <example>
