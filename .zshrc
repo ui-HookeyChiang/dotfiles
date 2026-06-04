@@ -179,6 +179,9 @@ if [[ -n "$CONDA_BASE" && -f "$CONDA_BASE/bin/conda" ]]; then
 fi
 unset CONDA_BASE
 
+# Rust/cargo binaries (stylua, tree-sitter, etc.) — needed by nvim formatters/treesitter
+[[ -d "$HOME/.cargo/bin" ]] && export PATH="$HOME/.cargo/bin:$PATH"
+
 # =============================================================================
 # 9. P10k 設定檔讀取
 # =============================================================================
