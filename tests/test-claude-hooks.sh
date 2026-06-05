@@ -43,7 +43,14 @@ command -v jq >/dev/null 2>&1 || { echo "1..0 # SKIP jq not installed"; exit 0; 
 command -v git >/dev/null 2>&1 || { echo "1..0 # SKIP git not installed"; exit 0; }
 
 HOST="${HOSTNAME:-$(hostname 2>/dev/null || echo unknown)}"
-is_deny(){ printf '%s' "$1" | jq -e '.hookSpecificOutput.permissionDecision=="deny"' >/dev/null 2>&1; }
+# Allow output is empty (hook exits 0 silently); deny output is JSON. Guard the
+# empty case explicitly — jq's exit code on empty stdin differs across versions
+# (1.6 vs 1.7), so never let jq adjudicate "no input". For real JSON, use
+# `// empty` + a value test that is exit-code-stable across jq versions.
+is_deny(){
+  [ -n "$1" ] || return 1   # empty == allow
+  [ "$(printf '%s' "$1" | jq -r '.hookSpecificOutput.permissionDecision // empty' 2>/dev/null)" = deny ]
+}
 inp(){ jq -nc --arg s "$1" --arg f "$2" --arg t "$3" \
   '{session_id:$s,transcript_path:$t,tool_input:{file_path:$f}}'; }
 run_block(){ "$BLOCK" <<<"$(inp "$1" "$2" "$3")"; }  # echoes hook stdout
@@ -66,16 +73,6 @@ backdate(){  # $1 = path
 
 # Hand-write a lock: owner transcript epoch host:pid
 wl(){ printf '%s\t%s\t%s\t%s\n' "$1" "$2" "$3" "$4" > "$LOCK"; }
-
-# --- CI diagnostics (temporary) ---
-echo "# DBG bash=$BASH_VERSION set=$-"
-echo "# DBG BLOCK=$BLOCK exec=$([ -x "$BLOCK" ] && echo yes || echo NO)"
-_dbg="$(run_block sessA "$REPO/f" "$TXA"; echo "rc=$?")"
-echo "# DBG run_block raw: [${_dbg}]"
-echo "# DBG lock-after: [$(cat -A "$LOCK" 2>/dev/null)]"
-echo "# DBG NF=$(awk -F'\t' '{print NF}' "$LOCK" 2>/dev/null)"
-rm -f "$LOCK"
-# --- end diagnostics ---
 
 # 1: first claim allowed + 4-field lock
 out="$(run_block sessA "$REPO/f" "$TXA")"
