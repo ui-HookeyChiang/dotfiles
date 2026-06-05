@@ -56,3 +56,19 @@ Claude Code's built-in sensitive-file detection (not settings.json `deny`) gates
 3. Chat "allow" ≠ dialog click; stop retrying after first deny — switch tool, don't tweak parameters.
 4. Always backup first: `cp <file> /tmp/<file>.bak-$(date +%s)` before Python rewrite, since there's no dialog safety net.
 5. Skill rewrites: park at `docs/specs/proposed/<slug>-DRAFT.md` with BEGIN/END markers — Python rewrite of skill files still works but DRAFT-then-merge keeps history clean.
+
+# Coding Principles
+
+Adapted from Karpathy's CLAUDE.md — anti-LLM-mistake guardrails. Inject into Dev-agent prompts; apply during brainstorming exit and code review.
+
+## 1. Think Before Coding
+State assumptions explicitly. If uncertain, ask. If multiple interpretations exist, present them — don't pick silently. Surface tradeoffs.
+
+## 2. Simplicity First
+Minimum code that solves the problem. Nothing speculative. No unrequested features, premature abstractions, or defensive error handling. Standard: would a senior engineer consider this overcomplicated?
+
+## 3. Surgical Changes
+Touch only what you must. Clean up only your own mess. Match existing style without improving unrelated sections. Remove only the imports/variables your change orphaned.
+
+## 4. Goal-Driven Execution
+Define success criteria. Loop until verified. Transform vague requests into testable objectives with clear verification steps. Plan multi-step work explicitly before implementation.
