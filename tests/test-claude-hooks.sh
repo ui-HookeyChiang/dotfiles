@@ -22,7 +22,11 @@
 #
 # Output: TAP-13. Exit 0 on all pass, non-zero otherwise.
 
-set -u  # NOT -e: keep running after a failure.
+# NOT -e: this suite self-manages failures via counters, and many checks
+# legitimately use the non-zero return of a command (is_deny, grep -q) as data.
+# CI invokes scripts as `bash -e {0}`, so explicitly disable errexit here.
+set +e
+set -u
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd -- "$script_dir/.." && pwd)"
@@ -53,6 +57,12 @@ LOCK="$REPO/.git/claude-session.lock"
 TXA="$(mktemp)"; TXB="$(mktemp)"; touch "$TXA" "$TXB"
 now(){ date +%s; }
 stale(){ echo $(( $(date +%s) - 99999 )); }
+# Portable "set this file's mtime ~28h into the past" (well past STALE_SECS).
+# GNU touch accepts `-d @<epoch>`; BSD touch does not, but both accept
+# `-t [[CC]YY]MMDDhhmm[.ss]`. Use a fixed old wall-clock stamp for BSD.
+backdate(){  # $1 = path
+  touch -d "@$(stale)" "$1" 2>/dev/null || touch -t 202001010000 "$1"
+}
 
 # Hand-write a lock: owner transcript epoch host:pid
 wl(){ printf '%s\t%s\t%s\t%s\n' "$1" "$2" "$3" "$4" > "$LOCK"; }
@@ -76,7 +86,7 @@ else chk fail "dead same-host pid reclaimed instantly (crash recovery, no 6h wai
 
 # 4: LIVE same-host pid denies despite stale transcript
 sleep 300 & DURABLE=$!
-touch -d "@$(stale)" "$TXB"
+backdate "$TXB"
 wl sessA "$TXB" "$(stale)" "${HOST}:${DURABLE}"
 out="$(run_block sessC "$REPO/f" "$(mktemp)")"
 is_deny "$out" && chk pass "live same-host pid denies despite stale transcript" \
@@ -93,7 +103,7 @@ printf '%s' "$out" | jq -r '.hookSpecificOutput.permissionDecisionReason' \
 kill "$DURABLE" 2>/dev/null; wait "$DURABLE" 2>/dev/null
 
 # 6: cross-host stale lock reclaimed via mtime
-touch -d "@$(stale)" "$TXA"
+backdate "$TXA"
 wl sessA "$TXA" "$(stale)" "otherhost-xyz:4242"
 out="$(run_block sessB "$REPO/f" "$TXB")"
 if ! is_deny "$out" && grep -q '^sessB	' "$LOCK"; then
@@ -115,7 +125,7 @@ is_deny "$out" && chk pass "v1 pidless lock honored via mtime (deny live)" \
                || chk fail "v1 pidless lock honored via mtime (deny live)"
 
 # 9: v1 stale lock reclaimed
-touch -d "@$(stale)" "$TXA"
+backdate "$TXA"
 printf 'sessA\t%s\t%s\n' "$TXA" "$(stale)" > "$LOCK"
 out="$(run_block sessB "$REPO/f" "$TXB")"
 if ! is_deny "$out" && grep -q '^sessB	' "$LOCK"; then

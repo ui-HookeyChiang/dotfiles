@@ -84,6 +84,11 @@ mutex="${lock}.mx"
 
 now="$(date +%s)"
 host="${HOSTNAME:-$(hostname 2>/dev/null || echo unknown)}"
+
+# Portable mtime-in-epoch-seconds: GNU coreutils `stat -c %Y`, else BSD `stat -f %m`.
+mtime_of() {  # $1 = path -> prints epoch seconds, or 0 if unavailable
+  stat -c %Y "$1" 2>/dev/null || stat -f %m "$1" 2>/dev/null || echo 0
+}
 # PPID is the parent `claude` session process that spawned this hook — recording
 # it lets a later check use kill -0 to detect a crashed session on THIS host
 # immediately, instead of waiting out the staleness timeout.
@@ -110,7 +115,7 @@ is_alive() {  # $1=transcript_path $2=claim_epoch $3=host:pid  -> 0 if alive
     return 0
   fi
   if [ -n "$tx" ] && [ -f "$tx" ]; then
-    mtime="$(stat -c %Y "$tx" 2>/dev/null || echo 0)"
+    mtime="$(mtime_of "$tx")"
     [ $((now - mtime)) -lt "$STALE_SECS" ] && return 0
     return 1
   fi
@@ -170,7 +175,7 @@ fi
 # --- Claim (atomic mkdir mutex around the lock write) -----------------------
 # Reap an abandoned mutex (a crashed claim that never rmdir'd).
 if [ -d "$mutex" ]; then
-  mx_mtime="$(stat -c %Y "$mutex" 2>/dev/null || echo 0)"
+  mx_mtime="$(mtime_of "$mutex")"
   if [ $((now - mx_mtime)) -ge "$MUTEX_STALE_SECS" ]; then
     rmdir "$mutex" 2>/dev/null || true
   fi
