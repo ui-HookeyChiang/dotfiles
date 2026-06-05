@@ -9,13 +9,17 @@
 #
 # Lock:     <git-dir>/claude-session.lock   (one per workdir; git-dir differs
 #           per linked worktree, so locks never collide across worktrees)
-# Format:   <session_id>\t<transcript_path>\t<claim_epoch>   (TSV, one line)
+# Format:   <session_id>\t<transcript_path>\t<claim_epoch>\t<host>:<pid>
+#           (TSV, one line; 4th field optional — v1 3-field locks still parse)
 # Release:  release-session-lock.sh on SessionEnd (owner deletes its own lock);
-#           crash recovery via a long staleness timeout (see STALE_SECS).
-# Liveness: the owner's transcript_path mtime — Claude appends a turn to the
-#           transcript on activity, so a live session's transcript advances and
-#           a dead one's goes quiet. Deliberately conservative (6h) so we never
-#           steal a lock from a session that is merely thinking for a long time.
+#           crash recovery via PID liveness (same host) or staleness (see below).
+# Liveness: primary signal is the owning claude session's PID (recorded as
+#           <host>:<pid> at claim). On the SAME host, kill -0 <pid> tells us
+#           instantly whether that session is alive — a crashed session's lock
+#           is reclaimed at once, no waiting. The pid is meaningless across
+#           machines/containers, so a cross-host (or v1 pidless) lock falls back
+#           to the owner's transcript_path mtime with a conservative 6h
+#           staleness timeout (never steal a lock from a long-thinking session).
 #
 # Escape hatch: ALLOW_MAIN_EDIT=1 bypasses the lock entirely (kept for the
 # legitimate cases the old hook documented — initial commit, editing this hook
@@ -79,9 +83,28 @@ lock="${gitdir}/claude-session.lock"
 mutex="${lock}.mx"
 
 now="$(date +%s)"
+host="${HOSTNAME:-$(hostname 2>/dev/null || echo unknown)}"
+# PPID is the parent `claude` session process that spawned this hook — recording
+# it lets a later check use kill -0 to detect a crashed session on THIS host
+# immediately, instead of waiting out the staleness timeout.
+sess_pid="$PPID"
 
-is_alive() {  # $1 = transcript_path, $2 = claim_epoch  -> 0 if alive
-  local tx="$1" ts="$2" mtime
+is_alive() {  # $1=transcript_path $2=claim_epoch $3=host:pid  -> 0 if alive
+  local tx="$1" ts="$2" hp="$3" h p mtime
+  # Same-host PID liveness — the authoritative, instant signal when available.
+  # hp is "<host>:<pid>"; only trust the pid when the lock was taken on THIS
+  # host (a pid is meaningless across machines / containers).
+  if [ -n "$hp" ]; then
+    h="${hp%:*}"; p="${hp##*:}"
+    if [ "$h" = "$host" ] && [ -n "$p" ]; then
+      if kill -0 "$p" 2>/dev/null; then
+        return 0    # owning session process is alive
+      else
+        return 1    # owning session process is gone -> reclaim immediately
+      fi
+    fi
+    # Different host: fall through to the mtime/epoch heuristic below.
+  fi
   # Never steal within the same wall-clock minute, regardless of signal.
   if [ -n "$ts" ] && [ $((now - ts)) -lt 60 ]; then
     return 0
@@ -99,17 +122,19 @@ is_alive() {  # $1 = transcript_path, $2 = claim_epoch  -> 0 if alive
 write_lock() {  # atomic replace via temp + mv (mv is atomic within a fs)
   local tmp
   tmp="$(mktemp "${lock}.XXXXXX")" || return 1
-  printf '%s\t%s\t%s\n' "$session_id" "$transcript_path" "$now" > "$tmp" \
+  printf '%s\t%s\t%s\t%s\n' "$session_id" "$transcript_path" "$now" "${host}:${sess_pid}" > "$tmp" \
     && mv -f "$tmp" "$lock"
 }
 
-# Read the lock into owner/owner_tx/owner_ts. Returns 1 if the file is missing
-# or malformed (fewer than the 3 expected non-empty TSV fields) so callers can
-# treat a corrupt lock as "no valid owner" rather than mis-parsing it.
-read_lock() {  # populates globals: owner owner_tx owner_ts
-  owner=""; owner_tx=""; owner_ts=""
+# Read the lock into owner/owner_tx/owner_ts/owner_hp. Returns 1 if the file is
+# missing or malformed (fewer than the 3 mandatory non-empty TSV fields) so
+# callers can treat a corrupt lock as "no valid owner" rather than mis-parsing
+# it. The 4th field (host:pid) is optional — a v1 (3-field) lock reads back with
+# owner_hp empty, and is_alive() then falls back to the mtime/epoch heuristic.
+read_lock() {  # populates globals: owner owner_tx owner_ts owner_hp
+  owner=""; owner_tx=""; owner_ts=""; owner_hp=""
   [ -f "$lock" ] || return 1
-  IFS=$'\t' read -r owner owner_tx owner_ts < "$lock"
+  IFS=$'\t' read -r owner owner_tx owner_ts owner_hp < "$lock"
   [ -n "$owner" ] && [ -n "$owner_ts" ] || return 1
   return 0
 }
@@ -122,7 +147,7 @@ if read_lock; then
     write_lock      # refresh our own claim; keep the lock warm
     exit 0
   fi
-  if is_alive "$owner_tx" "$owner_ts"; then
+  if is_alive "$owner_tx" "$owner_ts" "$owner_hp"; then
     deny "Blocked: this working directory is locked by another active Claude session.
 
   workdir: $dir
@@ -157,7 +182,7 @@ fi
 if mkdir "$mutex" 2>/dev/null; then
   trap 'rmdir "$mutex" 2>/dev/null || true' EXIT
   # Double-checked locking: re-read inside the critical section.
-  if read_lock && [ "$owner" != "$session_id" ] && is_alive "$owner_tx" "$owner_ts"; then
+  if read_lock && [ "$owner" != "$session_id" ] && is_alive "$owner_tx" "$owner_ts" "$owner_hp"; then
     deny "Blocked: this working directory was just claimed by another active
 Claude session (race). workdir: $dir, owner: session $owner.
 Create your own worktree:  git worktree add .worktree/<branch> -b <branch>"
@@ -175,7 +200,7 @@ fi
 # Lost the mutex race to a simultaneous fire: re-read and re-evaluate once.
 if read_lock; then
   [ "$owner" = "$session_id" ] && exit 0
-  if is_alive "$owner_tx" "$owner_ts"; then
+  if is_alive "$owner_tx" "$owner_ts" "$owner_hp"; then
     deny "Blocked: lost the lock race for $dir to another active session ($owner).
 Create your own worktree:  git worktree add .worktree/<branch> -b <branch>"
   fi
