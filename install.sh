@@ -770,16 +770,20 @@ install_skills() {
   # Skills CLI auto-symlinks into ~/.claude/skills/. Skip if all are linked.
   if [[ -L "$HOME/.claude/skills/huashu-nuwa" \
      && -L "$HOME/.claude/skills/darwin-skill" \
-     && -L "$HOME/.claude/skills/find-skills" ]]; then
-    note "skip skills (huashu-nuwa + darwin-skill + find-skills already linked)"
+     && -L "$HOME/.claude/skills/find-skills" \
+     && -L "$HOME/.claude/skills/handoff" ]]; then
+    note "skip skills (huashu-nuwa + darwin-skill + find-skills + handoff already linked)"
   else
-    note "installing nuwa-skill + darwin-skill + find-skills via npx skills CLI"
+    note "installing nuwa-skill + darwin-skill + find-skills + handoff via npx skills CLI"
     run npx --yes skills add -g -y alchaincyf/nuwa-skill alchaincyf/darwin-skill
     # `vercel-labs/skills` is a multi-skill repo, so we use `-s <name>` to pick a
     # single entry. The source positional must precede the flags — `skills add
     # -s X SRC` makes the CLI swallow SRC as `-s`'s value and exit with
     # `Missing required argument: source`.
     run npx --yes skills add vercel-labs/skills -g -y -s find-skills
+    # `handoff` is a productivity skill from mattpocock's multi-skill repo,
+    # single-picked with `-s` like find-skills above (same SRC-before-flags rule).
+    run npx --yes skills add mattpocock/skills -g -y -s handoff
   fi
 
   # caveman ships as a Claude Code plugin (not a bare skill) so its SessionStart
