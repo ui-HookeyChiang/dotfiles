@@ -87,6 +87,8 @@ CLAUDE_FILES=(
   CLAUDE.md
   settings.json
   statusline-command.sh
+  hooks/block-main-edit.sh
+  hooks/release-session-lock.sh
 )
 
 # ---------------------------------------------------------------------------
