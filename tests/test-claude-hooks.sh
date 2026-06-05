@@ -67,6 +67,16 @@ backdate(){  # $1 = path
 # Hand-write a lock: owner transcript epoch host:pid
 wl(){ printf '%s\t%s\t%s\t%s\n' "$1" "$2" "$3" "$4" > "$LOCK"; }
 
+# --- CI diagnostics (temporary) ---
+echo "# DBG bash=$BASH_VERSION set=$-"
+echo "# DBG BLOCK=$BLOCK exec=$([ -x "$BLOCK" ] && echo yes || echo NO)"
+_dbg="$(run_block sessA "$REPO/f" "$TXA"; echo "rc=$?")"
+echo "# DBG run_block raw: [${_dbg}]"
+echo "# DBG lock-after: [$(cat -A "$LOCK" 2>/dev/null)]"
+echo "# DBG NF=$(awk -F'\t' '{print NF}' "$LOCK" 2>/dev/null)"
+rm -f "$LOCK"
+# --- end diagnostics ---
+
 # 1: first claim allowed + 4-field lock
 out="$(run_block sessA "$REPO/f" "$TXA")"
 if ! is_deny "$out" && [ -f "$LOCK" ] && [ "$(awk -F'\t' '{print NF}' "$LOCK")" = 4 ]; then
