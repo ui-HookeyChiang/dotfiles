@@ -5,6 +5,7 @@
 [core]
     filemode = true
     editor = nvim
+	excludesfile = /home/hookey/.gitignore
 [commit]
     verbose = true
     gpgsign = true
