@@ -24,16 +24,16 @@ The main agent orchestrates — it delegates and decides, never executes directl
 
 When using Bash for tasks without a dedicated tool:
 
-| Task | Use | Never use |
-|------|-----|-----------|
-| Search file contents | `Grep` tool (ripgrep) or `rg` | `grep`, `egrep`, `fgrep` (denied) |
-| Find files by name | `fdfind` (Linux) / `fd` (macOS) | `find` (denied) |
-| Code structure | `ast-grep` | |
-| JSON | `jq` | |
-| YAML/XML | `yq` | |
-| Interactive select | `fzf` | |
+| Task | Use |
+|------|-----|
+| Search file contents | `Grep` tool (ripgrep) or `rg` |
+| Find files by name | `fdfind` (Linux) / `fd` (macOS) |
+| Code structure | `ast-grep` |
+| JSON | `jq` |
+| YAML/XML | `yq` |
+| Interactive select | `fzf` |
 
-`grep`/`find` are denied in settings.json. Don't try `bash -c` or pipeline workarounds — use the alternatives above. Note: `fd` alias from `.zshrc` doesn't expand in Bash tool (non-interactive zsh) — call the binary directly by its OS-specific name.
+`grep`/`egrep`/`fgrep`/`find` are denied in settings.json (hard-blocked). Don't try `bash -c` or pipeline workarounds — use the alternatives above. Note: `fd` alias from `.zshrc` doesn't expand in Bash tool (non-interactive zsh) — call the binary directly by its OS-specific name.
 
 # Language
 
@@ -57,18 +57,4 @@ Claude Code's built-in sensitive-file detection (not settings.json `deny`) gates
 4. Always backup first: `cp <file> /tmp/<file>.bak-$(date +%s)` before Python rewrite, since there's no dialog safety net.
 5. Skill rewrites: park at `docs/specs/proposed/<slug>-DRAFT.md` with BEGIN/END markers — Python rewrite of skill files still works but DRAFT-then-merge keeps history clean.
 
-# Coding Principles
-
-Adapted from Karpathy's CLAUDE.md — anti-LLM-mistake guardrails. Inject into Dev-agent prompts; apply during brainstorming exit and code review.
-
-## 1. Think Before Coding
-State assumptions explicitly. If uncertain, ask. If multiple interpretations exist, present them — don't pick silently. Surface tradeoffs.
-
-## 2. Simplicity First
-Minimum code that solves the problem. Nothing speculative. No unrequested features, premature abstractions, or defensive error handling. Standard: would a senior engineer consider this overcomplicated?
-
-## 3. Surgical Changes
-Touch only what you must. Clean up only your own mess. Match existing style without improving unrelated sections. Remove only the imports/variables your change orphaned.
-
-## 4. Goal-Driven Execution
-Define success criteria. Loop until verified. Transform vague requests into testable objectives with clear verification steps. Plan multi-step work explicitly before implementation.
+@RTK.md
