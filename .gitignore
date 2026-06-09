@@ -34,3 +34,8 @@ coverage/
 *.key
 id_*
 *.kdbx
+
+# Git worktree dev dirs (block-main-edit hook convention)
+.worktree/
+
+**/.claude/settings.local.json
