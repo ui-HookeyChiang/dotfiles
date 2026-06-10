@@ -110,6 +110,17 @@
           "statusMessage": "Seeding CRG graph DB into worktree"
         }
       ]
+    },
+    {
+      "matcher": "Bash",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash ~/.claude/hooks/post-worktree-remove.sh",
+          "timeout": 15,
+          "statusMessage": "Cleaning CRG DB for removed worktree"
+        }
+      ]
     }
   ]
 }

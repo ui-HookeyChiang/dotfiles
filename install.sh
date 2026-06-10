@@ -91,6 +91,7 @@ CLAUDE_FILES=(
   hooks/block-main-edit.sh
   hooks/release-session-lock.sh
   hooks/post-checkout.sh
+  hooks/post-worktree-remove.sh
 )
 
 # ---------------------------------------------------------------------------
