@@ -27,7 +27,7 @@
       "Bash(find:*)"
     ]
   },
-  "model": "opus[1m]",
+  "model": "sonnet[1m]",
   "hooks": {
     "PreToolUse": [
       {
@@ -98,5 +98,18 @@
   "alwaysThinkingEnabled": false,
   "effortLevel": "high",
   "skipDangerousModePermissionPrompt": true,
-  "defaultMode": "bypassPermissions"
+  "defaultMode": "bypassPermissions",
+  "PostToolUse": [
+    {
+      "matcher": "Bash",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash ~/.claude/hooks/post-checkout.sh",
+          "timeout": 30,
+          "statusMessage": "Seeding CRG graph DB into worktree"
+        }
+      ]
+    }
+  ]
 }

@@ -25,6 +25,7 @@ WITH_RUST=0
 WITH_DOCKER=0
 WITH_LATEX=0
 WITH_SKILLS=0
+WITH_CRG=0
 WITH_PROJECTS=0
 WITH_SECRETS=0
 SEED_SECRETS_MISSING=()  # (repo|KEY|service) tuples accumulated across run
@@ -89,6 +90,7 @@ CLAUDE_FILES=(
   statusline-command.sh
   hooks/block-main-edit.sh
   hooks/release-session-lock.sh
+  hooks/post-checkout.sh
 )
 
 # ---------------------------------------------------------------------------
@@ -136,6 +138,9 @@ Optional modules:
   --with-latex    MacTeX, macOS only (Task 2)
   --with-skills   Claude Code skills via npx skills CLI (huashu-nuwa, darwin-skill, find-skills)
                   plus caveman as a Claude Code plugin (ships its SessionStart hook)
+  --with-crg      code-review-graph (CRG) — persistent codebase graph for AI-assisted review.
+                  Installs via pipx; writes per-repo .mcp.json on first use (run crg install).
+                  Requires pipx (apt install pipx). Graph DB stored in .code-review-graph/ (gitignored).
   --with-projects Personal projects (llm-wiki, stock-target-finder, telegram-claude-bridge)
                   Auto-enables --with-node. Override clone dir with DOTFILES_PROJECTS_DIR (default: $HOME).
   --with-secrets  Materialize per-project .env from committed .env.tpl via macOS Keychain
@@ -164,6 +169,7 @@ parse_flags() {
       --with-docker)  WITH_DOCKER=1 ;;
       --with-latex)   WITH_LATEX=1 ;;
       --with-skills)  WITH_SKILLS=1 ;;
+      --with-crg)     WITH_CRG=1 ;;
       --with-projects) WITH_PROJECTS=1 ;;
       --with-secrets) WITH_SECRETS=1 ;;
       --all)
@@ -173,6 +179,7 @@ parse_flags() {
         WITH_DOCKER=1
         WITH_LATEX=1
         WITH_SKILLS=1
+        WITH_CRG=1
         WITH_PROJECTS=1
         WITH_SECRETS=1
         ;;
@@ -802,6 +809,39 @@ install_skills() {
   fi
 }
 
+install_crg() {
+  log "install_crg"
+  # Ensure pipx is available.
+  if ! command -v pipx >/dev/null 2>&1; then
+    case "$OS" in
+      linux)
+        note "installing pipx via apt"
+        run sudo apt-get install -y pipx
+        run python3 -m pipx ensurepath
+        ;;
+      macos)
+        if is_installed_brew pipx; then
+          note "skip pipx (brew formula present)"
+        else
+          note "installing pipx via brew"
+          run brew install pipx
+          run pipx ensurepath
+        fi
+        ;;
+    esac
+  else
+    note "skip pipx (installed: $(pipx --version 2>/dev/null || echo present))"
+  fi
+
+  # Install code-review-graph via pipx (idempotent).
+  if pipx list 2>/dev/null | grep -q 'code-review-graph'; then
+    note "skip code-review-graph (already installed via pipx)"
+  else
+    note "installing code-review-graph via pipx"
+    run pipx install code-review-graph
+  fi
+}
+
 # seed_env <envfile> <example>
 # If $envfile already exists: leave as-is. Otherwise cp $example -> $envfile and
 # rewrite each KEY=VALUE line so VALUE becomes FIXME-PLEASE-FILL. Comments
@@ -1072,6 +1112,7 @@ main() {
   if (( WITH_DOCKER ));   then install_docker;   fi
   if (( WITH_LATEX ));    then install_latex;    fi
   if (( WITH_SKILLS ));   then install_skills;   fi
+  if (( WITH_CRG ));      then install_crg;      fi
   if (( WITH_PROJECTS )); then install_projects; fi
   if (( WITH_SECRETS ));  then seed_secrets;     fi
 
