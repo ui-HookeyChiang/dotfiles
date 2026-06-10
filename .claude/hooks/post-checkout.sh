@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # PostToolUse hook (Bash tool): seed CRG graph DB into a fresh worktree.
 #
-# When Claude Code creates a git worktree, this hook seeds the CRG graph DB
-# by copying the base branch's DB from ~/.cache/crg/<repo>/<base>/ then
-# running an incremental update so the first review is fast.
+# DB layout: ~/.cache/crg/<repo>/<branch-slug>/
+# All branches use ~/.cache — post-worktree-remove.sh cleans up on removal.
+# Long-lived branches (stable/*, main) persist indefinitely.
+# Short-lived branches are cleaned when the worktree is removed.
 #
-# DB layout: ~/.cache/crg/<repo-name>/<branch-name>/
-# Each branch gets its own persistent DB; copy base → update is faster than
-# a full rebuild, and the correct base DB is used (not always "main").
+# On worktree add: copy base branch DB → incremental update.
+# On worktree remove: see post-worktree-remove.sh (cleans ~/.cache slot).
 #
 # No-op when:
 #   - Not triggered by a `git worktree add` Bash command
@@ -70,16 +70,16 @@ else
     | sed 's|refs/remotes/origin/||')" || base_branch="main"
 fi
 
-# DB paths.
-crg_cache="$HOME/.cache/crg/${repo_name}"
-base_db="${crg_cache}/${base_branch}"
-
 # New worktree's branch name (from -b flag or derived from worktree path).
 new_branch="$(printf '%s' "$cmd" \
   | tr ' ' '\n' \
   | awk '/^-b$/{getline; print; exit}')"
 [[ -n "$new_branch" ]] || new_branch="$(basename "$worktree_path")"
-new_db="${crg_cache}/${new_branch}"
+
+# All DBs go to ~/.cache; post-worktree-remove.sh cleans short-lived ones.
+crg_cache="$HOME/.cache/crg/${repo_name}"
+base_db="${crg_cache}/${base_branch//\//-}"
+new_db="${crg_cache}/${new_branch//\//-}"
 
 # Already seeded — skip.
 [[ -d "$new_db" ]] && exit 0
@@ -87,7 +87,7 @@ new_db="${crg_cache}/${new_branch}"
 # Base DB must exist to copy from.
 [[ -d "$base_db" ]] || exit 0
 
-# Copy base DB into new branch's cache slot, then incremental update.
+# Copy base DB into new branch's slot, then incremental update.
 mkdir -p "$crg_cache"
 cp -r "$base_db" "$new_db" 2>/dev/null || exit 0
 code-review-graph update \
