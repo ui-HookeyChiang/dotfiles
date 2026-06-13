@@ -209,6 +209,9 @@ if read_lock; then
     deny "Blocked: lost the lock race for $dir to another active session ($owner).
 Create your own worktree:  git worktree add .worktree/<branch> -b <branch>"
   fi
+  # Stale lock after race: fall through to allow (original owner is dead).
+  exit 0
 fi
-# No live owner after the race: allow rather than spuriously deny.
-exit 0
+# read_lock failed (lock not yet written by winner) — fail closed, not open.
+deny "Blocked: lock contention for $dir — another session is mid-claim.
+Retry in a moment, or use ALLOW_MAIN_EDIT=1 if certain no other session is active."
