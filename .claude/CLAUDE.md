@@ -2,8 +2,7 @@
 
 ## Workflow routing
 
-For code changes, invoke `stacking-dev` (it handles spec creation if missing).
-For tiny single-file fixes < 20 lines, use `stacking-dev-tiny`.
+For code changes, invoke `stacking-dev` (it handles spec creation if missing) — it sizes the work and routes all changes, including small single-file fixes, through the full flow.
 For non-code work (questions, debug, config, deploy, perspective audits), use the matching domain skill — not stacking-dev.
 superpowers skills are subordinate — used within stacking-dev's phases, not directly.
 Always delegate execution to subagents.
@@ -16,7 +15,14 @@ Always delegate execution to subagents.
 
 # Delegation
 
-The main agent orchestrates — it delegates and decides, never executes directly.
+The main agent orchestrates — delegate based on scope:
+
+| Scope | Executor | Model |
+|-------|----------|-------|
+| Single-file change | main agent directly | session model (Opus 4.8) |
+| Multi-file change | subagent + `isolation: "worktree"` | `claude-sonnet-4-6` |
+| Read / explore only | subagent | `claude-haiku-4-5-20251001` |
+| Code review | subagent (needs clean context) | `claude-sonnet-4-6` |
 
 **Handoff:** pass context in the subagent's prompt for one-shot tasks. Use CONTEXT.md for worktree-based agents that need persistent context. Subagents return results directly — don't poll files for output.
 
