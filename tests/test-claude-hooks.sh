@@ -6,19 +6,24 @@
 #   - first session claims a workdir; lock written with 4 TSV fields
 #   - same session re-edits (refresh, allow)
 #   - second LIVE session is denied and nudged to a worktree
-#   - PID liveness (same host): a DEAD owner pid is reclaimed instantly even
-#     with a fresh epoch; a LIVE owner pid holds the lock even with a stale
-#     transcript — this is the crash-recovery path that avoids the 6h wait
-#   - cross-host lock ignores the (meaningless) pid and falls back to mtime
+#   - liveness = transcript mtime (NOT pid): a lock whose owner transcript is
+#     fresh (or claimed <60s ago) is honored regardless of the recorded pid;
+#     a lock whose transcript is stale (> STALE_SECS) is reclaimable regardless
+#     of the recorded pid. The host:pid 4th field is debug-only metadata.
+#   - cross-host and same-host locks behave identically (pid is never trusted)
 #   - v1 (3-field, pidless) locks remain backward compatible
 #   - corrupt locks are treated as no-owner (reclaimable), not mis-parsed
 #   - non-git paths and missing session_id fail open
 #   - release deletes only a lock the session owns
 #
-# Liveness is tested deterministically with hand-crafted lock files (controlled
-# host:pid), NOT by relying on the hook's PPID — under a test harness the hook's
-# parent is an ephemeral capture subshell, whereas in production it is the
-# durable `claude` process. Hand-crafted locks isolate the LOGIC from that.
+# Liveness is intentionally pid-independent. The hook's $PPID is NOT a reliable
+# handle on the durable `claude` session: any launcher that wraps the hook in a
+# subshell (this repo's CI `bash -e {0}`, and the observed Claude Code runner)
+# makes $PPID an ephemeral process that is dead by the next turn — a kill -0 on
+# it would mark every lock stale and let concurrent sessions steal each other's
+# locks silently. Transcript mtime is the robust signal: a live session appends
+# to its transcript on every tool-use. Tests hand-craft lock files (controlled
+# host:pid) to prove the pid is ignored either way.
 #
 # Output: TAP-13. Exit 0 on all pass, non-zero otherwise.
 
@@ -84,20 +89,25 @@ else chk fail "first claim allowed, 4-field lock written"; fi
 out="$(run_block sessA "$REPO/f" "$TXA")"
 is_deny "$out" && chk fail "same session re-edit allowed" || chk pass "same session re-edit allowed"
 
-# 3: DEAD same-host pid reclaimed instantly (fresh epoch, dead pid)
-wl sessA "$TXA" "$(now)" "${HOST}:999999"
+# 3: same-host pid is NOT trusted — a DEAD pid with a FRESH transcript is
+# still honored (deny). Liveness comes from transcript mtime, not kill -0, so
+# the (irrelevant) dead pid must not grant a reclaim while the owner is active.
+touch "$TXA"
+wl sessA "$TXA" "$(stale)" "${HOST}:999999"
 out="$(run_block sessB "$REPO/f" "$TXB")"
-if ! is_deny "$out" && grep -q '^sessB	' "$LOCK"; then
-  chk pass "dead same-host pid reclaimed instantly (crash recovery, no 6h wait)"
-else chk fail "dead same-host pid reclaimed instantly (crash recovery, no 6h wait)"; fi
+is_deny "$out" && chk pass "dead same-host pid ignored; fresh transcript holds lock" \
+               || chk fail "dead same-host pid ignored; fresh transcript holds lock"
 
-# 4: LIVE same-host pid denies despite stale transcript
+# 4: same-host pid is NOT trusted — a LIVE pid with a STALE transcript is
+# reclaimable. A long-quiet session (no transcript writes past STALE_SECS) is
+# treated as gone regardless of its process still being alive.
 sleep 300 & DURABLE=$!
 backdate "$TXB"
 wl sessA "$TXB" "$(stale)" "${HOST}:${DURABLE}"
 out="$(run_block sessC "$REPO/f" "$(mktemp)")"
-is_deny "$out" && chk pass "live same-host pid denies despite stale transcript" \
-               || chk fail "live same-host pid denies despite stale transcript"
+if ! is_deny "$out" && grep -q '^sessC	' "$LOCK"; then
+  chk pass "live same-host pid ignored; stale transcript reclaimed"
+else chk fail "live same-host pid ignored; stale transcript reclaimed"; fi
 kill "$DURABLE" 2>/dev/null; wait "$DURABLE" 2>/dev/null
 
 # 5: deny message nudges to a worktree
