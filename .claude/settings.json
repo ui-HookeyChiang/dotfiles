@@ -27,7 +27,6 @@
       "Bash(find:*)"
     ]
   },
-  "model": "sonnet[1m]",
   "hooks": {
     "PreToolUse": [
       {
@@ -58,6 +57,42 @@
             "type": "command",
             "command": "bash ~/.claude/hooks/release-session-lock.sh",
             "timeout": 10
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/warn-stale-main.sh",
+            "timeout": 10,
+            "statusMessage": "Checking main-branch drift"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/post-checkout.sh",
+            "timeout": 30,
+            "statusMessage": "Seeding CRG graph DB into worktree"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/post-worktree-remove.sh",
+            "timeout": 15,
+            "statusMessage": "Cleaning CRG DB for removed worktree"
           }
         ]
       }
@@ -99,28 +134,5 @@
   "effortLevel": "high",
   "skipDangerousModePermissionPrompt": true,
   "defaultMode": "bypassPermissions",
-  "PostToolUse": [
-    {
-      "matcher": "Bash",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "bash ~/.claude/hooks/post-checkout.sh",
-          "timeout": 30,
-          "statusMessage": "Seeding CRG graph DB into worktree"
-        }
-      ]
-    },
-    {
-      "matcher": "Bash",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "bash ~/.claude/hooks/post-worktree-remove.sh",
-          "timeout": 15,
-          "statusMessage": "Cleaning CRG DB for removed worktree"
-        }
-      ]
-    }
-  ]
+  "model": "sonnet[1m]"
 }
