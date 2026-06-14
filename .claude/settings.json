@@ -81,7 +81,8 @@
             "type": "command",
             "command": "bash ~/.claude/hooks/post-checkout.sh",
             "timeout": 30,
-            "statusMessage": "Seeding CRG graph DB into worktree"
+            "statusMessage": "Seeding CRG graph DB into worktree",
+            "if": "Bash(git worktree add*)"
           }
         ]
       },
@@ -92,7 +93,8 @@
             "type": "command",
             "command": "bash ~/.claude/hooks/post-worktree-remove.sh",
             "timeout": 15,
-            "statusMessage": "Cleaning CRG DB for removed worktree"
+            "statusMessage": "Cleaning CRG DB for removed worktree",
+            "if": "Bash(git worktree remove*)"
           }
         ]
       }
