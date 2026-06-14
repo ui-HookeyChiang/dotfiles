@@ -27,7 +27,7 @@
 set -uo pipefail
 
 # --- Tunables ---------------------------------------------------------------
-STALE_SECS="${CLAUDE_LOCK_STALE_SECS:-21600}"  # 6h; fail-safe, do not lower lightly
+STALE_SECS="${CLAUDE_LOCK_STALE_SECS:-1800}"  # 30min; transcript mtime is the liveness signal (a live session writes its transcript every tool-use)
 MUTEX_STALE_SECS=30                            # abandoned mkdir-mutex reaper
 
 # --- Escape hatch -----------------------------------------------------------
@@ -89,27 +89,21 @@ host="${HOSTNAME:-$(hostname 2>/dev/null || echo unknown)}"
 mtime_of() {  # $1 = path -> prints epoch seconds, or 0 if unavailable
   stat -c %Y "$1" 2>/dev/null || stat -f %m "$1" 2>/dev/null || echo 0
 }
-# PPID is the parent `claude` session process that spawned this hook — recording
-# it lets a later check use kill -0 to detect a crashed session on THIS host
-# immediately, instead of waiting out the staleness timeout.
+# PPID is the short-lived hook-invoker process, NOT the long-lived claude
+# session — it dies when the turn ends, so kill -0 on it always reports "dead"
+# and would make every lock look stale (silent lock theft between concurrent
+# sessions). Recorded as debug metadata in the lock's 4th field only; liveness
+# is determined by transcript mtime in is_alive(), never by this pid.
 sess_pid="$PPID"
 
-is_alive() {  # $1=transcript_path $2=claim_epoch $3=host:pid  -> 0 if alive
-  local tx="$1" ts="$2" hp="$3" h p mtime
-  # Same-host PID liveness — the authoritative, instant signal when available.
-  # hp is "<host>:<pid>"; only trust the pid when the lock was taken on THIS
-  # host (a pid is meaningless across machines / containers).
-  if [ -n "$hp" ]; then
-    h="${hp%:*}"; p="${hp##*:}"
-    if [ "$h" = "$host" ] && [ -n "$p" ]; then
-      if kill -0 "$p" 2>/dev/null; then
-        return 0    # owning session process is alive
-      else
-        return 1    # owning session process is gone -> reclaim immediately
-      fi
-    fi
-    # Different host: fall through to the mtime/epoch heuristic below.
-  fi
+is_alive() {  # $1=transcript_path $2=claim_epoch (3rd arg host:pid ignored) -> 0 if alive
+  local tx="$1" ts="$2" mtime
+  # Liveness = transcript freshness. A live claude session appends to its
+  # transcript on every tool-use / response, so a recently-touched transcript
+  # is the reliable "owner still working" signal. We deliberately do NOT use
+  # kill -0 on the recorded pid: that pid is the short-lived hook-invoker
+  # ($PPID), which is already dead by the next turn, so it would mark every
+  # lock stale and let concurrent sessions silently steal each other's locks.
   # Never steal within the same wall-clock minute, regardless of signal.
   if [ -n "$ts" ] && [ $((now - ts)) -lt 60 ]; then
     return 0
