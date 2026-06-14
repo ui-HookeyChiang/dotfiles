@@ -134,5 +134,5 @@
   "effortLevel": "high",
   "skipDangerousModePermissionPrompt": true,
   "defaultMode": "bypassPermissions",
-  "model": "sonnet[1m]"
+  "skipWorkflowUsageWarning": true
 }
