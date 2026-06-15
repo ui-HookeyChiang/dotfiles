@@ -11,6 +11,8 @@ Always delegate execution to subagents.
 
 **Never push directly to main** — all changes go through PRs.
 
+**Release exception:** `semver-release` may push directly to main, but ONLY commits limited to `debian/changelog`, `releases/`, and version tags (`v*`). Any release that also needs code changes: those land via PR first, then `semver-release` tags the merged result.
+
 **Never merge PRs without explicit user consent.**
 
 # Delegation
