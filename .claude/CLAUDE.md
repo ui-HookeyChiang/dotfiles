@@ -15,16 +15,9 @@ Always delegate execution to subagents.
 
 # Delegation
 
-The main agent orchestrates — delegate based on scope:
+The main agent orchestrates and handles single-file changes directly (session model). Everything else — multi-file changes, code review, exploration — delegates to a subagent on `claude-sonnet-4-6`.
 
-| Scope | Executor | Model |
-|-------|----------|-------|
-| Single-file change | main agent directly | session model (Opus 4.8) |
-| Multi-file change | subagent + `isolation: "worktree"` | `claude-sonnet-4-6` |
-| Read / explore only | subagent | `claude-haiku-4-5-20251001` |
-| Code review | subagent (needs clean context) | `claude-sonnet-4-6` |
-
-**Handoff:** pass context in the subagent's prompt for one-shot tasks. Use CONTEXT.md for worktree-based agents that need persistent context. Subagents return results directly — don't poll files for output.
+**Handoff:** pass context in the subagent's prompt for one-shot tasks. Use HANDOFF.md for worktree-based agents that need persistent context. Subagents return results directly — don't poll files for output.
 
 # Shell Tools
 
