@@ -92,6 +92,7 @@ CLAUDE_FILES=(
   hooks/release-session-lock.sh
   hooks/post-checkout.sh
   hooks/post-worktree-remove.sh
+  hooks/warn-stale-main.sh
 )
 
 # ---------------------------------------------------------------------------
