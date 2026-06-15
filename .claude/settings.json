@@ -98,6 +98,17 @@
           }
         ]
       }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/subagent-caveman-inject.sh",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   },
   "statusLine": {
