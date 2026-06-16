@@ -97,3 +97,6 @@ set -g history-limit 50000
 # -- true color ---------------------------------------------------------------
 set -g default-terminal "tmux-256color"
 set -ag terminal-overrides ",xterm-256color:RGB"
+
+# -- OSC52 passthrough (nvim clipboard over SSH → iTerm2) ---------------------
+set -g allow-passthrough on
