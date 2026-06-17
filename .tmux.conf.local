@@ -65,16 +65,15 @@ bind-key -T root MouseDrag1Pane if-shell -F '#{pane_in_mode}' 'send-keys -M' 'co
 # When the current pane runs vim/nvim, forward the key into the editor so the
 # editor's plugin (mrjones2014/smart-splits.nvim, already installed in
 # ~/.config/nvim) handles the move; otherwise tmux selects the adjacent pane
-# directly. Regex copied verbatim from smart-splits.nvim README — must stay in
-# sync with the nvim-side plugin's detection pattern.
+# directly. Neovim sets the @is_vim pane variable on focus (see the nvim
+# plugin/events.lua tmux block), so tmux reads a variable instead of forking
+# `ps | grep` on every keypress — a pure native format check, no process spawn.
 #
-# Note: `grep -iqE` here is intentional and portable — tmux's `if-shell` runs
-# in a minimal POSIX shell on the user's system where `rg` may not exist.
-is_vim="ps -o state= -o comm= -t '#{pane_tty}' | grep -iqE '^[^TXZ ]+ +(\\S+\\/)?g?(view|n?vim?x?)(diff)?$'"
-bind-key -n C-h if-shell "$is_vim" 'send-keys C-h' 'select-pane -L'
-bind-key -n C-j if-shell "$is_vim" 'send-keys C-j' 'select-pane -D'
-bind-key -n C-k if-shell "$is_vim" 'send-keys C-k' 'select-pane -U'
-bind-key -n C-l if-shell "$is_vim" 'send-keys C-l' 'select-pane -R'
+# `if-shell -F` evaluates the format natively without spawning a shell at all.
+bind-key -n C-h if-shell -F '#{@is_vim}' 'send-keys C-h' 'select-pane -L'
+bind-key -n C-j if-shell -F '#{@is_vim}' 'send-keys C-j' 'select-pane -D'
+bind-key -n C-k if-shell -F '#{@is_vim}' 'send-keys C-k' 'select-pane -U'
+bind-key -n C-l if-shell -F '#{@is_vim}' 'send-keys C-l' 'select-pane -R'
 
 # Same bindings inside copy-mode-vi so navigation works during text selection.
 bind-key -T copy-mode-vi C-h select-pane -L
@@ -97,3 +96,6 @@ set -g history-limit 50000
 # -- true color ---------------------------------------------------------------
 set -g default-terminal "tmux-256color"
 set -ag terminal-overrides ",xterm-256color:RGB"
+
+# -- OSC52 passthrough (nvim clipboard over SSH → iTerm2) ---------------------
+set -g allow-passthrough on
