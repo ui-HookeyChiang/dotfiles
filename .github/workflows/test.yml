@@ -42,10 +42,10 @@ jobs:
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: bash -n (syntax check)
-        run: bash -n .ctags.sh .ai-commit.sh .ai-commit-msg.sh install.sh .claude/hooks/block-main-edit.sh .claude/hooks/release-session-lock.sh
+        run: bash -n .ctags.sh .ai-commit.sh .ai-commit-msg.sh install.sh .claude/hooks/block-main-edit.sh
 
       - name: shellcheck (bash files)
-        run: shellcheck -S error .ai-commit.sh .ai-commit-msg.sh install.sh .claude/hooks/block-main-edit.sh .claude/hooks/release-session-lock.sh
+        run: shellcheck -S error .ai-commit.sh .ai-commit-msg.sh install.sh .claude/hooks/block-main-edit.sh
 
       - name: shellcheck (sh dialect, .ctags.sh)
         run: shellcheck -s sh -S error .ctags.sh
