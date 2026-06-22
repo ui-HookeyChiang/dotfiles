@@ -1,34 +1,22 @@
 #!/usr/bin/env bash
-# PreToolUse hook (Edit|Write|MultiEdit|NotebookEdit): per-workdir occupancy lock.
+# PreToolUse hook (Edit|Write|MultiEdit|NotebookEdit): worktree-enforce (mode "X").
 #
-# Semantics: one Claude session at a time per git working directory (worktree
-# toplevel / main checkout). The first session to edit inside a workdir claims
-# it; a second concurrent session is blocked and nudged to create its own
-# worktree. This replaces the older "block all edits on main/master" rule —
-# main is no longer special; whoever claims it first may develop there.
+# Rule: edits are forbidden in the MAIN working tree. Develop in a linked
+# worktree instead, so the main checkout always reflects a clean merged state
+# and concurrent work cannot clobber it.
 #
-# Lock:     <git-dir>/claude-session.lock   (one per workdir; git-dir differs
-#           per linked worktree, so locks never collide across worktrees)
-# Format:   <session_id>\t<transcript_path>\t<claim_epoch>\t<host>:<pid>
-#           (TSV, one line; 4th field optional — v1 3-field locks still parse)
-# Release:  release-session-lock.sh on SessionEnd (owner deletes its own lock);
-#           crash recovery via PID liveness (same host) or staleness (see below).
-# Liveness: primary signal is the owning claude session's PID (recorded as
-#           <host>:<pid> at claim). On the SAME host, kill -0 <pid> tells us
-#           instantly whether that session is alive — a crashed session's lock
-#           is reclaimed at once, no waiting. The pid is meaningless across
-#           machines/containers, so a cross-host (or v1 pidless) lock falls back
-#           to the owner's transcript_path mtime with a conservative 6h
-#           staleness timeout (never steal a lock from a long-thinking session).
+# Detection: resolve the edit target's git directory and compare
+#   git -C <dir> rev-parse --git-dir   vs   --git-common-dir
+#   - main checkout: the two are EQUAL (both `.git`, or both the common dir),
+#     and the git-dir path does NOT contain `/worktrees/`  -> DENY.
+#   - linked worktree: the git-dir is `<common>/worktrees/<name>`, which differs
+#     from the common dir and contains `/worktrees/`        -> ALLOW.
+#   - not a git repo: ALLOW (fail open).
 #
-# Escape hatch: ALLOW_MAIN_EDIT=1 bypasses the lock entirely (kept for the
-# legitimate cases the old hook documented — initial commit, editing this hook
-# / settings.json itself, an urgent hotfix, or a deliberate single-operator run).
+# Escape hatch: ALLOW_MAIN_EDIT=1 bypasses the check (allow). Kept for the
+# legitimate cases: editing this hook / settings.json itself, an initial commit
+# before any worktree exists, or a deliberate urgent single-operator edit.
 set -uo pipefail
-
-# --- Tunables ---------------------------------------------------------------
-STALE_SECS="${CLAUDE_LOCK_STALE_SECS:-1800}"  # 30min; transcript mtime is the liveness signal (a live session writes its transcript every tool-use)
-MUTEX_STALE_SECS=30                            # abandoned mkdir-mutex reaper
 
 # --- Escape hatch -----------------------------------------------------------
 if [ "${ALLOW_MAIN_EDIT:-}" = "1" ]; then
@@ -36,10 +24,9 @@ if [ "${ALLOW_MAIN_EDIT:-}" = "1" ]; then
 fi
 
 # --- Parse hook input -------------------------------------------------------
+# NotebookEdit carries notebook_path instead of file_path; fall back to either,
+# then to PWD when the tool gives no path at all.
 input="$(cat)"
-session_id="$(printf '%s' "$input" | jq -r '.session_id // empty' 2>/dev/null)"
-transcript_path="$(printf '%s' "$input" | jq -r '.transcript_path // empty' 2>/dev/null)"
-# NotebookEdit carries notebook_path instead of file_path; fall back to either.
 file_path="$(printf '%s' "$input" \
   | jq -r '.tool_input.file_path // .tool_input.notebook_path // empty' 2>/dev/null)"
 
@@ -48,16 +35,11 @@ if [ -n "$file_path" ]; then
 else
   dir="${PWD}"
 fi
-# Resolve a relative file_path against PWD so git -C lands in the right repo.
+# Resolve a relative file_path against PWD so `git -C` lands in the right repo.
 case "$dir" in
   /*) ;;
   *)  dir="${PWD}/${dir}" ;;
 esac
-
-# Without a session_id we cannot own a lock; fail open (matches old allow path).
-if [ -z "$session_id" ]; then
-  exit 0
-fi
 
 deny() {  # $1 = reason
   jq -n --arg r "$1" '{
@@ -70,142 +52,28 @@ deny() {  # $1 = reason
   exit 0
 }
 
-# --- Resolve the workdir lock path (key on git-dir, NOT branch) -------------
-# git-dir is per-worktree, so this is the natural per-workdir key and works
-# for detached HEAD too (the old hook's empty-branch early-exit allowed those).
-gitdir="$(git -C "$dir" rev-parse --git-dir 2>/dev/null)" || exit 0  # not a repo -> allow
-[ -z "$gitdir" ] && exit 0
+# --- Resolve the target's git directory -------------------------------------
+# Use the absolute git-dir so the `/worktrees/` test is independent of CWD. A
+# linked worktree's git-dir is `<common>/worktrees/<name>`; the main checkout's
+# git-dir is the common dir itself and never contains that segment.
+gitdir="$(git -C "$dir" rev-parse --absolute-git-dir 2>/dev/null)" || exit 0  # not a repo -> allow
+[ -n "$gitdir" ] || exit 0
+
 case "$gitdir" in
-  /*) ;;
-  *)  gitdir="$(git -C "$dir" rev-parse --absolute-git-dir 2>/dev/null)" || gitdir="${dir}/${gitdir}" ;;
-esac
-lock="${gitdir}/claude-session.lock"
-mutex="${lock}.mx"
+  */worktrees/*) ;;                      # linked worktree -> allow
+  *)
+    deny "Blocked: editing the main working tree is forbidden.
 
-now="$(date +%s)"
-host="${HOSTNAME:-$(hostname 2>/dev/null || echo unknown)}"
+  target: $dir
 
-# Portable mtime-in-epoch-seconds: GNU coreutils `stat -c %Y`, else BSD `stat -f %m`.
-mtime_of() {  # $1 = path -> prints epoch seconds, or 0 if unavailable
-  stat -c %Y "$1" 2>/dev/null || stat -f %m "$1" 2>/dev/null || echo 0
-}
-# PPID is the short-lived hook-invoker process, NOT the long-lived claude
-# session — it dies when the turn ends, so kill -0 on it always reports "dead"
-# and would make every lock look stale (silent lock theft between concurrent
-# sessions). Recorded as debug metadata in the lock's 4th field only; liveness
-# is determined by transcript mtime in is_alive(), never by this pid.
-sess_pid="$PPID"
+Create a linked worktree and develop there instead:
 
-is_alive() {  # $1=transcript_path $2=claim_epoch (3rd arg host:pid ignored) -> 0 if alive
-  local tx="$1" ts="$2" mtime
-  # Liveness = transcript freshness. A live claude session appends to its
-  # transcript on every tool-use / response, so a recently-touched transcript
-  # is the reliable "owner still working" signal. We deliberately do NOT use
-  # kill -0 on the recorded pid: that pid is the short-lived hook-invoker
-  # ($PPID), which is already dead by the next turn, so it would mark every
-  # lock stale and let concurrent sessions silently steal each other's locks.
-  # Never steal within the same wall-clock minute, regardless of signal.
-  if [ -n "$ts" ] && [ $((now - ts)) -lt 60 ]; then
-    return 0
-  fi
-  if [ -n "$tx" ] && [ -f "$tx" ]; then
-    mtime="$(mtime_of "$tx")"
-    [ $((now - mtime)) -lt "$STALE_SECS" ] && return 0
-    return 1
-  fi
-  # Transcript gone: fall back to the lock's own claim timestamp.
-  [ -n "$ts" ] && [ $((now - ts)) -lt "$STALE_SECS" ] && return 0
-  return 1
-}
+  git worktree add .worktree/<branch> -b <branch>
+  cd .worktree/<branch>
 
-write_lock() {  # atomic replace via temp + mv (mv is atomic within a fs)
-  local tmp
-  tmp="$(mktemp "${lock}.XXXXXX")" || return 1
-  printf '%s\t%s\t%s\t%s\n' "$session_id" "$transcript_path" "$now" "${host}:${sess_pid}" > "$tmp" \
-    && mv -f "$tmp" "$lock"
-}
-
-# Read the lock into owner/owner_tx/owner_ts/owner_hp. Returns 1 if the file is
-# missing or malformed (fewer than the 3 mandatory non-empty TSV fields) so
-# callers can treat a corrupt lock as "no valid owner" rather than mis-parsing
-# it. The 4th field (host:pid) is optional — a v1 (3-field) lock reads back with
-# owner_hp empty, and is_alive() then falls back to the mtime/epoch heuristic.
-read_lock() {  # populates globals: owner owner_tx owner_ts owner_hp
-  owner=""; owner_tx=""; owner_ts=""; owner_hp=""
-  [ -f "$lock" ] || return 1
-  IFS=$'\t' read -r owner owner_tx owner_ts owner_hp < "$lock"
-  [ -n "$owner" ] && [ -n "$owner_ts" ] || return 1
-  return 0
-}
-
-# --- Fast path: existing lock -----------------------------------------------
-# A malformed lock (read_lock returns 1) is treated as "no valid owner" and
-# falls through to a fresh claim below, which overwrites the corrupt file.
-if read_lock; then
-  if [ "$owner" = "$session_id" ]; then
-    write_lock      # refresh our own claim; keep the lock warm
-    exit 0
-  fi
-  if is_alive "$owner_tx" "$owner_ts" "$owner_hp"; then
-    deny "Blocked: this working directory is locked by another active Claude session.
-
-  workdir: $dir
-  owner:   session $owner
-
-Concurrent sessions editing the same workdir clobber each other. Create your
-own isolated worktree and develop there instead:
-
-  git worktree add .worktree/<feature-branch> -b <feature-branch>
-  cd .worktree/<feature-branch>
-
-(Git enforces one branch per worktree, so pick a fresh branch name.)
-
-If you are certain the other session is dead, remove its lock: $lock
 Escape hatch for a deliberate single-operator edit: ALLOW_MAIN_EDIT=1."
-  fi
-  # Stale or corrupt lock -> fall through to claim below.
-fi
+    ;;
+esac
 
-# --- Claim (atomic mkdir mutex around the lock write) -----------------------
-# Reap an abandoned mutex (a crashed claim that never rmdir'd).
-if [ -d "$mutex" ]; then
-  mx_mtime="$(mtime_of "$mutex")"
-  if [ $((now - mx_mtime)) -ge "$MUTEX_STALE_SECS" ]; then
-    rmdir "$mutex" 2>/dev/null || true
-  fi
-fi
-
-# Distinguish "mutex already held" (EEXIST -> someone else is mid-claim) from a
-# real mkdir failure (permission denied, ENOSPC). On a real failure we must NOT
-# fall through to the lost-race allow path — that would let a second session in.
-if mkdir "$mutex" 2>/dev/null; then
-  trap 'rmdir "$mutex" 2>/dev/null || true' EXIT
-  # Double-checked locking: re-read inside the critical section.
-  if read_lock && [ "$owner" != "$session_id" ] && is_alive "$owner_tx" "$owner_ts" "$owner_hp"; then
-    deny "Blocked: this working directory was just claimed by another active
-Claude session (race). workdir: $dir, owner: session $owner.
-Create your own worktree:  git worktree add .worktree/<branch> -b <branch>"
-  fi
-  write_lock || deny "Blocked: could not write the occupancy lock for $dir
-(disk full or permission denied?). Refusing to edit without a lock."
-  exit 0
-elif [ ! -d "$mutex" ]; then
-  # mkdir failed but the mutex dir does NOT exist -> real error, not EEXIST.
-  deny "Blocked: cannot create the occupancy-lock mutex for $dir
-(permission denied or no space?). Refusing to edit without mutual exclusion.
-Escape hatch for a deliberate edit: ALLOW_MAIN_EDIT=1."
-fi
-
-# Lost the mutex race to a simultaneous fire: re-read and re-evaluate once.
-if read_lock; then
-  [ "$owner" = "$session_id" ] && exit 0
-  if is_alive "$owner_tx" "$owner_ts" "$owner_hp"; then
-    deny "Blocked: lost the lock race for $dir to another active session ($owner).
-Create your own worktree:  git worktree add .worktree/<branch> -b <branch>"
-  fi
-  # Stale lock after race: fall through to allow (original owner is dead).
-  exit 0
-fi
-# read_lock failed (lock not yet written by winner) — fail closed, not open.
-deny "Blocked: lock contention for $dir — another session is mid-claim.
-Retry in a moment, or use ALLOW_MAIN_EDIT=1 if certain no other session is active."
+# Reached only for a linked worktree: allow.
+exit 0
