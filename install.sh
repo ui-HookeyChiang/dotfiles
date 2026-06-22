@@ -86,6 +86,8 @@ SUBMODULE_OVERRIDES=(
 # install. Instead symlink only these files.
 CLAUDE_FILES=(
   CLAUDE.md
+  memory-discipline.md
+  sandbox-protected-paths.md
   settings.json
   statusline-command.sh
   hooks/block-main-edit.sh
