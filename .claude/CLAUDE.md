@@ -59,3 +59,4 @@ Claude Code's built-in sensitive-file detection (not settings.json `deny`) gates
 5. Skill rewrites: park at `docs/specs/proposed/<slug>-DRAFT.md` with BEGIN/END markers — Python rewrite of skill files still works but DRAFT-then-merge keeps history clean.
 
 @RTK.md
+@memory-discipline.md
