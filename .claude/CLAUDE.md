@@ -19,8 +19,6 @@ Always delegate execution to subagents.
 
 The main agent orchestrates and handles single-file changes directly (session model). Everything else — multi-file changes, code review, exploration — delegates to a subagent on `claude-sonnet-4-6`.
 
-**Handoff:** pass context in the subagent's prompt for one-shot tasks. Use HANDOFF.md for worktree-based agents that need persistent context. Subagents return results directly — don't poll files for output.
-
 # Language
 
 Reply to the user in **Traditional Chinese (繁體中文)** rather than Simplified Chinese. Keep technical terms, code symbols, command names, file paths, and library names in English (e.g. don't translate `git rebase`, `setMyCommands`, `SessionManager`).
