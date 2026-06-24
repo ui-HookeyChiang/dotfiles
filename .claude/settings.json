@@ -139,5 +139,6 @@
   "effortLevel": "high",
   "skipDangerousModePermissionPrompt": true,
   "defaultMode": "bypassPermissions",
-  "skipWorkflowUsageWarning": true
+  "skipWorkflowUsageWarning": true,
+  "model": "claude-sonnet-4-6[1m]"
 }
