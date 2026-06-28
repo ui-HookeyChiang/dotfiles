@@ -98,6 +98,22 @@ CLAUDE_FILES=(
   hooks/warn-stale-main.sh
 )
 
+# Whitelisted files inside ~/.config/opencode/ (live at $HOME/.config/opencode/<name>).
+#
+# OpenCode native config. OpenCode already has Claude Code compatibility mode
+# (reads ~/.claude/CLAUDE.md and ~/.claude/skills/ as fallbacks), but native
+# config provides full feature access (instructions field, permissions, etc.).
+# ~/.config/opencode/ may also hold runtime state, so we symlink only managed files.
+OPENCODE_FILES=(
+  AGENTS.md
+  opencode.json
+  package.json
+  memory-discipline.md
+  sandbox-protected-paths.md
+  shell-tools.md
+  plugins
+)
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -543,6 +559,14 @@ symlink_dotfiles() {
   fi
   for entry in "${CLAUDE_FILES[@]}"; do
     link_one ".claude/$entry"
+  done
+  # ~/.config/opencode/ — OpenCode native config (parallel to Claude Code).
+  # OpenCode runtime may write here too, so only symlink managed files.
+  if [[ ! -d "$HOME/.config/opencode" ]]; then
+    run mkdir -p "$HOME/.config/opencode"
+  fi
+  for entry in "${OPENCODE_FILES[@]}"; do
+    link_one ".config/opencode/$entry"
   done
   if [[ -z "$BACKUP_DIR" ]]; then
     note "no conflicts; no backup dir created"
