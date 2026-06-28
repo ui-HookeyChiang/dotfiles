@@ -107,7 +107,6 @@ CLAUDE_FILES=(
 OPENCODE_FILES=(
   AGENTS.md
   opencode.json
-  package.json
   memory-discipline.md
   sandbox-protected-paths.md
   shell-tools.md
