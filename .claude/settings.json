@@ -72,9 +72,9 @@
           {
             "type": "command",
             "command": "bash ~/.claude/hooks/post-checkout.sh",
+            "if": "Bash(git worktree add*)",
             "timeout": 30,
-            "statusMessage": "Seeding CRG graph DB into worktree",
-            "if": "Bash(git worktree add*)"
+            "statusMessage": "Seeding CRG graph DB into worktree"
           }
         ]
       },
@@ -84,9 +84,9 @@
           {
             "type": "command",
             "command": "bash ~/.claude/hooks/post-worktree-remove.sh",
+            "if": "Bash(git worktree remove*)",
             "timeout": 15,
-            "statusMessage": "Cleaning CRG DB for removed worktree",
-            "if": "Bash(git worktree remove*)"
+            "statusMessage": "Cleaning CRG DB for removed worktree"
           }
         ]
       }
@@ -138,7 +138,7 @@
   "alwaysThinkingEnabled": false,
   "effortLevel": "high",
   "skipDangerousModePermissionPrompt": true,
-  "defaultMode": "bypassPermissions",
   "skipWorkflowUsageWarning": true,
+  "defaultMode": "bypassPermissions",
   "model": "claude-sonnet-4-6[1m]"
 }
