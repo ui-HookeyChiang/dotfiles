@@ -192,3 +192,6 @@ export COLORTERM=truecolor
 # =============================================================================
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 POWERLEVEL9K_DISABLE_CONFIGURATION_WIZARD=true
+
+# opencode
+export PATH=/home/hookey/.opencode/bin:$PATH
