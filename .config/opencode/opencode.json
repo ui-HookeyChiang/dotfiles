@@ -13,7 +13,9 @@
       "git reset --hard *": "deny",
       "git add -A": "deny",
       "git add --all": "deny",
-      "git add .": "deny"
+      "git add .": "deny",
+      "gh pr edit * --title *": "deny",
+      "gh pr edit --title *": "deny"
     }
   },
   "instructions": [
