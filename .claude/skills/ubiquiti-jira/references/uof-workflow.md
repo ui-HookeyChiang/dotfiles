@@ -70,7 +70,8 @@ RD In Progress --(141)--> Test build for QA --(221)--> Ready to Merge --(231)-->
 ### Block → resume
 
 ```
-RD In Progress --(131)--> Block --(201)--> RD In Progress --(111)--> Ready to QA
+Block --(211)--> Ready to QA                          (direct, 1 step)
+Block --(201)--> RD In Progress --(111)--> Ready to QA  (via RD, 2 steps)
 ```
 
 ### QA failure → rework

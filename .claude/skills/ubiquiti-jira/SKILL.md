@@ -4,7 +4,10 @@
 
 UOF project Jira workflow automation — post-PR-merge transitions, PR title
 naming, fixVersion, and QA comment. Encodes the UOF state machine, not
-general Jira API (that's the `jira` skill).
+general Jira API (that's the `jira` skill). Use when user says "post-merge",
+"update jira after merge", "transition UOF ticket", "set fixVersion",
+"rename PR title [UOF-...]", or any post-merge Jira housekeeping for
+Ubiquiti firmware tickets.
 
 ## Usage
 
@@ -45,7 +48,7 @@ update metadata. The full sequence:
 | 待辦事項 | → RD In Progress (31) → Ready to QA (111) | 2 steps |
 | RD In Progress | → Ready to QA (111) | 1 step |
 | Ready to QA | already there | 0 steps |
-| Block | → RD In Progress (3, global) → Ready to QA (111) | 2 steps |
+| Block | → Ready to QA (211, direct) | 1 step |
 | Need more info | → RD In Progress (3, global) → Ready to QA (111) | 2 steps |
 
 **IMPORTANT**: transition IDs may change. Always **discover at runtime** via
@@ -96,13 +99,14 @@ gh api "repos/{owner}/{repo}/pulls/{number}" -X PATCH \
 
 ### 3. Fix Version Only (`fixversion`)
 
-Set fixVersion without transitioning:
+Set fixVersion without transitioning. Use `add` (not `set`) to preserve
+existing fixVersions (backport tickets have multiple):
 
 ```bash
 curl -s -u "$JIRA_EMAIL:$JIRA_TOKEN" -X PUT \
   "https://ubiquiti.atlassian.net/rest/api/3/issue/<KEY>" \
   -H "Content-Type: application/json" \
-  -d '{"update":{"fixVersions":[{"set":[{"name":"<VERSION>"}]}]}}'
+  -d '{"update":{"fixVersions":[{"add":{"name":"<VERSION>"}}]}}'
 ```
 
 ## Error Handling
