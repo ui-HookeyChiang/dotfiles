@@ -127,6 +127,13 @@ if [[ -n "$model_name" ]] && [[ "$model_name" != "null" ]]; then
   segments+=("$(printf '\033[35m%s\033[0m' "$model_name")")
 fi
 
+# Backend indicator (CLAUDE_CODE_ENTRYPOINT: cli=cc, sdk-ts=oc)
+case "${CLAUDE_CODE_ENTRYPOINT:-cli}" in
+  cli)    segments+=("$(printf '\033[38;5;39mcc\033[0m')") ;;
+  sdk-ts) segments+=("$(printf '\033[38;5;208moc\033[0m')") ;;
+  *)      segments+=("$(printf '\033[90m%s\033[0m' "${CLAUDE_CODE_ENTRYPOINT}")") ;;
+esac
+
 # Context window with gradient bar
 # Auto-compact buffer (33K) from Claude Code source
 _ctx_tokens=$(echo "$input" | jq -r '.context_window.current_usage | .input_tokens + .cache_creation_input_tokens + .cache_read_input_tokens')
