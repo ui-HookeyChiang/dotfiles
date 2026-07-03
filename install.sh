@@ -28,6 +28,7 @@ WITH_SKILLS=0
 WITH_CRG=0
 WITH_PROJECTS=0
 WITH_SECRETS=0
+WITH_NVIM=0
 SEED_SECRETS_MISSING=()  # (repo|KEY|service) tuples accumulated across run
 PROJECTS_DIR="${DOTFILES_PROJECTS_DIR:-$HOME}"
 PROJECT_NAMES=(llm-wiki stock-target-finder telegram-claude-bridge)
@@ -165,6 +166,9 @@ Optional modules:
                   Auto-enables --with-node. Override clone dir with DOTFILES_PROJECTS_DIR (default: $HOME).
   --with-secrets  Materialize per-project .env from committed .env.tpl via macOS Keychain
                   (security find-generic-password). Auto-enables --with-projects. macOS only.
+  --with-nvim     Install neovim LSP servers, formatters, treesitter parsers, and plugins
+                  via headless bootstrap. Auto-enables --with-node, --with-go, --with-rust.
+                  Runs healthcheck after install.
   --all           Enable all OS-compatible optional modules
 
 Flags:
@@ -192,6 +196,7 @@ parse_flags() {
       --with-crg)     WITH_CRG=1 ;;
       --with-projects) WITH_PROJECTS=1 ;;
       --with-secrets) WITH_SECRETS=1 ;;
+      --with-nvim)    WITH_NVIM=1 ;;
       --all)
         WITH_NODE=1
         WITH_GO=1
@@ -202,6 +207,7 @@ parse_flags() {
         WITH_CRG=1
         WITH_PROJECTS=1
         WITH_SECRETS=1
+        WITH_NVIM=1
         ;;
       -h|--help)
         usage
@@ -226,6 +232,22 @@ parse_flags() {
   if (( WITH_PROJECTS )) && (( ! WITH_NODE )); then
     WITH_NODE=1
     note "--with-projects auto-enabled --with-node (telegram-claude-bridge needs npm)"
+  fi
+
+  # Auto-flip language toolchains when WITH_NVIM is set (LSP servers need them).
+  if (( WITH_NVIM )); then
+    if (( ! WITH_NODE )); then
+      WITH_NODE=1
+      note "--with-nvim auto-enabled --with-node (tsls needs node)"
+    fi
+    if (( ! WITH_GO )); then
+      WITH_GO=1
+      note "--with-nvim auto-enabled --with-go (gopls needs go)"
+    fi
+    if (( ! WITH_RUST )); then
+      WITH_RUST=1
+      note "--with-nvim auto-enabled --with-rust (rust-analyzer + stylua need cargo)"
+    fi
   fi
 }
 
@@ -757,6 +779,169 @@ install_rust() {
   note "ensure \$HOME/.cargo/bin is on PATH (rustup --no-modify-path skips shell rc edits)"
 }
 
+install_nvim_deps() {
+  log "install_nvim_deps"
+
+  # Ensure ~/.local/bin exists (nvim init.lua prepends it to PATH)
+  run mkdir -p "$HOME/.local/bin"
+
+  # --- LSP servers -----------------------------------------------------------
+  # basedpyright + ruff (Python LSP + linter-as-LSP)
+  if command -v basedpyright >/dev/null 2>&1; then
+    note "skip basedpyright (installed)"
+  else
+    note "installing basedpyright via npm"
+    run npm install -g basedpyright
+  fi
+  if command -v ruff >/dev/null 2>&1; then
+    note "skip ruff (installed)"
+  else
+    note "installing ruff via pip/pipx"
+    if command -v pipx >/dev/null 2>&1; then
+      run pipx install ruff
+    else
+      run pip3 install --user ruff
+      # Symlink into ~/.local/bin so nvim (and shell) can find it
+      local ruff_bin
+      ruff_bin="$(python3 -m site --user-base 2>/dev/null)/bin/ruff"
+      if [[ -x "$ruff_bin" ]] && [[ ! -e "$HOME/.local/bin/ruff" ]]; then
+        run ln -sf "$ruff_bin" "$HOME/.local/bin/ruff"
+      fi
+    fi
+  fi
+
+  # lua-language-server
+  if command -v lua-language-server >/dev/null 2>&1; then
+    note "skip lua-language-server (installed)"
+  else
+    case "$OS" in
+      macos) run brew install lua-language-server ;;
+      linux)
+        note "installing lua-language-server via GitHub release"
+        local luals_ver
+        luals_ver="$(curl -fsSL https://api.github.com/repos/LuaLS/lua-language-server/releases/latest | jq -r .tag_name)"
+        local luals_dir="$HOME/.local/lib/lua-language-server"
+        run mkdir -p "$luals_dir"
+        run bash -c "curl -fsSL 'https://github.com/LuaLS/lua-language-server/releases/download/${luals_ver}/lua-language-server-${luals_ver}-linux-x64.tar.gz' | tar xz -C '$luals_dir'"
+        run ln -sf "$luals_dir/bin/lua-language-server" "$HOME/.local/bin/lua-language-server"
+        ;;
+    esac
+  fi
+
+  # clangd (usually installed with clang or llvm)
+  if command -v clangd >/dev/null 2>&1; then
+    note "skip clangd (installed)"
+  else
+    case "$OS" in
+      macos) run brew install llvm ;; # provides clangd
+      linux) run sudo apt-get install -y clangd ;;
+    esac
+  fi
+
+  # cmake-language-server
+  if command -v cmake-language-server >/dev/null 2>&1; then
+    note "skip cmake-language-server (installed)"
+  else
+    note "installing cmake-language-server via pip"
+    if command -v pipx >/dev/null 2>&1; then
+      run pipx install cmake-language-server
+    else
+      run pip3 install --user cmake-language-server
+      # Symlink into ~/.local/bin
+      local cms_bin
+      cms_bin="$(python3 -m site --user-base 2>/dev/null)/bin/cmake-language-server"
+      if [[ -x "$cms_bin" ]] && [[ ! -e "$HOME/.local/bin/cmake-language-server" ]]; then
+        run ln -sf "$cms_bin" "$HOME/.local/bin/cmake-language-server"
+      fi
+    fi
+  fi
+
+  # typescript-language-server (tsls)
+  if command -v typescript-language-server >/dev/null 2>&1; then
+    note "skip typescript-language-server (installed)"
+  else
+    note "installing typescript-language-server via npm"
+    run npm install -g typescript typescript-language-server
+  fi
+
+  # gopls (Go LSP — install via go install, go must be on PATH from install_go)
+  if command -v gopls >/dev/null 2>&1; then
+    note "skip gopls (installed)"
+  else
+    note "installing gopls via go install"
+    run go install golang.org/x/tools/gopls@latest
+  fi
+
+  # rust-analyzer (via rustup component — install_rust ensures rustup exists)
+  if command -v rust-analyzer >/dev/null 2>&1; then
+    note "skip rust-analyzer (installed)"
+  else
+    note "installing rust-analyzer via rustup"
+    run rustup component add rust-analyzer
+  fi
+
+  # zls (Zig Language Server)
+  if command -v zls >/dev/null 2>&1; then
+    note "skip zls (installed)"
+  else
+    case "$OS" in
+      macos)
+        if is_installed_brew zls; then
+          note "skip zls (brew formula present)"
+        else
+          note "installing zls via brew"
+          run brew install zls
+        fi
+        ;;
+      linux)
+        note "installing zls — see https://github.com/zigtools/zls/releases"
+        note "  (manual: download binary to ~/.local/bin/zls)"
+        ;;
+    esac
+  fi
+
+  # --- Formatters (not covered by language toolchains) -----------------------
+  # clang-format (often bundled with clangd/llvm, but verify)
+  if ! command -v clang-format >/dev/null 2>&1; then
+    case "$OS" in
+      macos) : ;; # already installed via llvm above or Xcode
+      linux) run sudo apt-get install -y clang-format ;;
+    esac
+  fi
+
+  # prettier (JS/TS formatter — via npm)
+  if command -v prettier >/dev/null 2>&1; then
+    note "skip prettier (installed)"
+  else
+    note "installing prettier via npm"
+    run npm install -g prettier
+  fi
+
+  # --- Treesitter parsers ----------------------------------------------------
+  # TSInstallSync requires treesitter plugin to be loaded. On a fresh install the
+  # plugin may not be available yet (vim.pack hasn't run). Bootstrap plugins first,
+  # then install parsers. Use a deferred lua call to handle nightly-only init.lua
+  # options that may error in headless mode.
+  note "bootstrapping vim.pack plugins (headless)"
+  # vim.pack downloads plugins on first startup when confirm=false.
+  # Give it up to 60s to clone all repos then quit.
+  run timeout 90 nvim --headless +"lua vim.defer_fn(function() vim.cmd('qa!') end, 60000)" 2>/dev/null || true
+
+  note "installing treesitter parsers (headless)"
+  run timeout 120 nvim --headless +"lua vim.defer_fn(function() pcall(vim.cmd, 'TSInstallSync c cpp rust zig lua python proto typescript javascript tsx css scss diff dockerfile graphql html sql markdown markdown_inline vimdoc vim cmake'); vim.defer_fn(function() vim.cmd('qa!') end, 5000) end, 5000)" 2>/dev/null || true
+
+  # --- Healthcheck -----------------------------------------------------------
+  note "running nvim healthcheck"
+  if ! (( DRY_RUN )); then
+    nvim --headless +'checkhealth lsp treesitter' +'w! /tmp/nvim-healthcheck.txt' +qa 2>/dev/null || true
+    if grep -qi 'ERROR' /tmp/nvim-healthcheck.txt 2>/dev/null; then
+      note "healthcheck found issues — review /tmp/nvim-healthcheck.txt"
+    else
+      note "healthcheck passed"
+    fi
+  fi
+}
+
 install_docker() {
   log "install_docker"
   if [[ "$OS" != "linux" ]]; then
@@ -1137,6 +1322,7 @@ main() {
   if (( WITH_NODE ));     then install_node;     fi
   if (( WITH_GO ));       then install_go;       fi
   if (( WITH_RUST ));     then install_rust;     fi
+  if (( WITH_NVIM ));     then install_nvim_deps; fi
   if (( WITH_DOCKER ));   then install_docker;   fi
   if (( WITH_LATEX ));    then install_latex;    fi
   if (( WITH_SKILLS ));   then install_skills;   fi
