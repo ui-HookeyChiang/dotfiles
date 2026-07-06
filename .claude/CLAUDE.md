@@ -2,9 +2,9 @@
 
 ## Workflow routing
 
-For code changes, invoke `stacking-dev` (it handles spec creation if missing) — it sizes the work and routes all changes, including small single-file fixes, through the full flow.
-For non-code work (questions, debug, config, deploy, perspective audits), use the matching domain skill — not stacking-dev.
-superpowers skills are subordinate — used within stacking-dev's phases, not directly.
+For code changes, invoke the flagship dev-orchestration skill (currently `stack-dev`; it handles spec creation if missing) — it sizes the work and routes all changes, including small single-file fixes, through the full flow.
+For non-code work (questions, debug, config, deploy, perspective audits), use the matching domain skill — not the dev-orchestration skill.
+Skills it composes internally are subordinate — used within its phases, not directly.
 Always delegate execution to subagents.
 
 ## Safety
@@ -17,7 +17,7 @@ Always delegate execution to subagents.
 
 # Delegation
 
-The main agent orchestrates and handles single-file changes directly (session model). Everything else — multi-file changes, code review, exploration — delegates to a subagent on `claude-sonnet-4-6`.
+The main agent orchestrates and handles single-file changes directly (session model). Everything else — multi-file changes, code review, exploration — delegates to a subagent. Pin the subagent's model explicitly rather than relying on the harness default; escalate model/effort tier for hard judgment calls, not merely large or long tasks.
 
 # Language
 
