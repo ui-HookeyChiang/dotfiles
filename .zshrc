@@ -195,3 +195,15 @@ POWERLEVEL9K_DISABLE_CONFIGURATION_WIZARD=true
 
 # opencode
 export PATH=/home/hookey/.opencode/bin:$PATH
+export OPENCODE_SERVER_URL="http://127.0.0.1:4096"
+
+# oc — attach to shared opencode server (all sessions visible to telegram-claude-bridge bot)
+# Falls back to local TUI if server not reachable.
+oc() {
+  if curl -s --max-time 1 "$OPENCODE_SERVER_URL/session" > /dev/null 2>&1; then
+    /home/hookey/.opencode/bin/opencode attach "$OPENCODE_SERVER_URL" "$@"
+  else
+    echo "[oc] server not reachable at $OPENCODE_SERVER_URL, starting local opencode" >&2
+    /home/hookey/.opencode/bin/opencode "$@"
+  fi
+}
