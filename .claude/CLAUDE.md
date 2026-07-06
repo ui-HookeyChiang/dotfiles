@@ -27,3 +27,9 @@ Reply to the user in **Traditional Chinese (繁體中文)** rather than Simplifi
 @memory-discipline.md
 @sandbox-protected-paths.md
 @shell-tools.md
+@constitution/diagnosis.md
+@constitution/model-dispatch.md
+@constitution/judgment-rubric.md
+@constitution/delegation-templates.md
+@constitution/maintenance-protocol.md
+@constitution/letter-to-future-sessions.md
