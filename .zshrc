@@ -198,10 +198,11 @@ export PATH=/home/hookey/.opencode/bin:$PATH
 export OPENCODE_SERVER_URL="http://127.0.0.1:4096"
 
 # oc — attach to shared opencode server (all sessions visible to telegram-claude-bridge bot)
+# Uses --dir $(pwd) so each project opens in its own working directory.
 # Falls back to local TUI if server not reachable.
 oc() {
   if curl -s --max-time 1 "$OPENCODE_SERVER_URL/session" > /dev/null 2>&1; then
-    /home/hookey/.opencode/bin/opencode attach "$OPENCODE_SERVER_URL" "$@"
+    /home/hookey/.opencode/bin/opencode attach "$OPENCODE_SERVER_URL" --dir "$(pwd)" "$@"
   else
     echo "[oc] server not reachable at $OPENCODE_SERVER_URL, starting local opencode" >&2
     /home/hookey/.opencode/bin/opencode "$@"
