@@ -57,8 +57,12 @@ descriptions make weaker models mis-trigger (e.g. `pua:p7` vs `p7`).
 
 ## 3. Stale model pins + contradictory delegation rules (top focus-loss)
 
-**Evidence:** Old CLAUDE.md pinned subagents to `claude-sonnet-4-6` (superseded;
-a pinned ID goes stale, an alias doesn't). Simultaneously: "routes all changes,
+**Evidence:** Old CLAUDE.md pinned subagents to `claude-sonnet-4-6`. That model
+is still served (verified against the model catalog, 2026-07), but the pin has
+two problems: the Agent tool's `model` parameter accepts aliases only
+(`sonnet`/`opus`/`haiku`), so the pinned ID was never expressible where it
+mattered; and Sonnet 5 has since shipped — an alias tracks it, a pin doesn't.
+Simultaneously: "routes all changes,
 including small single-file fixes, through the full flow" + "Always delegate
 execution to subagents" (Workflow section) vs "main agent … handles single-file
 changes directly" (Delegation section).
