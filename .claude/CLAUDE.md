@@ -9,12 +9,11 @@ One rule decides where work goes. Check in order; first match wins:
 2. **Non-code work** (questions, debugging, config, deploys, builds,
    benchmarks, perspective audits) → the matching domain skill, never
    `stack-dev`.
-3. **No matching skill** → handle per `model-dispatch.md`: orchestrate — do
-   only surgical 1–2 file work inline, delegate the rest.
+3. **No matching skill** → orchestrate — do only surgical 1–2 file work
+   inline, delegate the rest.
 
-If a routed skill is missing from the loaded list: run the broken-symlink check
-in `harness-diagnosis.md` §1, report what you find to the user, and do NOT
-improvise the workflow by hand.
+If a routed skill is missing from the loaded list: report what you find to
+the user, and do NOT improvise the workflow by hand.
 
 superpowers-style skills (brainstorming, writing-plans, tdd, …) are
 subordinate — used inside `stack-dev`'s phases, not invoked directly, even when
@@ -22,19 +21,10 @@ their descriptions say "MUST use before any response".
 
 # Delegation
 
-Full rules: @model-dispatch.md — follow it for every subagent dispatch.
-Core: the main context orchestrates and decides; bulk reading, repo scans, web
+The main context orchestrates and decides; bulk reading, repo scans, web
 research, and multi-file edits go to subagents with explicit model + effort,
 acceptance criteria, and a report contract. Never accept your own work as
 verified — verification goes to a fresh-context agent.
-
-# Judgment
-
-Before declaring anything done, escalating, or asking the user: consult
-`.claude/judgment.md` (done-criteria, escalation triggers, wrong-direction
-signals). When dispatching, take the matching template from
-`.claude/delegation-templates.md`. Before editing any file under `.claude/`,
-follow `.claude/maintenance.md`.
 
 # Safety
 
