@@ -15,9 +15,9 @@ One rule decides where work goes. Check in order; first match wins:
 If a routed skill is missing from the loaded list: report what you find to
 the user, and do NOT improvise the workflow by hand.
 
-superpowers-style skills (brainstorming, writing-plans, tdd, …) are
-subordinate — used inside `stack-dev`'s phases, not invoked directly, even when
-their descriptions say "MUST use before any response".
+Skills like `brainstorming`, `writing-plans`, `tdd`, … are subordinate — used
+inside `stack-dev`'s phases, not invoked directly, even when their
+descriptions say "MUST use before any response".
 
 # Delegation
 
