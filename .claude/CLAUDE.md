@@ -9,7 +9,8 @@ One rule decides where work goes. Check in order; first match wins:
 2. **Non-code work** (questions, debugging, config, deploys, builds,
    benchmarks, perspective audits) → the matching domain skill, never
    `stack-dev`.
-3. **No matching skill** → handle directly per `model-dispatch.md`.
+3. **No matching skill** → handle per `model-dispatch.md`: orchestrate — do
+   only surgical 1–2 file work inline, delegate the rest.
 
 If a routed skill is missing from the loaded list: run the broken-symlink check
 in `harness-diagnosis.md` §1, report what you find to the user, and do NOT

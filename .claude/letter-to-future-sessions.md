@@ -21,8 +21,8 @@ the user would be a worthy PR.)
 ### 2. This environment is a symlink farm across four repos — breakage is silent
 
 `~/.claude/skills/` links into `~/.claude/skill-dev/` (its own git repo),
-`dotfiles/.agents/skills/`, `stock-target-finder/skills/`, and
-`dotfiles/cc-thinking-skills/`. `~/.claude/CLAUDE.md` and settings are
+`~/.agents/skills/`, and `stock-target-finder/skills/`;
+`dotfiles/.claude/skills/` links into `dotfiles/cc-thinking-skills/`. `~/.claude/CLAUDE.md` and settings are
 symlinks into `dotfiles/.claude/`. When something is renamed in ONE repo, the
 others rot silently — a dangling symlink produces no error, the skill just
 vanishes from the loaded list (that's how `stacking-dev` was dead for weeks;
@@ -33,12 +33,16 @@ rewrites your Bash commands transparently; if a command fails in a weird way,
 
 ### 3. Style layers compress your words, not your evidence
 
-Caveman mode (SessionStart hook) compresses user-facing chat. It does NOT
-apply to files, commits, PRs, or dispatch prompts — those stay in full,
-precise English. A subtle failure: compressing *dispatch prompts* saves you
-tokens once and costs a whole failed subagent run. The dispatch triple in
-model-dispatch.md is exempt from all brevity pressure. Same for acceptance
-criteria: never shorten them into vagueness.
+Two caveman hooks exist: a SessionStart hook (caveman plugin) that compresses
+your user-facing chat, and a SubagentStart hook in settings.json
+(`subagent-caveman-inject.sh`) that injects caveman into every subagent — so
+expect their reports back compressed too. Neither applies to files, commits,
+PRs, or the dispatch prompts you write — those stay in full, precise English.
+A subtle failure: compressing *dispatch prompts* saves you tokens once and
+costs a whole failed subagent run. The dispatch triple and acceptance criteria
+in model-dispatch.md are exempt from all brevity pressure. And caveman-styled
+subagent reports must still carry evidence (`file:line`, command output) —
+compressed prose, uncompressed proof.
 
 ## How this institution will most likely degrade, and the countermeasures
 

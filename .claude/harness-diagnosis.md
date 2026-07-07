@@ -32,9 +32,10 @@ done
 
 **Evidence:** ~250 skill descriptions load into every session's system prompt:
 ~20 `*-perspective` + council skills symlinked from
-`/home/hookey/stock-target-finder/skills/`, 37 `thinking-*` skills from
-`cc-thinking-skills/`, the full `pua` plugin AND standalone pua copies in
-`.agents/skills/` (duplicates visible in the loaded list: `pua` vs `pua:pua`,
+`/home/hookey/stock-target-finder/skills/` into global `~/.claude/skills/`,
+37 `thinking-*` skills symlinked in `dotfiles/.claude/skills/` (project-scoped
+to dotfiles sessions), the full `pua` plugin AND standalone pua copies in
+`~/.agents/skills/` (duplicates visible in the loaded list: `pua` vs `pua:pua`,
 `caveman` vs `caveman:caveman`, `skill-creator` vs `skill-creator:skill-creator`).
 
 **Cost:** roughly 15–25k tokens burned per session before the first user word —
@@ -45,11 +46,14 @@ descriptions make weaker models mis-trigger (e.g. `pua:p7` vs `p7`).
 - Move `stock-target-finder` perspective symlinks out of global
   `~/.claude/skills/` into that project's own `.claude/skills/` (they only
   matter there).
-- Same for `thinking-*` if not needed in every repo.
+- Remove `thinking-*` symlinks from `dotfiles/.claude/skills/` if not pulling
+  their weight in dotfiles sessions (they also ship as a plugin manifest in
+  `cc-thinking-skills/.claude-plugin/` — check both sources).
 - Pick ONE source per duplicated skill: either the plugin (`pua@pua-skills`,
-  `caveman@caveman` in settings.json `enabledPlugins`) or the local symlink;
-  disable the other.
-- `~/.claude/skills-disabled/` already exists as the parking lot.
+  `caveman@caveman` in settings.json `enabledPlugins`) or the symlink in
+  `~/.agents/skills/`-backed `~/.claude/skills/`; disable the other.
+- `~/.claude/skills-disabled/` exists as the parking lot (currently holds
+  `thinking-council`).
 
 ## 3. Stale model pins + contradictory delegation rules (top focus-loss)
 
