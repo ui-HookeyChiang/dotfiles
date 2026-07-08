@@ -2,9 +2,9 @@
 
 ## Workflow routing
 
-For code changes, invoke `stacking-dev` (it handles spec creation if missing) — it sizes the work and routes all changes, including small single-file fixes, through the full flow.
-For non-code work (questions, debug, config, deploy, perspective audits), use the matching domain skill — not stacking-dev.
-superpowers skills are subordinate — used within stacking-dev's phases, not directly.
+For code changes, invoke `stack` (it handles spec creation if missing) — it sizes the work and routes all changes, including small single-file fixes, through the full pipeline (grill-with-docs → to-prd → to-issues → stack-dev → stack-merge).
+For non-code work (questions, debug, config, deploy, perspective audits), use the matching domain skill — not stack.
+superpowers skills are subordinate — used within stack's phases, not directly.
 Always delegate execution to subagents.
 
 ## Safety
