@@ -8,7 +8,9 @@ One rule decides where work goes. Check in order; first match wins:
    stacked series → `stack-merge`.
 2. **Non-code work** (questions, debugging, config, deploys, builds,
    benchmarks, perspective audits) → the matching domain skill, never
-   `stack-dev`.
+   `stack-dev`. For non-code intent/decision clarification, `grill-with-docs`
+   is standalone-callable — it is not gated to code work, only `stack`'s own
+   scope is.
 3. **No matching skill** → orchestrate — do only surgical 1–2 file work
    inline, delegate the rest.
 
