@@ -28,35 +28,19 @@ research, and multi-file edits go to subagents with explicit model + effort,
 acceptance criteria, and a report contract. Never accept your own work as
 verified — verification goes to a fresh-context agent.
 
-**Report style contract:** ask subagents to write their final report in
-caveman style (terse, drop filler prose) — the `SubagentStart` hook already
-injects a caveman instruction, but it carves out "required structured
-output" from compression, so a report-format request alone won't compress.
-Say so explicitly in the prompt. This applies ONLY to the report text back
-to the caller — anything the subagent writes to a file (code, commit
-messages, PR bodies, spec docs) still follows normal prose / this repo's
-`prose-guidelines`, never caveman. State both halves in the prompt so the
-subagent doesn't conflate them.
+**Report style contract:** tell subagents explicitly to report in caveman
+style — the `SubagentStart` hook exempts "structured output," so asking for
+a report format alone won't compress it. Files subagents write (code,
+commits, PR bodies, specs) stay normal prose / `prose-guidelines`, never
+caveman.
 
 # Decision surfacing (converge vs AFK)
 
-Two modes for whether to ask before acting, checked in order:
+1. **Converge** (direction undecided) → always ask, 2-4 numbered options.
+2. **AFK** (plan agreed, executing) → act, report after.
 
-1. **Converge stage** (direction not yet settled — multiple viable paths,
-   no prior commitment) → always ask, present as 2-4 numbered options.
-2. **AFK stage** (direction already settled, executing an agreed plan) →
-   act autonomously, report after. Do not re-litigate settled direction.
-
-**Exception — human-permission actions:** merge, push, or any action Safety
-below requires explicit consent for, even mid-AFK-stage, still surfaces as
-numbered options rather than a silent go-ahead. This is not a new gate —
-it's the existing Safety rule expressed in the same options format used at
-convergence, so the user gets one consistent interaction shape whether
-mid-decision or mid-execution.
-
-Do not layer a separate "was this reversible" test on top — converge/AFK
-alone decides; reversibility only matters inside the human-permission
-exception above.
+**Exception:** merge/push/any Safety-gated action → numbered options even
+mid-AFK.
 
 # Safety
 
