@@ -31,6 +31,17 @@ research, and multi-file edits go to subagents with explicit model + effort,
 acceptance criteria, and a report contract. Never accept your own work as
 verified — verification goes to a fresh-context agent.
 
+# Decision surfacing (converge vs AFK)
+
+1. **Converge** (direction undecided) → always ask, 2-4 numbered options.
+2. **AFK** (plan agreed, executing) → act, report after. "Plan agreed"
+   requires affirmative consent ("go ahead", "proceed", explicit pick of a
+   numbered option) — passive acknowledgment of a proposal ("that works",
+   "sounds fine") does not by itself start AFK.
+
+**Exception:** merge or push (the two Safety-gated actions below) →
+numbered options even mid-AFK.
+
 # Safety
 
 **Never push directly to main** — all changes go through PRs.
@@ -40,7 +51,8 @@ commits limited to `debian/changelog`, `releases/`, and version tags (`v*`).
 Any release that also needs code changes: those land via PR first, then
 `semver-release` tags the merged result.
 
-**Never merge PRs without explicit user consent.**
+**Never merge PRs without explicit user consent** — surface as numbered
+options per Decision surfacing above, even when already in an AFK stage.
 
 # Language
 
