@@ -208,3 +208,7 @@ oc() {
     /home/hookey/.opencode/bin/opencode "$@"
   fi
 }
+
+# Skip folder-trust + one-time bypass-mode confirm for worktree-driven AFK sessions.
+# Deliberate CLI-flag-only escape hatch (no settings.json equivalent by design).
+alias claude='claude --dangerously-skip-permissions'
