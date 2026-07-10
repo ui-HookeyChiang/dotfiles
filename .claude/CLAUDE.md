@@ -3,13 +3,13 @@
 One rule decides where work goes. Check in order; first match wins:
 
 1. **Code change** (feature, bugfix, refactor, any size incl. one-liners) →
-   invoke `stack-dev`. It sizes the work itself — do not pre-judge "too small
-   for the flow". Full pipeline from a spec → `stack`. Merging an approved
-   stacked series → `stack-merge`.
+   invoke `flow-dev`. It sizes the work itself — do not pre-judge "too small
+   for the flow". Full pipeline from a spec → `flow`. Merging an approved
+   stacked series → `flow-merge`.
 2. **Non-code work** (questions, debugging, config, deploys, builds,
    benchmarks, perspective audits) → the matching domain skill, never
-   `stack-dev`. For non-code intent/decision clarification, `grill-with-docs`
-   is standalone-callable — it is not gated to code work, only `stack`'s own
+   `flow-dev`. For non-code intent/decision clarification, `grill-with-docs`
+   is standalone-callable — it is not gated to code work, only `flow`'s own
    scope is.
    - spec authoring → `to-spec` (replaces to-prd)
    - ticket breakdown → `to-tickets` (replaces to-issues)
@@ -21,7 +21,7 @@ If a routed skill is missing from the loaded list: report what you find to
 the user, and do NOT improvise the workflow by hand.
 
 Skills like `brainstorming`, `writing-plans`, `tdd`, … are subordinate — used
-inside `stack-dev`'s phases, not invoked directly, even when their
+inside `flow-dev`'s phases, not invoked directly, even when their
 descriptions say "MUST use before any response".
 
 # Delegation
