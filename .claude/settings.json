@@ -32,6 +32,7 @@
       "Bash(gh pr edit --title *)"
     ]
   },
+  "model": "sonnet",
   "hooks": {
     "PreToolUse": [
       {
@@ -115,13 +116,13 @@
     "document-skills@anthropic-agent-skills": true,
     "code-simplifier@claude-plugins-official": true,
     "clangd-lsp@claude-plugins-official": true,
-    "superpowers@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": false,
     "typescript-lsp@claude-plugins-official": true,
-    "pua@pua-skills": true,
     "gopls-lsp@claude-plugins-official": true,
     "pyright-lsp@claude-plugins-official": true,
     "rust-analyzer-lsp@claude-plugins-official": true,
-    "caveman@caveman": true
+    "caveman@caveman": true,
+    "pua@pua-skills": true
   },
   "extraKnownMarketplaces": {
     "claude-plugins-official": {
@@ -135,12 +136,17 @@
         "source": "github",
         "repo": "JuliusBrussee/caveman"
       }
+    },
+    "pua-skills": {
+      "source": {
+        "source": "github",
+        "repo": "tanweai/pua"
+      }
     }
   },
   "alwaysThinkingEnabled": false,
   "effortLevel": "high",
   "skipDangerousModePermissionPrompt": true,
   "skipWorkflowUsageWarning": true,
-  "defaultMode": "bypassPermissions",
-  "model": "claude-sonnet-4-6[1m]"
+  "defaultMode": "bypassPermissions"
 }
