@@ -28,19 +28,16 @@ research, and multi-file edits go to subagents with explicit model + effort,
 acceptance criteria, and a report contract. Never accept your own work as
 verified — verification goes to a fresh-context agent.
 
-**Report style contract:** tell subagents explicitly to report in caveman
-style — the `SubagentStart` hook exempts "structured output," so asking for
-a report format alone won't compress it. Files subagents write (code,
-commits, PR bodies, specs) stay normal prose / `prose-guidelines`, never
-caveman.
-
 # Decision surfacing (converge vs AFK)
 
 1. **Converge** (direction undecided) → always ask, 2-4 numbered options.
-2. **AFK** (plan agreed, executing) → act, report after.
+2. **AFK** (plan agreed, executing) → act, report after. "Plan agreed"
+   requires affirmative consent ("go ahead", "proceed", explicit pick of a
+   numbered option) — passive acknowledgment of a proposal ("that works",
+   "sounds fine") does not by itself start AFK.
 
-**Exception:** merge/push/any Safety-gated action → numbered options even
-mid-AFK.
+**Exception:** merge or push (the two Safety-gated actions below) →
+numbered options even mid-AFK.
 
 # Safety
 
