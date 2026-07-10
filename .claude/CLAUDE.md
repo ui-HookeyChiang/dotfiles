@@ -4,13 +4,16 @@ One rule decides where work goes. Check in order; first match wins:
 
 1. **Code change** (feature, bugfix, refactor, any size incl. one-liners) →
    invoke `stack-dev`. It sizes the work itself — do not pre-judge "too small
-   for the flow". Full pipeline from a PRD → `stack`. Merging an approved
+   for the flow". Full pipeline from a spec → `stack`. Merging an approved
    stacked series → `stack-merge`.
 2. **Non-code work** (questions, debugging, config, deploys, builds,
    benchmarks, perspective audits) → the matching domain skill, never
    `stack-dev`. For non-code intent/decision clarification, `grill-with-docs`
    is standalone-callable — it is not gated to code work, only `stack`'s own
    scope is.
+   - spec authoring → `to-spec` (replaces to-prd)
+   - ticket breakdown → `to-tickets` (replaces to-issues)
+   - large multi-session planning → `wayfinder`
 3. **No matching skill** → orchestrate — do only surgical 1–2 file work
    inline, delegate the rest.
 
