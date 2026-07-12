@@ -121,10 +121,15 @@ if git rev-parse --is-inside-work-tree &>/dev/null; then
   fi
 fi
 
-# Model name
+# Model name (+ effort level)
 model_name=$(echo "$input" | jq -r '.model.display_name')
+effort=$(echo "$input" | jq -r '.effort_level // empty')
 if [[ -n "$model_name" ]] && [[ "$model_name" != "null" ]]; then
-  segments+=("$(printf '\033[35m%s\033[0m' "$model_name")")
+  if [[ -n "$effort" ]] && [[ "$effort" != "null" ]]; then
+    segments+=("$(printf '\033[35m%s (%s)\033[0m' "$model_name" "$effort")")
+  else
+    segments+=("$(printf '\033[35m%s\033[0m' "$model_name")")
+  fi
 fi
 
 # Backend indicator (CLAUDE_CODE_ENTRYPOINT: cli=cc, sdk-ts=oc)
@@ -225,6 +230,22 @@ if [[ -n "$pct" && "$pct" -gt 0 ]] 2>/dev/null; then
     pct_color=$(heatmap_color $last_pos)
 
     segments+=("${output} ${pct_color}${pct}%${reset}")
+fi
+
+# Cache hit rate + input/output tokens
+cache_read=$(echo "$input" | jq -r '.context_window.current_usage.cache_read_input_tokens // 0')
+cache_write=$(echo "$input" | jq -r '.context_window.current_usage.cache_creation_input_tokens // 0')
+in_tokens=$(echo "$input" | jq -r '.context_window.current_usage.input_tokens // 0')
+out_tokens=$(echo "$input" | jq -r '.context_window.current_usage.output_tokens // 0')
+_cache_total=$((cache_read + cache_write + in_tokens))
+if [[ "$_cache_total" -gt 0 ]] 2>/dev/null; then
+  hit_pct=$((cache_read * 100 / _cache_total))
+  if [[ "$hit_pct" -lt 70 ]]; then
+    hit_str="$(printf '\033[31mhit: %d%%\033[0m' "$hit_pct")"
+  else
+    hit_str="$(printf '\033[90mhit: %d%%\033[0m' "$hit_pct")"
+  fi
+  segments+=("$(printf '%b \033[2m|\033[0m in: %s, out: %s' "$hit_str" "$in_tokens" "$out_tokens")")
 fi
 
 # Session cost & duration
