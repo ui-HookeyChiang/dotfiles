@@ -22,5 +22,15 @@
     "~/.config/opencode/memory-discipline.md",
     "~/.config/opencode/sandbox-protected-paths.md",
     "~/.config/opencode/shell-tools.md"
-  ]
+  ],
+  "agent": {
+    "general": {
+      "mode": "subagent",
+      "prompt": "{file:./agents/general.md}"
+    },
+    "explore": {
+      "mode": "subagent",
+      "prompt": "{file:./agents/explore.md}"
+    }
+  }
 }

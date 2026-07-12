@@ -99,7 +99,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.claude/hooks/subagent-caveman-inject.sh",
+            "command": "bash ~/.claude/hooks/subagent-dispatch-inject.sh",
             "timeout": 10
           }
         ]
