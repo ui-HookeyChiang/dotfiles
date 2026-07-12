@@ -112,6 +112,7 @@ OPENCODE_FILES=(
   sandbox-protected-paths.md
   shell-tools.md
   plugins
+  agents
 )
 
 # ---------------------------------------------------------------------------

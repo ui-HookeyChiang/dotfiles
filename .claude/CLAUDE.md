@@ -26,13 +26,6 @@ Rules:
   at phase breaks. (Bulk work fans out to subagents — see Delegation.)
 - No matching route → orchestrate: surgical 1–2 file inline, delegate the rest.
 
-# Delegation
-
-The main context orchestrates and decides; bulk reading, repo scans, web
-research, and multi-file edits go to subagents with explicit model + effort,
-acceptance criteria, and a report contract. Never accept your own work as
-verified — verification goes to a fresh-context agent.
-
 # Decision surfacing (converge vs AFK)
 
 1. **Converge** (direction undecided) → always ask, 2-4 numbered options.
@@ -66,3 +59,4 @@ Files, code, commits, PRs: write in English.
 @memory-discipline.md
 @sandbox-protected-paths.md
 @shell-tools.md
+@constitution/model-dispatch.md
