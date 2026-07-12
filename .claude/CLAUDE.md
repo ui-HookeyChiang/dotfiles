@@ -39,8 +39,7 @@ verified — verification goes to a fresh-context agent.
    numbered option) — passive acknowledgment of a proposal ("that works",
    "sounds fine") does not by itself start AFK.
 
-**Exception:** merge or push (the two Safety-gated actions below) →
-numbered options even mid-AFK.
+**Exception:** merge or push → numbered options even mid-AFK (see Safety).
 
 # Safety
 
