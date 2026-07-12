@@ -1,28 +1,30 @@
-# Routing
+# Routing — one map, idea → ship
 
-One rule decides where work goes. Check in order; first match wins:
+Match the raw input to a route. First match wins.
 
-1. **Code change** (feature, bugfix, refactor, any size incl. one-liners) →
-   invoke `flow-dev`. It sizes the work itself — do not pre-judge "too small
-   for the flow". Full pipeline from a spec → `flow`. Merging an approved
-   stacked series → `flow-merge`.
-2. **Non-code work** (questions, debugging, config, deploys, builds,
-   benchmarks, perspective audits) → the matching domain skill, never
-   `flow-dev`. For non-code intent/decision clarification, `grill-with-docs`
-   is standalone-callable — it is not gated to code work, only `flow`'s own
-   scope is.
-   - spec authoring → `to-spec` (replaces to-prd)
-   - ticket breakdown → `to-tickets` (replaces to-issues)
-   - large multi-session planning → `wayfinder`
-3. **No matching skill** → orchestrate — do only surgical 1–2 file work
-   inline, delegate the rest.
+| Raw input                   | Route                                    | Then           |
+|-----------------------------|------------------------------------------|----------------|
+| fuzzy intent / feature      | `flow` (Converge = `grill-with-docs`)    | → spec         |
+| missing facts               | `research` → `grill-with-docs`           | → spec         |
+| unfelt design question      | `prototype` → `grill-with-docs`          | → spec         |
+| issue pile (not yours)      | `triage`                                 | → `flow-dev`   |
+| something broken            | `diagnosing-bugs`                        | → fix          |
+| codebase drift              | `improve-codebase-architecture`          | → re-grill     |
+| multi-session build         | `to-spec` → `to-tickets` → `flow-dev`    | per ticket     |
+| grounded single task        | `flow-dev` (bug+repro / clear scope / PRD) | —            |
+| approved stacked series     | `flow-merge`                             | —              |
+| config/deploy/build/audit   | matching domain skill                    | never `flow-dev` |
+| multi-session planning      | `wayfinder`                              | —              |
+| domain terms / module seams | `domain-modeling` / `codebase-design`    | —              |
 
-If a routed skill is missing from the loaded list: report what you find to
-the user, and do NOT improvise the workflow by hand.
+Rules:
 
-Skills like `brainstorming`, `writing-plans`, `tdd`, … are subordinate — used
-inside `flow-dev`'s phases, not invoked directly, even when their
-descriptions say "MUST use before any response".
+- Triage ONLY issues you didn't create — `to-tickets` output is agent-ready.
+- `flow` drives `brainstorming` / `tdd` / `code-review` internally — never
+  invoke them directly, even when their descriptions say "MUST use".
+- Converge + decompose in one ~120k window; `handoff` near the limit, `compact`
+  at phase breaks. (Bulk work fans out to subagents — see Delegation.)
+- No matching route → orchestrate: surgical 1–2 file inline, delegate the rest.
 
 # Delegation
 
