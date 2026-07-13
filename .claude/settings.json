@@ -32,7 +32,7 @@
       "Bash(gh pr edit --title *)"
     ]
   },
-  "model": "sonnet",
+  "model": "claude-opus-4-6[1m]",
   "hooks": {
     "PreToolUse": [
       {
