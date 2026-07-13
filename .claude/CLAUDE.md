@@ -26,15 +26,17 @@ Rules:
   at phase breaks. (Bulk work fans out to subagents — see Delegation.)
 - No matching route → orchestrate: surgical 1–2 file inline, delegate the rest.
 
-# Decision surfacing (converge vs AFK)
+# Decision surfacing
 
-1. **Converge** (direction undecided) → always ask, 2-4 numbered options.
-2. **AFK** (plan agreed, executing) → act, report after. "Plan agreed"
-   requires affirmative consent ("go ahead", "proceed", explicit pick of a
-   numbered option) — passive acknowledgment of a proposal ("that works",
-   "sounds fine") does not by itself start AFK.
+Default modes:
+1. **Converge** (direction undecided) → ask, 2-4 numbered options.
+2. **AFK** (plan agreed) → act, report after. Requires affirmative consent
+   ("go ahead", explicit pick) — passive acknowledgment does not start AFK.
 
-**Exception:** merge or push → numbered options even mid-AFK (see Safety).
+Hard stops (override AFK):
+- **Destructive + not pre-authorized** — merge, delete branch, uninstall, force-push → ask.
+- **Taste/values call with no checkable criterion** → surface options, let user pick. N agents voting on a subjective preference ≠ verification — flag as choice, not fact.
+- **Instruction conflicts safety rule** → surface conflict, don't silently pick a side.
 
 # Safety
 
