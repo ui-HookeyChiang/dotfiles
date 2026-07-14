@@ -38,18 +38,39 @@ case "$repo_root" in
   *) exit 0 ;;
 esac
 
-# Which base does this command actually touch? Only warn for that one.
+# Which base does this command actually touch? Match on word boundaries so a
+# branch name embedded in an unrelated token (e.g. "my-master-branch-copy")
+# doesn't false-positive on "master".
 target_base=""
 for b in "${SHARED_BASES[@]}"; do
-  case "$cmd" in
-    *"$b"*) target_base="$b"; break ;;
-  esac
+  if [[ "$cmd" =~ (^|[[:space:]/])"$b"($|[[:space:]/]) ]]; then
+    target_base="$b"
+    break
+  fi
 done
 [[ -n "$target_base" ]] || exit 0
 
-git fetch origin "$target_base" --quiet 2>/dev/null || true
+if ! git fetch origin "$target_base" --quiet 2>/dev/null; then
+  jq -n --arg base "$target_base" '{
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision: "ask",
+      permissionDecisionReason: ("⚠ Could not fetch origin/" + $base + " to verify shared-base freshness (network/auth issue?). Proceeding without this check risks inheriting stale or unrelated state — confirm the base is fresh before continuing.")
+    }
+  }'
+  exit 0
+fi
 
-behind="$(git rev-list --count "${target_base}..origin/${target_base}" 2>/dev/null || echo 0)"
+if ! behind="$(git rev-list --count "${target_base}..origin/${target_base}" 2>/dev/null)"; then
+  jq -n --arg base "$target_base" '{
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision: "ask",
+      permissionDecisionReason: ("⚠ Could not compare local " + $base + " against origin/" + $base + " (ref missing after fetch?). Proceeding without this check risks inheriting stale or unrelated state — confirm the base is fresh before continuing.")
+    }
+  }'
+  exit 0
+fi
 ahead="$(git rev-list --count "origin/${target_base}..${target_base}" 2>/dev/null || echo 0)"
 
 if [[ "$behind" -gt 0 || "$ahead" -gt 0 ]]; then
