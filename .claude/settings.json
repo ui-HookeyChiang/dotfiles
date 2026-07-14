@@ -54,6 +54,18 @@
             "command": "rtk hook claude"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/warn-stale-shared-base.sh",
+            "if": "Bash(git worktree add*)",
+            "timeout": 15,
+            "statusMessage": "Checking shared base freshness"
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
