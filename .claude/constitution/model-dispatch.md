@@ -14,7 +14,7 @@ Main session = old-tokenizer (reads most context).
 | T2 opus-4-6 | high | judgment, synthesis, architectural decision |
 
 T3 (opus-4-8) never directly dispatched — only receives escalated work.
-Main session = T2. ≤1 file + bounded = inline. Otherwise subagent.
+Main session = T2. Bounded + mechanical = subagent T1. Judgment + cross-cutting = inline T2.
 
 ## Leader Escalation
 
