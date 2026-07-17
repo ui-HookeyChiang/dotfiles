@@ -35,7 +35,7 @@ Default modes:
 
 Hard stops (override AFK):
 - **Destructive + not pre-authorized** — merge, delete branch, uninstall, force-push → ask.
-- **Taste/values call with no checkable criterion** → surface options, let user pick. N agents voting on a subjective preference ≠ verification — flag as choice, not fact.
+- **Taste/values call with no checkable criterion** → surface options, let user pick.
 - **Instruction conflicts safety rule** → surface conflict, don't silently pick a side.
 
 # Safety
@@ -47,8 +47,7 @@ commits limited to `debian/changelog`, `releases/`, and version tags (`v*`).
 Any release that also needs code changes: those land via PR first, then
 `semver-release` tags the merged result.
 
-**Never merge PRs without explicit user consent** — surface as numbered
-options per Decision surfacing above, even when already in an AFK stage.
+**Never merge PRs without explicit user consent** — even in AFK mode.
 
 # Language
 
