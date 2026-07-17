@@ -57,7 +57,6 @@ Keep technical terms, code symbols, command names, file paths, and library
 names in English (don't translate `git rebase`, `SessionManager`, …).
 Files, code, commits, PRs: write in English.
 
-@RTK.md
 @memory-discipline.md
 @sandbox-protected-paths.md
 @shell-tools.md
