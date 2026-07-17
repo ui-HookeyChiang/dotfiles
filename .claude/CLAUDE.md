@@ -61,4 +61,4 @@ Files, code, commits, PRs: write in English.
 @docs/agents/memory-discipline.md
 @docs/agents/sandbox-protected-paths.md
 @docs/agents/shell-tools.md
-@constitution/model-dispatch.md
+@docs/agents/model-dispatch.md
