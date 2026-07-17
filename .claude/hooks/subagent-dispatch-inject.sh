@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SubagentStart hook: inject failure escalation + red lines + caveman into subagents.
+# SubagentStart hook: inject failure escalation + red lines into subagents.
 read -r _IN
 
 RULES='## Delivery Red Lines
@@ -21,6 +21,6 @@ On each failure:
 Cannot report failure before step 3. Red line 3 enforces this.
 
 ## Output Style
-CAVEMAN FULL: drop articles/filler/pleasantries. Fragments OK. PRESERVE: technical terms, code, paths, numbers, errors, structured output.'
+Terse: drop articles/filler/pleasantries. Fragments OK. Never drop facts, caveats, preconditions. Technical terms, code, paths, numbers, errors, structured output: verbatim.'
 
 jq -nc --arg c "$RULES" '{hookSpecificOutput:{hookEventName:"SubagentStart",additionalContext:$c}}'
