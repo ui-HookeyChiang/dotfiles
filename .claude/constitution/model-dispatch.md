@@ -7,14 +7,27 @@ Main session = old-tokenizer (reads most context).
 
 ## Dispatch Table
 
-| Model | Effort | When |
-|-------|--------|------|
-| T0 haiku-4-5 | low | grep, locate, classify, scan |
-| T1 sonnet-4-6 | high | implement, refactor, review, research, adversarial review |
-| T2 opus-4-6 | high | judgment, synthesis, architectural decision |
+| Tier | Model | Effort | Criterion |
+|------|-------|--------|-----------|
+| T0 | claude-haiku-4-5 | low | Scan: read-only or trivial substitution, structured output (grep, locate, closed-bound classify, poll, extract) |
+| T1 | claude-sonnet-4-6 | high | Execute: goal clear, success verifiable (implement, test, deploy, build, correctness-focused review) |
+| T2 | claude-opus-4-6 | high | Decide: trade-off judgment, no single correct answer (architecture, merge strategy, design, architectural review) |
 
-T3 (opus-4-8) never directly dispatched — only receives escalated work.
-Main session = T2. Bounded + mechanical = subagent T1. Judgment + cross-cutting = inline T2.
+T3 (claude-opus-4-8): escalation only — never directly dispatched.
+Main session = T2. Inline when context already loaded; subagent when isolated context needed.
+Do not use Explore or general-purpose agent types — plain Agent + model param.
+
+## Model Pinning
+
+Agent tool `model` param accepts full model ID (e.g. `claude-sonnet-4-6`), not just alias.
+Alias (`sonnet`, `opus`) resolves to latest version — use full ID to prevent drift.
+
+| Mechanism | Precedence | Scope |
+|-----------|-----------|-------|
+| `CLAUDE_CODE_SUBAGENT_MODEL` env var | 1 (highest) | all subagents |
+| Agent tool `model` param (full ID) | 2 | single spawn |
+| `.claude/agents/*.md` frontmatter `model:` | 3 | agent type |
+| Inherit main session (settings.json) | 4 (fallback) | default |
 
 ## Leader Escalation
 
