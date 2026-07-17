@@ -9,7 +9,7 @@ Main session = old-tokenizer (reads most context).
 
 | Tier | Model | Effort | Criterion |
 |------|-------|--------|-----------|
-| T0 | claude-haiku-4-5 | low | Scan: read-only or trivial substitution, structured output (grep, locate, closed-bound classify, poll, extract) |
+| T0 | claude-haiku-4-5 | low | Scan: bounded — input contains all needed information (grep, locate, classify, substitute, poll, extract) |
 | T1 | claude-sonnet-4-6 | high | Execute: goal clear, success verifiable (implement, test, deploy, build, correctness-focused review) |
 | T2 | claude-opus-4-6 | high | Decide: trade-off judgment, no single correct answer (architecture, merge strategy, design, architectural review) |
 
