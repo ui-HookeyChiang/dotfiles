@@ -22,8 +22,7 @@
     "~/.config/opencode/memory-discipline.md",
     "~/.config/opencode/sandbox-protected-paths.md",
     "~/.config/opencode/shell-tools.md",
-    "~/.config/opencode/terse-output.md",
-    "~/.config/opencode/model-dispatch.md"
+    "~/.config/opencode/terse-output.md"
   ],
   "agent": {
     "general": {
