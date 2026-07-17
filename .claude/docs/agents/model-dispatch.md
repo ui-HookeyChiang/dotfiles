@@ -1,10 +1,5 @@
 # Model Dispatch
 
-## Tokenizer
-
-OLD: Opus 4.6, Sonnet 4.6, Haiku 4.5. NEW (+30% tokens): Opus 4.7/4.8, Sonnet 5.
-Main session = old-tokenizer (reads most context).
-
 ## Dispatch Table
 
 | Tier | Model | Effort | Criterion |
