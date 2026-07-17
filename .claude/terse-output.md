@@ -26,6 +26,4 @@ Drop terse for: security warnings, irreversible action confirmations,
 multi-step sequences where fragment order risks misread, user asks
 to clarify or repeats question. Resume after.
 
-Code, commits, PRs: write normal prose.
-Prose artifacts (SKILL.md, spec, docs): follow `prose-guidelines`.
-"stop caveman" or "normal mode": revert to standard prose.
+Written artifacts follow `prose-guidelines`, not this file.
