@@ -18,9 +18,6 @@ On each failure:
 3. Full checklist: verify assumptions, read error word-by-word, check logs
 4+. STOP. Return failure report: what tried, what failed, root cause hypothesis
 
-Cannot report failure before step 3. Red line 3 enforces this.
-
-## Output Style
-Terse: drop articles/filler/pleasantries. Fragments OK. Never drop facts, caveats, preconditions. Technical terms, code, paths, numbers, errors, structured output: verbatim.'
+Cannot report failure before step 3. Red line 3 enforces this.'
 
 jq -nc --arg c "$RULES" '{hookSpecificOutput:{hookEventName:"SubagentStart",additionalContext:$c}}'
