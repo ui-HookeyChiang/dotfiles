@@ -9,12 +9,13 @@ Main session = old-tokenizer (reads most context).
 
 | Tier | Model | Effort | Criterion |
 |------|-------|--------|-----------|
-| T0 | claude-haiku-4-5 | low | Scan: read-only, structured output (grep, locate, classify, poll) |
-| T1 | claude-sonnet-4-6 | high | Execute: goal clear, success verifiable (implement, test, deploy, build, review) |
-| T2 | claude-opus-4-6 | high | Decide: trade-off judgment, no single correct answer (architecture, merge strategy, design) |
+| T0 | claude-haiku-4-5 | low | Scan: read-only or trivial substitution, structured output (grep, locate, classify, poll, extract) |
+| T1 | claude-sonnet-4-6 | high | Execute: goal clear, success verifiable (implement, test, deploy, build, correctness-focused review) |
+| T2 | claude-opus-4-6 | high | Decide: trade-off judgment, no single correct answer (architecture, merge strategy, design, architectural review) |
 
 T3 (claude-opus-4-8): escalation only — never directly dispatched.
-Main session = T2. ≤1 file + bounded = inline. Otherwise subagent.
+Main session = T2. Inline when context already loaded; subagent when isolated context needed.
+Do not use Explore or general-purpose agent types — plain Agent + model param.
 
 ## Model Pinning
 
