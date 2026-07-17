@@ -79,32 +79,6 @@
         ]
       }
     ],
-    "PostToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ~/.claude/hooks/post-checkout.sh",
-            "if": "Bash(git worktree add*)",
-            "timeout": 30,
-            "statusMessage": "Seeding CRG graph DB into worktree"
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ~/.claude/hooks/post-worktree-remove.sh",
-            "if": "Bash(git worktree remove*)",
-            "timeout": 15,
-            "statusMessage": "Cleaning CRG DB for removed worktree"
-          }
-        ]
-      }
-    ],
     "SubagentStart": [
       {
         "hooks": [
