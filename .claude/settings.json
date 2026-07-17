@@ -60,10 +60,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.claude/hooks/warn-stale-shared-base.sh",
-            "if": "Bash(git worktree add*)",
+            "command": "bash ~/.claude/hooks/guard-stale-base.sh",
             "timeout": 15,
-            "statusMessage": "Checking shared base freshness"
+            "statusMessage": "Checking base branch freshness"
           }
         ]
       }
