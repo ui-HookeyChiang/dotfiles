@@ -1,0 +1,1 @@
+../../.claude/docs/agents/terse-output.md
