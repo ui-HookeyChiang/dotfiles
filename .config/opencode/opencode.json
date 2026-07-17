@@ -15,12 +15,15 @@
       "git add --all": "deny",
       "git add .": "deny",
       "gh pr edit * --title *": "deny",
-      "gh pr edit --title *": "deny"
+      "gh pr edit --title *": "deny",
+      "grep *": "deny",
+      "egrep *": "deny",
+      "fgrep *": "deny",
+      "find *": "deny"
     }
   },
   "instructions": [
     "~/.config/opencode/memory-discipline.md",
-    "~/.config/opencode/sandbox-protected-paths.md",
     "~/.config/opencode/shell-tools.md",
     "~/.config/opencode/terse-output.md"
   ],
