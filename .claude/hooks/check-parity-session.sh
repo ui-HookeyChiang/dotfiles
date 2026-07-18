@@ -7,10 +7,12 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PARITY_SCRIPT=""
 
-# Find check-parity.sh — try skill-dev repo, then installed skill
+# Find check-parity.sh — installed skill, then co-located repo (via hook symlink)
+HOOK_REAL="$(readlink -f "$0" 2>/dev/null || echo "$0")"
+HOOK_REPO="$(cd "$(dirname "$HOOK_REAL")/.." 2>/dev/null && pwd)"
 for candidate in \
-  "$HOME/.claude/skill-dev/check-agent-parity/scripts/check-parity.sh" \
-  "$HOME/.claude/skills/check-agent-parity/scripts/check-parity.sh"; do
+  "$HOME/.claude/skills/agent-parity/scripts/check-parity.sh" \
+  "$HOOK_REPO/agent-parity/scripts/check-parity.sh"; do
   [ -x "$candidate" ] && { PARITY_SCRIPT="$candidate"; break; }
 done
 
@@ -35,5 +37,5 @@ warnings=$(echo "$output" | rg -o '[0-9]+ warning' | rg -o '[0-9]+' || echo 0)
 # Drift detected — emit condensed summary
 drift_lines=$(echo "$output" | rg 'MISSING|DRIFTED|UNDECLARED|DIVERGED')
 
-echo "Agent parity drift detected ($gaps gap(s), $warnings warning(s)). Run /check-agent-parity for details. Divergences:"
+echo "Agent parity drift detected ($gaps gap(s), $warnings warning(s)). Run /agent-parity for details. Divergences:"
 echo "$drift_lines"

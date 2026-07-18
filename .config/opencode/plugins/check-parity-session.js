@@ -2,15 +2,20 @@
 // Lightweight parity check at session start. Reports drift.
 
 import { execSync } from "child_process"
-import { existsSync } from "fs"
-import { join } from "path"
+import { existsSync, realpathSync } from "fs"
+import { join, dirname } from "path"
 
 export const CheckParitySession = async () => {
   return {
     "session.created": async () => {
+      const home = process.env.HOME || ""
+      let hookRepo = ""
+      try {
+        hookRepo = dirname(dirname(realpathSync(join(home, ".claude", "hooks", "check-parity-session.sh"))))
+      } catch {}
       const candidates = [
-        join(process.env.HOME || "", ".claude", "skill-dev", "check-agent-parity", "scripts", "check-parity.sh"),
-        join(process.env.HOME || "", ".claude", "skills", "check-agent-parity", "scripts", "check-parity.sh"),
+        join(home, ".claude", "skills", "agent-parity", "scripts", "check-parity.sh"),
+        ...(hookRepo ? [join(hookRepo, "agent-parity", "scripts", "check-parity.sh")] : []),
       ]
 
       let script = null
