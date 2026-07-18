@@ -5,12 +5,9 @@
 # worktree instead, so the main checkout always reflects a clean merged state
 # and concurrent work cannot clobber it.
 #
-# Detection: resolve the edit target's git directory and compare
-#   git -C <dir> rev-parse --git-dir   vs   --git-common-dir
-#   - main checkout: the two are EQUAL (both `.git`, or both the common dir),
-#     and the git-dir path does NOT contain `/worktrees/`  -> DENY.
-#   - linked worktree: the git-dir is `<common>/worktrees/<name>`, which differs
-#     from the common dir and contains `/worktrees/`        -> ALLOW.
+# Detection: compare --absolute-git-dir vs --git-common-dir (canonicalized).
+#   - main checkout: both resolve to the same directory     -> DENY.
+#   - linked worktree: git-dir is <common>/worktrees/<name> -> ALLOW.
 #   - not a git repo: ALLOW (fail open).
 #
 # Escape hatch: ALLOW_MAIN_EDIT=1 bypasses the check (allow). Kept for the
@@ -53,16 +50,18 @@ deny() {  # $1 = reason
 }
 
 # --- Resolve the target's git directory -------------------------------------
-# Use the absolute git-dir so the `/worktrees/` test is independent of CWD. A
-# linked worktree's git-dir is `<common>/worktrees/<name>`; the main checkout's
-# git-dir is the common dir itself and never contains that segment.
-gitdir="$(git -C "$dir" rev-parse --absolute-git-dir 2>/dev/null)" || exit 0  # not a repo -> allow
-[ -n "$gitdir" ] || exit 0
+# A linked worktree's --git-dir differs from --git-common-dir.
+# The main checkout's git-dir equals its common-dir.
+gitdir="$(git -C "$dir" rev-parse --absolute-git-dir 2>/dev/null)" || exit 0
+commondir="$(git -C "$dir" rev-parse --git-common-dir 2>/dev/null)" || exit 0
+[ -n "$gitdir" ] && [ -n "$commondir" ] || exit 0
 
-case "$gitdir" in
-  */worktrees/*) ;;                      # linked worktree -> allow
-  *)
-    deny "Blocked: editing the main working tree is forbidden.
+# Canonicalize for reliable comparison
+gitdir="$(cd "$gitdir" 2>/dev/null && pwd)" || exit 0
+commondir="$(cd "$commondir" 2>/dev/null && pwd)" || exit 0
+
+if [ "$gitdir" = "$commondir" ]; then
+  deny "Blocked: editing the main working tree is forbidden.
 
   target: $dir
 
@@ -72,8 +71,6 @@ Create a linked worktree and develop there instead:
   cd .worktree/<branch>
 
 Escape hatch for a deliberate single-operator edit: ALLOW_MAIN_EDIT=1."
-    ;;
-esac
+fi
 
-# Reached only for a linked worktree: allow.
 exit 0

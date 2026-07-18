@@ -4,7 +4,6 @@
 # If drift detected, emits system-reminder so agent can offer to fix.
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PARITY_SCRIPT=""
 
 # Find check-parity.sh — installed skill, then co-located repo (via hook symlink)
@@ -28,14 +27,16 @@ AGENT_COUNT=$("$DETECT_SCRIPT" 2>/dev/null | jq '[.agents[] | select(.installed)
 
 # Run parity check, capture output
 output=$("$PARITY_SCRIPT" 2>/dev/null || true)
-gaps=$(echo "$output" | rg -o '[0-9]+ gap' | rg -o '[0-9]+' || echo 0)
-warnings=$(echo "$output" | rg -o '[0-9]+ warning' | rg -o '[0-9]+' || echo 0)
+gaps=$(echo "$output" | sed -n 's/.*\([0-9]\+\) gap.*/\1/p' | tail -1)
+warnings=$(echo "$output" | sed -n 's/.*\([0-9]\+\) warning.*/\1/p' | tail -1)
+gaps="${gaps:-0}"
+warnings="${warnings:-0}"
 
 # No drift — silent
 [ "$gaps" -eq 0 ] && [ "$warnings" -eq 0 ] && exit 0
 
 # Drift detected — emit condensed summary
-drift_lines=$(echo "$output" | rg 'MISSING|DRIFTED|UNDECLARED|DIVERGED')
+drift_lines=$(echo "$output" | sed -n '/MISSING\|DRIFTED\|UNDECLARED\|DIVERGED/p')
 
 echo "Agent parity drift detected ($gaps gap(s), $warnings warning(s)). Run /agent-parity for details. Divergences:"
 echo "$drift_lines"

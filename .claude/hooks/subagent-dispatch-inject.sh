@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SubagentStart hook: inject failure escalation + red lines into subagents.
-read -r _IN
+cat > /dev/null
 
 RULES='## Delivery Red Lines
 1. CLOSE THE LOOP: "done" requires evidence (test output, build log). No evidence = not done.
