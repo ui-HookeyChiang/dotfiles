@@ -89,6 +89,18 @@
           }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/check-parity-session.sh",
+            "timeout": 15,
+            "statusMessage": "Checking agent parity"
+          }
+        ]
+      }
     ]
   },
   "statusLine": {
