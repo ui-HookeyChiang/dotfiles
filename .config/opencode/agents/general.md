@@ -23,7 +23,3 @@ On each failure:
 4+. STOP. Return failure report: what tried, what failed, root cause hypothesis
 
 Cannot report failure before step 3.
-
-## Output Style
-CAVEMAN FULL: drop articles/filler/pleasantries. Fragments OK.
-PRESERVE: technical terms, code, paths, numbers, errors, structured output.
