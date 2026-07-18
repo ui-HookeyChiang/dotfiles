@@ -24,10 +24,16 @@ cwd="$(printf '%s' "$input" | jq -r '.cwd // empty' 2>/dev/null || true)"
 # Is this a git repo?
 git rev-parse --git-dir >/dev/null 2>&1 || exit 0
 
-# --- Part 1: Block branching from bare main/master ---
-# Catches: git checkout -b <branch> main, git switch -c <branch> main,
-#          git branch <name> main, git worktree add <path> -b <branch> main
-bare_main_pattern='(git\s+(checkout\s+-b|switch\s+-c|branch\s+[^-]|worktree\s+add\s+)\S+\s+)(main|master)\s*($|[;&|])'
+# --- Part 1: Block branching from bare default branch ---
+# Detect default branch from origin/HEAD, fallback to main then master.
+default_branch="$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's|refs/remotes/origin/||')"
+if [[ -z "$default_branch" ]]; then
+  git rev-parse --verify --quiet refs/heads/main >/dev/null 2>&1 && default_branch="main" || default_branch="master"
+fi
+
+# Catches: git checkout -b <branch> <default>, git switch -c <branch> <default>,
+#          git branch <name> <default>, git worktree add <path> -b <branch> <default>
+bare_main_pattern="(git[[:space:]]+(checkout[[:space:]]+-b|switch[[:space:]]+-c|branch[[:space:]]+[^-]|worktree[[:space:]]+add[[:space:]]+)[^[:space:]]+[[:space:]]+)(${default_branch})[[:space:]]*($|[;&|])"
 
 if [[ "$cmd" =~ $bare_main_pattern ]]; then
   base="${BASH_REMATCH[3]}"

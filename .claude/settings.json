@@ -67,18 +67,6 @@
         ]
       }
     ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ~/.claude/hooks/warn-stale-main.sh",
-            "timeout": 10,
-            "statusMessage": "Checking main-branch drift"
-          }
-        ]
-      }
-    ],
     "SubagentStart": [
       {
         "hooks": [
