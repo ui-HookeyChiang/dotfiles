@@ -59,5 +59,4 @@ Files, code, commits, PRs: write in English.
 @docs/agents/terse-output.md
 @docs/agents/memory-discipline.md
 @docs/agents/sandbox-protected-paths.md
-@docs/agents/shell-tools.md
 @docs/agents/model-dispatch.md
