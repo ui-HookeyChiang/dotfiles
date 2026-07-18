@@ -1,12 +1,9 @@
 #!/usr/bin/env bash
 # guard-stale-base.sh — PreToolUse hook (Bash matcher).
 #
-# Blocks branching from a bare local ref. Any branch/checkout/switch/worktree
-# command whose base is not prefixed with `origin/` is denied — local branches
-# may carry stale or unpushed commits.
-#
-# Allowed:  git checkout -b feat/x origin/main
-# Blocked:  git checkout -b feat/x main
+# Two guards on branching commands:
+# 1. Base ref without `origin/` prefix — denied (local may be stale)
+# 2. Base ref with `origin/` prefix — fetched first to ensure fresh
 set -euo pipefail
 
 input="$(cat)"
@@ -40,9 +37,21 @@ fi
 
 [[ -n "$base" ]] || exit 0
 
-# origin/ prefix = remote ref, allow
+# origin/ prefix = remote ref — fetch to ensure fresh, then allow
 case "$base" in
-  origin/*) exit 0 ;;
+  origin/*)
+    ref_name="${base#origin/}"
+    if ! git fetch origin "$ref_name" --quiet 2>/dev/null; then
+      jq -n --arg base "$base" '{
+        hookSpecificOutput: {
+          hookEventName: "PreToolUse",
+          permissionDecision: "ask",
+          permissionDecisionReason: ("⚠ Could not fetch " + $base + " to verify freshness. Proceeding risks branching from stale state.")
+        }
+      }'
+    fi
+    exit 0
+    ;;
 esac
 
 # Bare local ref — deny
