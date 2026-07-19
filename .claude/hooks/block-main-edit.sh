@@ -1,18 +1,16 @@
 #!/usr/bin/env bash
-# PreToolUse hook (Edit|Write|MultiEdit|NotebookEdit): worktree-enforce (mode "X").
+# PreToolUse hook (Edit|Write|MultiEdit|NotebookEdit): branch-enforce (mode "X").
 #
-# Rule: edits are forbidden in the MAIN working tree. Develop in a linked
-# worktree instead, so the main checkout always reflects a clean merged state
-# and concurrent work cannot clobber it.
+# Rule: edits are forbidden on the default branch. Develop on a feature branch.
 #
-# Detection: compare --absolute-git-dir vs --git-common-dir (canonicalized).
-#   - main checkout: both resolve to the same directory     -> DENY.
-#   - linked worktree: git-dir is <common>/worktrees/<name> -> ALLOW.
+# Detection: compare current branch vs origin/HEAD (fallback: main).
+#   - current branch == default branch -> DENY.
+#   - current branch != default branch -> ALLOW.
 #   - not a git repo: ALLOW (fail open).
 #
 # Escape hatch: ALLOW_MAIN_EDIT=1 bypasses the check (allow). Kept for the
 # legitimate cases: editing this hook / settings.json itself, an initial commit
-# before any worktree exists, or a deliberate urgent single-operator edit.
+# before any branch exists, or a deliberate urgent single-operator edit.
 set -uo pipefail
 
 # --- Escape hatch -----------------------------------------------------------
@@ -49,26 +47,26 @@ deny() {  # $1 = reason
   exit 0
 }
 
-# --- Resolve the target's git directory -------------------------------------
-# A linked worktree's --git-dir differs from --git-common-dir.
-# The main checkout's git-dir equals its common-dir.
-gitdir="$(git -C "$dir" rev-parse --absolute-git-dir 2>/dev/null)" || exit 0
-commondir="$(git -C "$dir" rev-parse --git-common-dir 2>/dev/null)" || exit 0
-[ -n "$gitdir" ] && [ -n "$commondir" ] || exit 0
+# --- Resolve the target's default and current branch -----------------------
+default_branch="$(git -C "$dir" rev-parse --abbrev-ref origin/HEAD 2>/dev/null | sed 's|^origin/||')"
+# Fallback if origin/HEAD isn't set
+[ -z "$default_branch" ] && default_branch="main"
 
-# Canonicalize for reliable comparison
-gitdir="$(cd "$gitdir" 2>/dev/null && pwd)" || exit 0
-commondir="$(cd "$commondir" 2>/dev/null && pwd)" || exit 0
+current_branch="$(git -C "$dir" rev-parse --abbrev-ref HEAD 2>/dev/null)" || exit 0
+[ -z "$current_branch" ] && exit 0
 
-if [ "$gitdir" = "$commondir" ]; then
-  deny "Blocked: editing the main working tree is forbidden.
+if [ "$current_branch" = "$default_branch" ]; then
+  deny "Blocked: editing on the default branch ($default_branch) is forbidden.
 
   target: $dir
 
-Create a linked worktree and develop there instead:
+Switch to a feature branch first:
+
+  git checkout -b <branch>
+
+Or create a linked worktree:
 
   git worktree add .worktree/<branch> -b <branch>
-  cd .worktree/<branch>
 
 Escape hatch for a deliberate single-operator edit: ALLOW_MAIN_EDIT=1."
 fi
