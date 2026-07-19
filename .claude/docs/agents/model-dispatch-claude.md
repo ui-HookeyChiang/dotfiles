@@ -14,15 +14,28 @@ Do not use Explore or general-purpose agent types — plain Agent + model param.
 
 ## Model Pinning
 
-Agent tool `model` param accepts full model ID (e.g. `claude-sonnet-4-6`), not just alias.
-Alias (`sonnet`, `opus`) resolves to latest version — use full ID to prevent drift.
+Agent tool `model` param accepts **aliases only** (`sonnet`, `opus`, `haiku`, `fable`). Aliases resolve to latest version.
+To pin a specific version, use `~/.claude/agents/*.md` definition files — frontmatter `model:` accepts full model IDs (e.g. `model: claude-sonnet-4-6`).
 
 | Mechanism | Precedence | Scope |
 |-----------|-----------|-------|
 | `CLAUDE_CODE_SUBAGENT_MODEL` env var | 1 (highest) | all subagents |
-| Agent tool `model` param (full ID) | 2 | single spawn |
+| Agent tool `model` param (alias only) | 2 | single spawn |
 | `.claude/agents/*.md` frontmatter `model:` | 3 | agent type |
 | Inherit main session (settings.json) | 4 (fallback) | default |
+
+## Agent Definitions (~/.claude/agents/)
+
+Three agent definitions pin model versions for dispatch tiers:
+
+| Agent | File | Model | Tier |
+|-------|------|-------|------|
+| `scan` | `~/.claude/agents/scan.md` | `haiku` | T0 |
+| `execute` | `~/.claude/agents/execute.md` | `claude-sonnet-4-6` | T1 |
+| `decide` | `~/.claude/agents/decide.md` | `claude-opus-4-6` | T2 |
+
+Usage: `Agent(subagent_type: "execute", prompt: "...")` — model resolved from frontmatter.
+Required frontmatter: `name`, `description`, `model`, `color`. Missing fields = silently ignored by registry.
 
 ## Leader Escalation
 
