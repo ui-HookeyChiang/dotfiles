@@ -1,6 +1,8 @@
-# Routing — one map, idea → ship
+# Routing — MANDATORY, idea → ship
 
-Match the raw input to a route. First match wins.
+**BEFORE generating any response**, match user input to this table. First match
+wins. Invoke the matched skill IMMEDIATELY — do not answer, plan, or discuss
+first. Responding without routing is a bug.
 
 | Raw input                   | Route                                    | Then           |
 |-----------------------------|------------------------------------------|----------------|
@@ -19,12 +21,9 @@ Match the raw input to a route. First match wins.
 
 Rules:
 
-- Triage ONLY issues you didn't create — `to-tickets` output is agent-ready.
-- `flow` drives `brainstorming` / `tdd` / `code-review` internally — never
-  invoke them directly, even when their descriptions say "MUST use".
-- Converge + decompose in one ~120k window; `handoff` near the limit, `compact`
-  at phase breaks. (Bulk work fans out to subagents — see Delegation.)
-- No matching route → orchestrate: surgical 1–2 file inline, delegate the rest.
+- Triage external issues only — `to-tickets` output is agent-ready.
+- One ~120k window per converge+decompose; `handoff` near limit, `compact` at phase breaks.
+- No match → orchestrate: 1–2 file inline, delegate rest.
 
 # Decision surfacing
 
