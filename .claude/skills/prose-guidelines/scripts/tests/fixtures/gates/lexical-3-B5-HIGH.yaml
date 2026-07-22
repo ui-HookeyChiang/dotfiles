@@ -1,0 +1,21 @@
+file: "prose-guidelines/scripts/tests/fixtures/gates/target.md"
+findings:
+  - lines: "L23-L23"
+    finding_class: lexical
+    preceding_heading: "Gate fixture target"
+    original_words: 16
+    rewritten_words: 7
+    ratio: 0.44
+    confidence: high
+    rationale_bucket: false
+    lexical_hits:
+      - {token: "in order to", subclass: B5}
+      - {token: "due to the fact that", subclass: B5}
+      - {token: "at this point in time", subclass: B5}
+    evidence_quote: |
+      In order to start, due to the fact that caching helps, at this point in time we cache.
+    rewritten_text: |
+      To start, because caching helps, now we cache.
+    suggested_action: "Three B5 redundant phrases — high severity."
+summary:
+  findings_by_class: {paragraph: 0, lexical: 1, meta: 0, hedge: 0}

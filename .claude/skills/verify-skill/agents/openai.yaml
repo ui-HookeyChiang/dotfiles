@@ -1,0 +1,3 @@
+interface:
+  display_name: "Verify Skill"
+  short_description: "Verify a skill's behavior before merge — effect mode for new skills, equivale..."

@@ -1,0 +1,11 @@
+file: "prose-guidelines/scripts/tests/fixtures/merge/target-partial.md"
+findings:
+  - lines: "L3-L3"
+    finding_class: paragraph
+    severity_recount: MEDIUM
+    evidence_quote: |
+      The service caches reads aggressively to cut latency.
+    rewritten_text: ""
+    suggested_action: "Delete the whole paragraph."
+summary:
+  findings_by_class: {paragraph: 1, lexical: 0, meta: 0, hedge: 0}

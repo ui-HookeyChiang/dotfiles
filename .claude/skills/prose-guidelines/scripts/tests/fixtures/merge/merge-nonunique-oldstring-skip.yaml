@@ -1,0 +1,14 @@
+file: "prose-guidelines/scripts/tests/fixtures/merge/target-dup.md"
+findings:
+  - lines: "L3-L3"
+    finding_class: lexical
+    lexical_hits:
+      - {token: duplicated, subclass: B1}
+    severity_recount: LOW
+    evidence_quote: |
+      duplicated line here.
+    rewritten_text: |
+      line here.
+    suggested_action: "Drop weasel."
+summary:
+  findings_by_class: {paragraph: 0, lexical: 1, meta: 0, hedge: 0}

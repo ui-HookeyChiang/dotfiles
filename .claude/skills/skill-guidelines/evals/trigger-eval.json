@@ -1,0 +1,20 @@
+[
+  {"query": "What belongs in a SKILL.md body vs references?", "should_trigger": true, "rationale": "Core good-class / disclosure question"},
+  {"query": "I'm writing a new skill — what's the right shape for the body?", "should_trigger": true, "rationale": "Authoring shape — the write-time guide"},
+  {"query": "Should this paragraph go in the body or a reference file?", "should_trigger": true, "rationale": "Pointer / lean good-class decision"},
+  {"query": "skill authoring principles", "should_trigger": true, "rationale": "Direct trigger phrase"},
+  {"query": "Is a changelog section OK in my SKILL.md?", "should_trigger": true, "rationale": "no-history good-class (live-mechanism corollary)"},
+  {"query": "How should I write the description for my skill?", "should_trigger": true, "rationale": "Triggers good-class (description trigger-only)"},
+  {"query": "幫我看這個 SKILL.md 的內容該放 body 還是 references", "should_trigger": true, "rationale": "Chinese — disclosure/pointer good-class"},
+  {"query": "good-classes of a skill body", "should_trigger": true, "rationale": "Direct trigger phrase"},
+  {"query": "What's the right shape — should the description summarize the workflow?", "should_trigger": true, "rationale": "Triggers good-class — trigger-only-not-workflow rule"},
+  {"query": "Audit this skill for bloat and dead scripts.", "should_trigger": false, "rationale": "Auditing an existing skill → skill-audit, not the write-time guide"},
+  {"query": "Compress the wordy paragraphs in my SKILL.md.", "should_trigger": false, "rationale": "Prose density → prose-guidelines"},
+  {"query": "Refactor this Python function for clarity.", "should_trigger": false, "rationale": "Code style → coding-guidelines"},
+  {"query": "Create the skill for me and run the verify gate.", "should_trigger": false, "rationale": "Building/orchestrating → skill-writer"},
+  {"query": "Run skill-audit on flow-dev.", "should_trigger": false, "rationale": "Audit invocation → skill-audit"},
+  {"query": "Score my skill on the 9-dim rubric.", "should_trigger": false, "rationale": "Rubric score → darwin-skill"},
+  {"query": "Review this SKILL.md for paraphrased duplication across its sections.", "should_trigger": false, "rationale": "Near-miss: a read-side audit of an existing skill → skill-audit (probabilistic G1), not the write-time good-class guide"},
+  {"query": "Is this script still called anywhere?", "should_trigger": false, "rationale": "Reachability/deadcode → skill-audit (deterministic leg)"},
+  {"query": "My SKILL.md flags as bloated — what should I cut?", "should_trigger": false, "rationale": "Near-miss: diagnosing an existing skill's bloat is a read-side audit (skill-audit), not authoring-shape guidance (the write-time guide prevents it, doesn't triage it)"}
+]

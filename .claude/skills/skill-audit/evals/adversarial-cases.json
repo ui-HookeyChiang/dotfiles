@@ -1,0 +1,40 @@
+{
+  "description": "Adversarial inputs for A5 verifying skill-semantic-audit.",
+  "cases": [
+    {
+      "id": "adv-sma-2-skills-identical",
+      "input_kind": "two-skill-paths",
+      "description": "Two skills with byte-identical SKILL.md",
+      "input_content": "skill-a == skill-b",
+      "expected": "G1 fires with 100% match; recommends merging or removing one"
+    },
+    {
+      "id": "adv-sma-2-skills-different",
+      "input_kind": "two-skill-paths",
+      "description": "Two skills with zero topical overlap",
+      "input_content": "ubiquiti-nas-perf-test vs confluence",
+      "expected": "G1 fires with 0% match; no finding emitted"
+    },
+    {
+      "id": "adv-sma-mixed-language",
+      "input_kind": "file",
+      "description": "SKILL.md mixes English + Traditional Chinese in description",
+      "input_content": "description: 用 Munger 的 perspective audit",
+      "expected": "audit handles UTF-8 without crashing; G8 may or may not fire (no bias on script)"
+    },
+    {
+      "id": "adv-sma-progressive-disclosure-perfect",
+      "input_kind": "skill-path",
+      "description": "Skill already has ideal SKILL.md size + references/ layout",
+      "input_path": "<well-structured-skill>/",
+      "expected": "G8 (progressive disclosure) emits clean; no findings"
+    },
+    {
+      "id": "adv-sma-g8-open-set-history-prose",
+      "input_kind": "skill-path",
+      "description": "SKILL.md body carries open-set history-prose the narrow verb whitelist misses ('Consolidated from the old flow', 'was v1 Phase 3.4') — exercises the LLM-owns-recall path (coding-guidelines §6 case-3)",
+      "input_path": "<skill-with-open-set-changelog>/",
+      "expected": "with LLM: G8 'n' inline-changelog finding (DELETE) on the open-set markers via the recall_probe pass; with --no-llm: N/A advisory returned (open concept — does not attempt regex findings; regex still runs for candidate count in advisory summary)"
+    }
+  ]
+}

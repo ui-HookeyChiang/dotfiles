@@ -1,0 +1,3 @@
+interface:
+  display_name: "Jira"
+  short_description: "Interact with Jira via REST API — create, search, read, comment, and transiti..."

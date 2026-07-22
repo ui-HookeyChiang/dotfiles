@@ -1,0 +1,20 @@
+file: "prose-guidelines/scripts/tests/fixtures/merge/target.md"
+findings:
+  - lines: "L3-L4"
+    finding_class: paragraph
+    semantic_axis: G7
+    evidence_quote: |
+      This section describes the pipeline. The flow has 3 stages reporting to Prometheus.
+    rewritten_text: |
+      The flow has 3 stages reporting to Prometheus.
+    suggested_action: "Compress."
+  - lines: "L4-L5"
+    finding_class: paragraph
+    semantic_axis: G7
+    evidence_quote: |
+      We use various backends to leverage caching and facilitate faster reads everywhere.
+    rewritten_text: |
+      We use various backends for caching.
+    suggested_action: "Compress."
+summary:
+  findings_by_class: {paragraph: 2, lexical: 0, meta: 0, hedge: 0}

@@ -1,0 +1,61 @@
+{
+  "description": "Adversarial inputs for A5 when verifying verify-skill itself (only used in dogfood / standalone runs).",
+  "cases": [
+    {
+      "id": "adv-self-invocation",
+      "input_kind": "skill-path",
+      "description": "Pass verify-skill's own path as the target",
+      "input_path": "<verify-skill installation path>",
+      "expected": "exit 3; verdict NEEDS_HUMAN with note 'verify-skill cannot grade itself'"
+    },
+    {
+      "id": "adv-bare-clone",
+      "input_kind": "skill-path",
+      "description": "Skill inside a bare git clone",
+      "input_path": "<bare-repo>/some-skill",
+      "expected": "exit 4 with bare-clone message"
+    },
+    {
+      "id": "adv-symlinked-foreign-repo",
+      "input_kind": "skill-path",
+      "description": "Skill that symlinks into a foreign git repo",
+      "input_path": "<repo-a>/foreign-link -> <repo-b>/skill",
+      "expected": "exit 4 with symlinked-foreign-repo message (SC16)"
+    },
+    {
+      "id": "adv-trust-root-uncomputable",
+      "input_kind": "skill-path",
+      "description": "Repo with no origin remote and SD_TRUNK_REF unset",
+      "input_path": "<repo>/skill",
+      "expected": "exit 76 with remediation hint"
+    },
+    {
+      "id": "adv-corpus-missing-trigger-eval",
+      "input_kind": "skill-path",
+      "description": "Skill with no evals/trigger-eval.json",
+      "input_path": "<repo>/skill-without-trigger-eval",
+      "expected": "exit 2 with 'run skill-writer Phase 4 first' hint"
+    },
+    {
+      "id": "adv-corpus-malformed-json",
+      "input_kind": "skill-path",
+      "description": "trigger-eval.json contains invalid JSON",
+      "input_path": "<repo>/skill-bad-json",
+      "expected": "exit 2 with malformed-JSON hint"
+    },
+    {
+      "id": "adv-spaces-in-path",
+      "input_kind": "skill-path",
+      "description": "Skill at a path containing spaces",
+      "input_path": "<repo>/has spaces/my-skill",
+      "expected": "succeeds; mode + pipeline_mode emitted; no shell-quote breakage"
+    },
+    {
+      "id": "adv-detached-head",
+      "input_kind": "skill-path",
+      "description": "Skill verified while HEAD is detached",
+      "input_path": "<repo>/skill (after git checkout <sha>)",
+      "expected": "mode + trust_root still computed (merge-base works on detached HEAD); no crash"
+    }
+  ]
+}

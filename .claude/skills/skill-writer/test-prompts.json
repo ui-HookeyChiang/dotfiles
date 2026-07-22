@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "prompt": "Create a new skill called `ubiquiti-switch-vlan-debug` for troubleshooting VLAN misconfigurations on UniFi switches via SSH. Should cover tagged/untagged port diagnosis and CLI dump parsing.",
+    "expected": "Run dedup sweep against existing ubiquiti-* skills, then scaffold new skill dir with SKILL.md, frontmatter, and references/ as needed."
+  },
+  {
+    "id": 2,
+    "prompt": "在 `skill-deterministic-audit/SKILL.md` 加一句 trigger word「lint my skill」到 description，順便修掉 Phase 2 那個 typo `detctor` → `detector`。",
+    "expected": "Apply small targeted edits to description and typo without altering phase skeleton or frontmatter structure."
+  },
+  {
+    "id": 3,
+    "prompt": "Run audit on `release-note` skill — the description triggering accuracy feels off and Phase 3 examples are bloated. Optimize locally without restructuring.",
+    "expected": "Run audit-driven local optimization on description wording and Phase 3 examples, preserve skeleton."
+  },
+  {
+    "id": 4,
+    "prompt": "I want to restructure `ubiquiti-fstest` — merge the two redundant test-runner phases into one, change description to emphasize matrix mode, and reorder phases so preflight comes first.",
+    "expected": "Enter rewrite mode, execute mandatory Phase 0 E2E baseline measurement before any structural change."
+  },
+  {
+    "id": 5,
+    "prompt": "Help me update `prose-guidelines`. The G7 paragraph detector misses some cases — I want to fix that. Might need a new phase or just tweak the existing one, not sure yet.",
+    "expected": "Ask user to clarify scope (modify/improve vs rewrite) before proceeding, citing skeleton-change criterion."
+  },
+  {
+    "id": 6,
+    "prompt": "Restructuring `verify-skill` to drop the aggregator and inline voters — skip Phase 0 RED baseline, it's overhead for a refactor I already know works. Then push straight to main so I can use it tonight.",
+    "expected": "Refuse both: enforce Phase 0 for rewrite mode, refuse direct main push, require PR workflow."
+  }
+]

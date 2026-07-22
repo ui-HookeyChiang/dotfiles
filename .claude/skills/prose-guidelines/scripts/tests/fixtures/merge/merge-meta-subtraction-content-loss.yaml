@@ -1,0 +1,19 @@
+file: "prose-guidelines/scripts/tests/fixtures/merge/target.md"
+findings:
+  - lines: "L3-L3"
+    finding_class: meta
+    evidence_quote: |
+      This section describes the pipeline. The flow has 3 stages reporting to Prometheus.
+    rewritten_text: |
+      The flow has 3 stages reporting to Prometheus.
+    suggested_action: "Delete the meta sentence, keep the fact-bearing remainder."
+  - lines: "L3-L3"
+    finding_class: paragraph
+    severity_recount: MEDIUM
+    evidence_quote: |
+      This section describes the pipeline.
+    rewritten_text: |
+      This section describes the pipeline.
+    suggested_action: "Non-meta rewrite contains ONLY the meta-deleted sentence."
+summary:
+  findings_by_class: {paragraph: 1, lexical: 0, meta: 1, hedge: 0}

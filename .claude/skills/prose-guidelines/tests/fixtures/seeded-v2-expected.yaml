@@ -1,0 +1,54 @@
+# seeded-v2-expected.yaml
+# Expected detection results when v2 prose-guidelines runs on seeded-v2-baseline.md.
+# Per spec docs/specs/active/2026-05-29-prose-guidelines-v2-coverage.md File 5,
+# extended for 2026-06-02-prose-guidelines-reliability-hardening.md G9 (3 new seed
+# sentences: hard-token survival, `just` B4, meta-then-fact).
+# Used by tests/run-seeded-baseline.sh for end-to-end pass/fail.
+
+expected_findings_by_paragraph:
+  P1: {class: lexical, lexical_hits_count: 3}    # leverage, facilitate, various (line 7)
+  P2: {class: lexical, lexical_hits_count: 3}    # 進行, 做出決策, 基本上 (line 9)
+  P3: {class: lexical, lexical_hits_count: 2}    # really, simply (line 11)
+  P4: {class: meta}                              # This section describes ... (line 15)
+  P5: {class: meta}                              # 本文 將 介紹 ... (line 17)
+  P6: {class: hedge}                             # might — lead paragraph (line 3)
+  P7: {class: hedge}                             # probably — under ## TL;DR (line 21)
+  P12: {class: lexical, lexical_hits_count: 1}   # basically B4 — hard-token survival seed (line 45, G9/Gate 7)
+  P13: {class: lexical, lexical_hits_count: 1}   # just B4 — caveman G8 increment (line 49)
+  P14: {class: meta}                             # meta-then-fact: meta sentence deleted, fact kept (line 53, G7)
+
+# Negative paragraphs: agent MUST emit no finding citing these line ranges.
+# negative_strict in tolerance → any false positive fails the test.
+expected_negative_paragraphs:
+  - P8    # leverages a 10k-entry LRU cache (line 25) — adjacent-quantification skip
+  - P9    # fenced code block with `essentially` (lines 29-33) — extraction skip
+  - P10   # ## Relevant references + hedge (line 37) — hedge out-of-decision-layer
+  - P11   # ## Risks section with hedges (line 41) — E4 suppression set extension
+
+# Aggregate sanity check, by class.
+totals_by_class:
+  lexical: 5
+  meta: 3
+  hedge: 2
+
+tolerance:
+  per_class: 1          # per-class detected count >= expected - 1
+  negative_strict: true # any false positive on negative paragraphs fails
+
+# Paragraph line anchors (informational; used by runner to map line ranges → P-labels).
+# Lines 3-41 unchanged; new seeds appended at lines 45/49/53 (no shift to existing anchors).
+paragraph_line_anchors:
+  P1: {start: 7,  end: 7}
+  P2: {start: 9,  end: 9}
+  P3: {start: 11, end: 11}
+  P4: {start: 15, end: 15}
+  P5: {start: 17, end: 17}
+  P6: {start: 3,  end: 3}
+  P7: {start: 21, end: 21}
+  P8: {start: 25, end: 25}
+  P9: {start: 29, end: 33}
+  P10: {start: 37, end: 37}
+  P11: {start: 41, end: 41}
+  P12: {start: 45, end: 45}
+  P13: {start: 49, end: 49}
+  P14: {start: 53, end: 53}

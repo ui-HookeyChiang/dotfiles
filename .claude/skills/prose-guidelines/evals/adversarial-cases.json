@@ -1,0 +1,103 @@
+{
+  "description": "Adversarial inputs for A5 (Adversarial Voter). Each case has an expected behavior; A5 votes ROBUST if all cases behave as expected, FRAGILE otherwise. These are NOT inputs to the prose-guidelines repo's own evals — they live in the voting workspace.",
+  "cases": [
+    {
+      "id": "adv-empty-file",
+      "input_kind": "file",
+      "description": "Empty markdown file",
+      "input_content": "",
+      "expected": "findings: []; summary scanned=0; exit 0"
+    },
+    {
+      "id": "adv-only-code-fences",
+      "input_kind": "file",
+      "description": "File with only fenced code blocks, no prose",
+      "input_content": "# Title\n\n```bash\necho hello\nls -la\n```\n\n```python\nprint('x')\n```\n",
+      "expected": "findings: []; paragraph extraction skips fences"
+    },
+    {
+      "id": "adv-only-tables",
+      "input_kind": "file",
+      "description": "File with only headings + tables, no prose paragraphs",
+      "input_content": "# Spec\n\n## Limits\n\n| Setting | Value |\n|---|---|\n| timeout | 30s |\n| retries | 3 |\n",
+      "expected": "findings: []; tables skipped"
+    },
+    {
+      "id": "adv-short-paragraphs",
+      "input_kind": "file",
+      "description": "All paragraphs < 30 words / < 2 sentences",
+      "input_content": "# Spec\n\nShort paragraph.\n\nAnother short one. Two sentences here.\n\nTen words only here as a single short directive.\n",
+      "expected": "findings: []; nothing qualifies"
+    },
+    {
+      "id": "adv-blog-essay-style",
+      "input_kind": "file",
+      "description": "Long-form essay (out of scope)",
+      "input_content": "# My journey with kernel scheduling\n\nWhen I first started looking at the Linux scheduler in 2018, I had no idea how deep the rabbit hole would go. The codebase felt impenetrable, like an ancient cathedral whose builders had long since forgotten what each pillar was for. I spent weeks just reading sched/fair.c, scribbling diagrams on napkins, trying to map out the data structures in my head before I dared touch anything. Looking back now, the most valuable thing I learned was not the algorithm itself but the texture of how to read code that has been continuously evolving for two decades.\n\nThe second lesson came from a mistake. I tried to optimize for a benchmark I cared about, and in doing so I broke three workloads I did not care about. My patch was politely rejected. The maintainer's response was kind but firm, and it taught me that performance work is fundamentally about tradeoffs you can articulate, not numbers you can show.\n",
+      "expected": "Out-of-scope detection; findings: [] with note 'essay / blog'"
+    },
+    {
+      "id": "adv-malformed-yaml-in-front",
+      "input_kind": "file",
+      "description": "File with broken yaml frontmatter then valid prose",
+      "input_content": "---\nname: test\ndescription: missing closing bracket [\n---\n\n# Real prose\n\nThis is a real prose paragraph with more than thirty words including specific named entities like systemd-resolved and DNSSEC RFC 6840. It has more than two sentences. The system handles unicode correctly when input includes characters like ñ é 中.\n",
+      "expected": "Should still find the prose paragraph; broken frontmatter not in scope of prose-guidelines (frontmatter parsing isn't its job)"
+    },
+    {
+      "id": "adv-line-numbers-edge",
+      "input_kind": "file",
+      "description": "Single-line file ending without newline",
+      "input_content": "This is one long line with two sentences. It has exactly enough words to qualify if the counter works correctly on single source lines that are wide.",
+      "expected": "Might or might not qualify (one source line); whichever way it goes, validator should not crash"
+    },
+    {
+      "id": "adv-line-numbers-large",
+      "input_kind": "file_ref",
+      "description": "File > 800 lines (chunking required)",
+      "input_path": "prose-guidelines/evals/fixtures/large-prose.md",
+      "expected": "Main agent must chunk into ~500-line windows BEFORE spawn"
+    },
+    {
+      "id": "adv-unicode-evidence-quote",
+      "input_kind": "file",
+      "description": "Prose containing characters that need exact UTF-8 substring match",
+      "input_content": "# 規格\n\n這份規格描述了系統的 timeout 處理方式，包含 retry 次數 (預設 3 次) 與 backoff 策略 (exponential，base 100ms)。當系統收到 ETIMEDOUT 時會走 retry 路徑；收到 ECONNREFUSED 則直接 fail-fast 不 retry。三個邊界條件需要特別處理：（1）DNS 解析失敗；（2）TLS handshake 超時；（3）HTTP 5xx 但 Retry-After 不存在。\n",
+      "expected": "evidence_quote must match the literal UTF-8 substring; validator should not break on mixed-language input"
+    },
+    {
+      "id": "adv-already-tight",
+      "input_kind": "file",
+      "description": "Prose that is already maximally tight (no compressible)",
+      "input_content": "# Spec\n\n## Timeout\n\nRequest timeout is 30s with 3 retries at 100ms exponential backoff. ETIMEDOUT triggers retry; ECONNREFUSED is fail-fast.\n\n## Auth\n\nBearer JWT with 15-minute TTL, rotated via /refresh. Tokens cached in process memory only; no disk persistence.\n",
+      "expected": "Every paragraph already < 0.8 incompressible OR < 30 words / 2 sentences; findings: []"
+    },
+    {
+      "id": "adv-fact-loss-rewrite",
+      "input_kind": "finding",
+      "description": "A non-meta finding whose rewritten_text silently drops a hard fact token (the errno ETIMEDOUT and the number 3). Gate 7 (fact-token preservation) must catch it.",
+      "input_content": "finding_class=paragraph, semantic_axis=G7, lines=L3-L3; evidence_quote='The handler performs 3 retries on ETIMEDOUT before it pages the on-call operator through the alerting pipeline today.'; rewritten_text='The handler retries before paging the on-call operator through the alerting pipeline.' (ETIMEDOUT dropped)",
+      "expected": "Gate 7 drops the finding: exit 0 (single drop under budget), finding absent from stdout, stderr carries `Gate7 drop missing token='ETIMEDOUT'`."
+    },
+    {
+      "id": "adv-same-paragraph-multi-class",
+      "input_kind": "findings",
+      "description": "One source paragraph (same L-range) hits both a meta opener and a lexical B4 intensifier. merge-findings.py must collapse them into ONE apply unit with sentence-level meta precedence (meta deletes its sentence, lexical applies to the remainder).",
+      "input_content": "Paragraph at L3-L3 = 'This section describes the routing flow. The pipeline basically runs 3 retries on ETIMEDOUT before paging the on-call team.' Two same-range findings: (1) meta, rewritten_text keeps only the second sentence; (2) lexical {token: basically, subclass: B4}, rewritten_text drops `basically` on the second sentence.",
+      "expected": "merge-findings.py emits exactly ONE apply unit (sources=[meta, lexical]) for L3-L3: meta's sentence-delete removes the meta opener, the lexical edit applies to the remainder, yielding new_string='The pipeline runs 3 retries on ETIMEDOUT before paging the on-call team.' (3 and ETIMEDOUT preserved, basically dropped); exit 0, no overlap conflict."
+    },
+    {
+      "id": "adv-b3-advisory-not-high",
+      "input_kind": "finding",
+      "description": "A lexical finding with 3 B3 nominalization hits in one paragraph. B3 is advisory (PR2): it must NOT escalate to HIGH even at 3 hits — severity_recount caps at MED because B3 is excluded from the HIGH-eligible set, while still being surfaced in lexical_hits.",
+      "input_content": "finding_class=lexical, lines=L1-L1; lexical_hits=[{token:'perform an analysis',subclass:B3},{token:'make a decision',subclass:B3},{token:'reach a resolution',subclass:B3}]; evidence_quote and rewritten_text consistent (ratio matches recount).",
+      "expected": "severity_recount: MED (NOT HIGH) — 3x B3 does not escalate because B3 is advisory/excluded from the HIGH set; the three B3 hits still appear in lexical_hits; exit 0."
+    },
+    {
+      "id": "adv-b5-precedence-longest-span",
+      "input_kind": "finding",
+      "description": "A B5 redundant-phrase span ('in order to') that contains/abuts a B4 intensifier ('basically'). B5 precedence (PR2) = longest matching span wins; the B4 token inside the B5 span is not separately recorded, so the paragraph counts as B5 hits only (no double-count violating one-sub-class-per-token).",
+      "input_content": "finding_class=lexical; the paragraph contains 'basically in order to proceed' and a doubled word 'the the'; lexical_hits record the B5 phrase + the dup-word as B5, NOT a separate B4 'basically' inside the B5 span.",
+      "expected": "lexical_hits contain B5 entries for the redundant phrase and the doubled word; no separate B4 hit is recorded for a token falling inside a B5 span (longest-span-wins, one sub-class per token); dedup invariant intact; exit 0."
+    }
+  ]
+}

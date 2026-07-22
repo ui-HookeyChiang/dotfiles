@@ -1,0 +1,102 @@
+[
+  {
+    "query": "Add NVMe cache monitoring: it touches the storage daemon, a new CLI command, and integration tests",
+    "should_trigger": true,
+    "rationale": "Multi-file/multi-subsystem feature development — squarely the default code-change workflow."
+  },
+  {
+    "query": "Rename the retryCount variable across three handler files and open a PR for it",
+    "should_trigger": true,
+    "rationale": "Multi-file rename across 3 files — a code change, the default workflow."
+  },
+  {
+    "query": "Refactor the fio runner from bash to Lua — it's about 800 lines, split it into stacked PRs",
+    "should_trigger": true,
+    "rationale": "Refactoring of substantial scope; the description names refactoring as an in-scope trigger."
+  },
+  {
+    "query": "Fix the off-by-one bug in the RAID resync progress calc — it requires changes in the daemon and the CLI status reader",
+    "should_trigger": true,
+    "rationale": "Multi-file bug fix → the default code-change workflow."
+  },
+  {
+    "query": "Add JWT authentication to the API — split it into tasks and use a worktree per PR",
+    "should_trigger": true,
+    "rationale": "Feature development with explicit task decomposition and stacked execution — the canonical flow-dev case."
+  },
+  {
+    "query": "Implement RAID10 support: add the types first, then the implementation, then the tests",
+    "should_trigger": true,
+    "rationale": "Progressive multi-step feature build across several files → flow-dev."
+  },
+  {
+    "query": "This change spans the kernel config, the debbox build scripts, and debfactory packaging",
+    "should_trigger": true,
+    "rationale": "Multi-subsystem work explicitly called out in the description as in-scope for the default workflow."
+  },
+  {
+    "query": "Migrate the config loader from v4 to v5 across the loader, the schema, and the migration script",
+    "should_trigger": true,
+    "rationale": "Multi-file migration → the default code-change workflow."
+  },
+  {
+    "query": "Fix the typo in the README, about 5 lines, and push it",
+    "should_trigger": true,
+    "rationale": "Single-file <20-line fix — flow-dev now owns ALL code changes including small ones (tiny lane removed), so it MUST trigger."
+  },
+  {
+    "query": "Add a one-line fix to the baud-rate constant in recover-device.sh and open a quick PR",
+    "should_trigger": true,
+    "rationale": "Single-file, <20-line code change. With the tiny lane removed, flow-dev handles every size → it triggers."
+  },
+  {
+    "query": "Review PR #42 on the ustd repo and leave inline comments",
+    "should_trigger": false,
+    "rationale": "NEAR-MISS negative: 'PR' keyword, but this is PR review (non-code-change work) → code-review domain skill, excluded by the description."
+  },
+  {
+    "query": "Deploy firmware PR-1234 to the UNAS Pro and verify it boots",
+    "should_trigger": false,
+    "rationale": "NEAR-MISS negative: 'PR' keyword, but deploying is non-code-change work → ubiquiti deploy domain skill, explicitly excluded."
+  },
+  {
+    "query": "Build the UNAS firmware image from the stable/5.0 branch with debbox",
+    "should_trigger": false,
+    "rationale": "NEAR-MISS negative: build work is explicitly excluded ('builds' → matching domain skill), not a code change authored here."
+  },
+  {
+    "query": "Run the full fio benchmark suite on UNAS Pro over SMB with RAID5",
+    "should_trigger": false,
+    "rationale": "NEAR-MISS negative: benchmarks are explicitly excluded non-code work → nas-perf-test domain skill."
+  },
+  {
+    "query": "Merge PR #19 and rebase the downstream branches onto main",
+    "should_trigger": false,
+    "rationale": "NEAR-MISS negative: 'PR / rebase / main' keywords overlap, but merging/rebasing is not authoring a code change → not flow-dev."
+  },
+  {
+    "query": "Add the new PDU power-monitoring dashboard — four components to build across the UI, the API, and the collector",
+    "should_trigger": true,
+    "rationale": "Large multi-component feature development — default code-change workflow."
+  },
+  {
+    "query": "Correct a single misspelled string in the help text of one CLI file and ship it",
+    "should_trigger": true,
+    "rationale": "Single-file <20-line edit — with the tiny lane removed, flow-dev owns small fixes too → it triggers."
+  },
+  {
+    "query": "Bump the log level config and restart the service to apply it",
+    "should_trigger": false,
+    "rationale": "NEAR-MISS negative: config-and-restart operational work, not authoring a code change → config/deploy domain skill, excluded."
+  },
+  {
+    "query": "Cut the v5.1.0 release: tag it, run gbp dch, and publish the changelog",
+    "should_trigger": false,
+    "rationale": "NEAR-MISS negative: release cutting is non-code-change workflow work → semver-release / release domain skills, excluded."
+  },
+  {
+    "query": "Triage the open device-drift alerts and label the tickets that need a human",
+    "should_trigger": false,
+    "rationale": "NEAR-MISS negative: triage/ticket-labeling is non-code work → triage domain skill, not flow-dev."
+  }
+]

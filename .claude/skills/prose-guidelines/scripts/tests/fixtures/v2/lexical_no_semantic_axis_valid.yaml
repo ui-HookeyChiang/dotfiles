@@ -1,0 +1,30 @@
+file: "prose-guidelines/scripts/tests/fixtures/v2/semantic_axis_target.md"
+# Positive fixture (task-2): lexical-class finding with `lexical_hits`
+# populated and NO `semantic_axis` field. Validator should accept (exit 0,
+# zero drops). Demonstrates that semantic_axis is paragraph-class-only.
+findings:
+  - lines: "L5-L5"
+    finding_class: lexical
+    preceding_heading: "Semantic axis fixture target"
+    original_words: 14
+    rewritten_words: 10
+    ratio: 0.71
+    confidence: high
+    rationale_bucket: false
+    lexical_hits: [leverage, facilitate]
+    evidence_quote: |
+      We leverage the cache to facilitate faster reads across the entire production cluster.
+    rewritten_text: |
+      The cache speeds reads across the production cluster. Concrete verbs replace empty leverage / facilitate.
+    suggested_action: "Replace leverage/facilitate with concrete verbs."
+
+summary:
+  total_paragraphs_scanned: 1
+  flagged_below_0_8: 1
+  high_severity_below_0_5: 0
+  findings_by_class:
+    paragraph: 0
+    lexical: 1
+    meta: 0
+    hedge: 0
+  note: "Positive fixture for task-2 — lexical finding with no semantic_axis. Validator accepts."

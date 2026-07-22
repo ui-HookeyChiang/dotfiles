@@ -1,0 +1,24 @@
+# Confabulation defense L1 allowlist — binaries permitted in /jira fill
+# generated shell blocks. Expansion rule (spec line 46): each addition is a
+# separate PR with a one-line rationale in the commit message. No grouped
+# or silent expansions.
+ssh
+scp
+cat
+ls
+md5sum
+sha256sum
+tar
+curl
+wget
+reboot
+systemctl
+tail
+head
+jq
+python3
+gh
+git
+mount
+umount
+cd

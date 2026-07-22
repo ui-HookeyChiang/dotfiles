@@ -1,16 +1,24 @@
 #!/usr/bin/env bash
-# PreToolUse hook (Edit|Write|MultiEdit|NotebookEdit): branch-enforce (mode "X").
+# PreToolUse hook (Edit|Write|MultiEdit|NotebookEdit|apply_patch): worktree-enforce.
 #
-# Rule: edits are forbidden on the default branch. Develop on a feature branch.
+# Rule: writes into the MAIN checkout are forbidden. Develop in a linked git
+# worktree (its own directory + branch). The main working tree is read-only.
 #
-# Detection: compare current branch vs origin/HEAD (fallback: main).
-#   - current branch == default branch -> DENY.
-#   - current branch != default branch -> ALLOW.
-#   - not a git repo: ALLOW (fail open).
+# Detection (path-based, not branch-based):
+#   - Resolve the target's git toplevel.
+#   - Main checkout  <=> `git-dir` == `git-common-dir` (both point at .git).
+#   - Linked worktree <=> `git-dir` lives under `<common>/worktrees/*`.
+#   - target in a linked worktree -> ALLOW.
+#   - target in the main checkout  -> DENY (unless release-whitelisted).
+#   - not a git repo / cannot resolve -> ALLOW (fail open; e.g. initial commit).
 #
-# Escape hatch: ALLOW_MAIN_EDIT=1 bypasses the check (allow). Kept for the
-# legitimate cases: editing this hook / settings.json itself, an initial commit
-# before any branch exists, or a deliberate urgent single-operator edit.
+# Release whitelist (encodes the CLAUDE.md semver-release exception): a write
+# whose target path is confined to `debian/changelog` or `releases/**` is
+# allowed even in the main checkout. Anything else in the same operation is
+# still denied — release-adjacent code changes must go through a PR first.
+#
+# Escape hatch: ALLOW_MAIN_EDIT=1 bypasses the check (allow). Kept for editing
+# this hook / settings.json itself, or a deliberate urgent single-operator edit.
 set -uo pipefail
 
 # --- Escape hatch -----------------------------------------------------------
@@ -18,25 +26,7 @@ if [ "${ALLOW_MAIN_EDIT:-}" = "1" ]; then
   exit 0
 fi
 
-# --- Parse hook input -------------------------------------------------------
-# NotebookEdit carries notebook_path instead of file_path; fall back to either,
-# then to PWD when the tool gives no path at all.
-input="$(cat)"
-file_path="$(printf '%s' "$input" \
-  | jq -r '.tool_input.file_path // .tool_input.notebook_path // empty' 2>/dev/null)"
-
-if [ -n "$file_path" ]; then
-  dir="$(dirname "$file_path")"
-else
-  dir="${PWD}"
-fi
-# Resolve a relative file_path against PWD so `git -C` lands in the right repo.
-case "$dir" in
-  /*) ;;
-  *)  dir="${PWD}/${dir}" ;;
-esac
-
-deny() {  # $1 = reason
+deny() {
   jq -n --arg r "$1" '{
     hookSpecificOutput: {
       hookEventName: "PreToolUse",
@@ -47,28 +37,99 @@ deny() {  # $1 = reason
   exit 0
 }
 
-# --- Resolve the target's default and current branch -----------------------
-default_branch="$(git -C "$dir" rev-parse --abbrev-ref origin/HEAD 2>/dev/null | sed 's|^origin/||')"
-# Fallback if origin/HEAD isn't set
-[ -z "$default_branch" ] && default_branch="main"
+DENY_MSG_TAIL="Develop in a linked worktree (its own dir + branch):
 
-current_branch="$(git -C "$dir" rev-parse --abbrev-ref HEAD 2>/dev/null)" || exit 0
-[ -z "$current_branch" ] && exit 0
+  git worktree add .worktrees/<branch> -b <branch> origin/main
 
-if [ "$current_branch" = "$default_branch" ]; then
-  deny "Blocked: editing on the default branch ($default_branch) is forbidden.
+or, as a subagent, call EnterWorktree.
 
-  target: $dir
+The main checkout is read-only. Escape hatch for a deliberate
+single-operator edit: ALLOW_MAIN_EDIT=1."
 
-Switch to a feature branch first:
+# Is DIR inside the MAIN checkout (not a linked worktree)?
+#   main checkout : git-dir == git-common-dir
+#   linked wt     : git-dir == <common>/worktrees/<name>
+# Returns 0 = main checkout, 1 = linked worktree OR not a git repo (fail open).
+is_main_checkout() {
+  local dir="$1" gitdir commondir
+  gitdir="$(git -C "$dir" rev-parse --absolute-git-dir 2>/dev/null)" || return 1
+  commondir="$(git -C "$dir" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" || return 1
+  [ -z "$gitdir" ] && return 1
+  [ -z "$commondir" ] && return 1
+  [ "$gitdir" = "$commondir" ]
+}
 
-  git checkout -b <branch>
+# Is REL (a path relative to the checkout root) within the release whitelist?
+is_release_path() {
+  local rel="$1"
+  rel="${rel#./}"
+  case "$rel" in
+    debian/changelog|releases|releases/*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
 
-Or create a linked worktree:
+# --- Parse hook input -------------------------------------------------------
+input="$(cat)"
+tool_name="$(printf '%s' "$input" | jq -r '.tool_name // empty' 2>/dev/null)"
 
-  git worktree add .worktree/<branch> -b <branch>
+# apply_patch: patch text lives in tool_input.patch (Claude Code) or
+# tool_input.command (Codex CLI). apply_patch runs at repo root -> use PWD.
+if [ "$tool_name" = "apply_patch" ]; then
+  patch="$(printf '%s' "$input" | jq -r '.tool_input.patch // .tool_input.command // empty' 2>/dev/null)"
+  [ -z "$patch" ] && exit 0
 
-Escape hatch for a deliberate single-operator edit: ALLOW_MAIN_EDIT=1."
+  is_main_checkout "$PWD" || exit 0
+
+  # Every touched path must be release-whitelisted to pass; else deny.
+  mapfile -t files < <(printf '%s' "$patch" | grep -E '^\+\+\+ b/' | sed 's|^+++ b/||')
+  [ "${#files[@]}" -eq 0 ] && exit 0
+  for f in "${files[@]}"; do
+    is_release_path "$f" && continue
+    deny "Blocked: apply_patch writes into the main checkout.
+
+  target: $f
+
+$DENY_MSG_TAIL"
+  done
+  exit 0
 fi
 
-exit 0
+# NotebookEdit carries notebook_path instead of file_path; fall back to either,
+# then to PWD when the tool gives no path at all.
+file_path="$(printf '%s' "$input" \
+  | jq -r '.tool_input.file_path // .tool_input.notebook_path // empty' 2>/dev/null)"
+
+if [ -n "$file_path" ]; then
+  case "$file_path" in
+    /*) ;;
+    *)  file_path="${PWD}/${file_path}" ;;
+  esac
+  dir="$(dirname "$file_path")"
+else
+  dir="${PWD}"
+fi
+
+# The target's dir may not exist yet (new file in a new subdir). Walk up to the
+# nearest existing ancestor so git-dir resolution reflects the real checkout and
+# a new-file write cannot slip past via fail-open.
+while [ -n "$dir" ] && [ "$dir" != "/" ] && [ ! -d "$dir" ]; do
+  dir="$(dirname "$dir")"
+done
+
+is_main_checkout "$dir" || exit 0
+
+# Release whitelist: compute the target path relative to the checkout root.
+if [ -n "$file_path" ]; then
+  toplevel="$(git -C "$dir" rev-parse --show-toplevel 2>/dev/null)"
+  if [ -n "$toplevel" ]; then
+    rel="${file_path#"$toplevel"/}"
+    is_release_path "$rel" && exit 0
+  fi
+fi
+
+deny "Blocked: writing into the main checkout is forbidden.
+
+  target: ${file_path:-$dir}
+
+$DENY_MSG_TAIL"

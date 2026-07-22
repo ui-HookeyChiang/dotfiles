@@ -1,0 +1,3 @@
+interface:
+  display_name: "Flow Merge"
+  short_description: "Cascade-merge a stacked PR series in dependency order and clean up."

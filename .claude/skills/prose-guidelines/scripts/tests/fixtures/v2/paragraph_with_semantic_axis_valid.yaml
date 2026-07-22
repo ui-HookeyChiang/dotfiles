@@ -1,0 +1,29 @@
+file: "prose-guidelines/scripts/tests/fixtures/v2/semantic_axis_target.md"
+# Positive fixture (task-2): paragraph-class finding with `semantic_axis: G7`
+# correctly set. Validator should accept (exit 0, zero drops).
+findings:
+  - lines: "L3-L3"
+    finding_class: paragraph
+    semantic_axis: G7
+    preceding_heading: "Semantic axis fixture target"
+    original_words: 55
+    rewritten_words: 30
+    ratio: 0.55
+    confidence: medium
+    rationale_bucket: false
+    evidence_quote: |
+      This is a long sample paragraph used by the semantic_axis validator fixtures.
+    rewritten_text: |
+      Long sample paragraph for semantic_axis fixtures, with several sentences so it qualifies under the prose-guidelines paragraph extraction rules.
+    suggested_action: "Tighten — drop preamble."
+
+summary:
+  total_paragraphs_scanned: 1
+  flagged_below_0_8: 1
+  high_severity_below_0_5: 0
+  findings_by_class:
+    paragraph: 1
+    lexical: 0
+    meta: 0
+    hedge: 0
+  note: "Positive fixture for task-2 — paragraph finding with semantic_axis: G7. Validator accepts."

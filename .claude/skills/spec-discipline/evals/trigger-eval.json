@@ -1,0 +1,66 @@
+[
+  {
+    "prompt": "there's a bug in the spec — the timeout should be 30s not 60s",
+    "should_trigger": true
+  },
+  {
+    "prompt": "this new approach supersedes the old caching design",
+    "should_trigger": true
+  },
+  {
+    "prompt": "I need to edit the PRD to fix an ambiguity in section 3",
+    "should_trigger": true
+  },
+  {
+    "prompt": "extend the spec with a new retry mechanism",
+    "should_trigger": true
+  },
+  {
+    "prompt": "the spec says X but it should say Y — fix it",
+    "should_trigger": true
+  },
+  {
+    "prompt": "this spec gap caused the bug — update the spec",
+    "should_trigger": true
+  },
+  {
+    "prompt": "supersede docs/spec/2026-01-15-old-design.md with the new approach",
+    "should_trigger": true
+  },
+  {
+    "prompt": "the spec needs an update to cover the edge case we found",
+    "should_trigger": true
+  },
+  {
+    "prompt": "write a new feature from scratch",
+    "should_trigger": false
+  },
+  {
+    "prompt": "create a PRD for the notification system",
+    "should_trigger": false
+  },
+  {
+    "prompt": "implement the login endpoint",
+    "should_trigger": false
+  },
+  {
+    "prompt": "run the tests",
+    "should_trigger": false
+  },
+  {
+    "prompt": "review this PR",
+    "should_trigger": false
+  },
+  {
+    "prompt": "what does the spec say about timeouts?",
+    "should_trigger": false
+  },
+  {
+    "prompt": "help me understand the caching design",
+    "should_trigger": false
+  },
+  {
+    "prompt": "deploy the latest build to staging",
+    "should_trigger": false
+  }
+]

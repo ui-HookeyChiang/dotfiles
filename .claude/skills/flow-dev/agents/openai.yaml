@@ -1,0 +1,3 @@
+interface:
+  display_name: "Flow Dev"
+  short_description: "Dev executor for per-task implementation — receives decomposed tasks from the..."

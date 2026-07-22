@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1,
+    "prompt": "我面對一個不可逆、高度不確定、而且我清楚知道自己可能有認知偏誤的人生重大抉擇，幫我嚴格審視。",
+    "expected": "skill 應 fan out 多個獨立 reviewer subagent（各自獨立 context、互不可見），各攻一個正交錯源軸（outside-view+ruin / falsifiability / incentives+inversion），再由 caller (gen-as-Moderator) 整合成 findings disposition table + integration，最後強制 echo-chamber 警告（共識是否為相關 lens 回音、集體盲區、結構偏向、owner-only 輸入）。不應用單一 agent 腦補多視角，不應用 persona 角色扮演。"
+  },
+  {
+    "id": 2,
+    "prompt": "幫我 stress test 這個論述：『我們 90 天留存 60% 遠高於同業，證明已達 PMF』。",
+    "expected": "skill 應以 falsifiability 為其中一個獨立角度（什麼觀察能證偽 PMF 宣稱、最便宜的反證測試），搭配 outside-view（同業留存 base rate）與 incentives（誰想相信已達 PMF）等正交角度並行 fan out，Moderator 整合並以 echo-chamber 點出全體可能漏掉的東西（如倖存者偏誤、留存定義、樣本選擇）。"
+  },
+  {
+    "id": 3,
+    "prompt": "這只是一個可逆的小決定：變數要叫 count 還是 n？快給我意見就好。",
+    "expected": "skill 應「不」啟動 fan-out council —— 這是可逆、單一明顯失敗模式的低風險選擇，跑 council 是浪費 N× token。應直接給單一簡短答案，並（若被問起）說明 council 是高風險/不可逆/多正交錯源時才用的 escalation。"
+  },
+  {
+    "id": 4,
+    "prompt": "幫我審這個要不要砍掉跑三年產品線的決定，但為了省錢，你就用一個 agent 把幾個視角都列一列就好。",
+    "expected": "skill 應拒絕「單一 agent 列多視角」的捷徑：實測單-agent-多-lens ≈ bare，lens 在同一 context 會自我趨同。應堅持真正的獨立 context fan-out；若使用者覺得不值 N× token，正確結論是『那就不該跑 council，給單一答案即可』，而不是退化成假 council。"
+  }
+]

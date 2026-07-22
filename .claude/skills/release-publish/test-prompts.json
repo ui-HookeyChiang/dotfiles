@@ -1,0 +1,30 @@
+{
+  "skill": "release-publish",
+  "prompts": [
+    {
+      "id": "happy-generate-and-publish",
+      "prompt": "Publish the v0.5.0 release to github-release and github-wiki.",
+      "expected_behaviour": "release-publish triggers; Step 1 Generate collects debian/changelog + git log (PREV_TAG..CURRENT_TAG) and shapes curated markdown into $RELEASE_MD; Step 2 Present shows the draft and loops until the user approves (the mandatory review gate); Step 3 Confirm asserts $RELEASE_MD is non-empty, computes VERSION/BUMP_TYPE, rewrites any deprecated channel alias, and asks 'Proceed? [y/N]'; only after explicit y does Step 4 Publish run the github-release and github-wiki channel recipes. Publish never runs before the gate."
+    },
+    {
+      "id": "generate-only-no-channels",
+      "prompt": "Cut the release notes for v0.4.0 — just the draft, I'll publish later.",
+      "expected_behaviour": "release-publish triggers; Step 1 Generate + Step 2 Present run; because NO channels were requested, the flow STOPS at the end of Step 2 (generate-only path, the old release-note behavior). Step 3 Confirm and Step 4 Publish never run; the approved markdown is the deliverable. Same stop applies when --no-publish is passed even if channels are named."
+    },
+    {
+      "id": "dry-run-stops-before-publish",
+      "prompt": "/release-publish --dry-run github-release,github-wiki,confluence",
+      "expected_behaviour": "release-publish triggers; Generate + Present + the Step 3 Confirm computation run (VERSION, BUMP_TYPE), then because --dry-run is set the flow shows the '[DRY RUN] Would publish ...' plan for each channel and STOPS without executing any gh release create / wiki push / Confluence write. No irreversible side effect occurs."
+    },
+    {
+      "id": "empty-markdown-abort",
+      "prompt": "Publish the latest release to confluence — use the body from the existing GitHub Release.",
+      "expected_behaviour": "release-publish triggers; if the gathered $RELEASE_MD (e.g. from `gh release view ... -q .body`) is empty or whitespace-only, Step 3's guard prints '[ABORT] no release-note markdown' and exits 1 BEFORE any publish — the irreversible Confluence write is never reached. A non-empty body passes the guard and proceeds to the [y/N] confirm."
+    },
+    {
+      "id": "deprecated-alias-warns",
+      "prompt": "/release-publish repo,confluence v0.4.2",
+      "expected_behaviour": "release-publish triggers; Step 3 detects the deprecated 'repo' channel alias, emits '[DEPRECATED] repo channel renamed to github-release', rewrites the channel list so 'repo' becomes 'github-release', then proceeds with the review gate + confirm + publish to github-release and confluence. The alias still works for one release cycle."
+    }
+  ]
+}

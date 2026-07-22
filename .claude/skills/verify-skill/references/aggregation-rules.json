@@ -1,0 +1,21 @@
+{
+  "version": "1.0",
+  "pass_verdicts": ["TRIGGER_PASS", "BEHAVIOR_PASS", "EQUIVALENT", "CONTRACT_HELD", "ROBUST"],
+  "fail_verdicts": ["TRIGGER_FAIL", "BEHAVIOR_FAIL", "DIVERGED", "CONTRACT_BROKEN", "FRAGILE"],
+  "na_verdicts": ["NOT_APPLICABLE", "BEHAVIOR_NOT_APPLICABLE"],
+  "timeout_verdict": "TIMEOUT_FAIL",
+  "thresholds": {
+    "voting_total_5": {"5": "APPROVE", "4": "APPROVE_WITH_NOTES", "3": "NEEDS_HUMAN", "default": "REJECT"},
+    "voting_total_4": {"4": "APPROVE", "3": "APPROVE_WITH_NOTES", "2": "NEEDS_HUMAN", "default": "REJECT"},
+    "voting_total_3": {"3": "APPROVE_WITH_NOTES", "2": "NEEDS_HUMAN", "default": "REJECT"}
+  },
+  "hc_rules": {
+    "hc1": "5_of_5_PASS_with_any_high_conf_concern_ceiling_APPROVE_WITH_NOTES",
+    "hc2": "two_or_more_high_conf_FAIL_ceiling_NEEDS_HUMAN"
+  },
+  "pipeline_mode_ceilings": {
+    "auto-pipeline-create": "APPROVE_WITH_NOTES",
+    "auto-pipeline-improve": "NEEDS_HUMAN",
+    "standalone": null
+  }
+}

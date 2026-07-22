@@ -1,0 +1,20 @@
+file: "prose-guidelines/scripts/tests/fixtures/gates/target.md"
+findings:
+  - lines: "L19-L19"
+    finding_class: lexical
+    preceding_heading: "Gate fixture target"
+    original_words: 27
+    rewritten_words: 24
+    ratio: 0.74
+    confidence: medium
+    rationale_bucket: false
+    lexical_hits:
+      - {token: 其實, subclass: B4}
+      - {token: 其實, subclass: B4}
+    evidence_quote: |
+      其實 這個 設計 其實 已經 相當 完整 而且 基本上 可以 直接 上線 部署。
+    rewritten_text: |
+      這個 設計 已經 相當 完整 而且 可以 直接 上線 部署。
+    suggested_action: "Drop doubled 其實 intensifier."
+summary:
+  findings_by_class: {paragraph: 0, lexical: 1, meta: 0, hedge: 0}

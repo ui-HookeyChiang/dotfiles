@@ -1,0 +1,66 @@
+[
+  {
+    "query": "Generate a work report for the last week",
+    "should_trigger": true
+  },
+  {
+    "query": "What did I do from 2026-06-01 to 2026-06-15?",
+    "should_trigger": true
+  },
+  {
+    "query": "Collect my activity summary for this month",
+    "should_trigger": true
+  },
+  {
+    "query": "I need a weekly journal entry covering my git commits and Claude sessions",
+    "should_trigger": true
+  },
+  {
+    "query": "Run the host work journal with --detailed for the past 2 weeks",
+    "should_trigger": true
+  },
+  {
+    "query": "Give me an activity summary so I can write my performance review",
+    "should_trigger": true
+  },
+  {
+    "query": "Collect work data from this host into JSON \u2014 skip dates already covered",
+    "should_trigger": true
+  },
+  {
+    "query": "What work did I do last week? Gather git, shell, and Claude activity.",
+    "should_trigger": true
+  },
+  {
+    "query": "Write a Python script that parses JSON logs",
+    "should_trigger": false
+  },
+  {
+    "query": "Help me fix the failing CI on PR #42",
+    "should_trigger": false
+  },
+  {
+    "query": "Review PR #87 on the debfactory repo",
+    "should_trigger": false
+  },
+  {
+    "query": "Deploy firmware to the UNAS Pro device",
+    "should_trigger": false
+  },
+  {
+    "query": "Create a new skill for managing Docker containers",
+    "should_trigger": false
+  },
+  {
+    "query": "Run fio benchmarks on the NAS over SMB",
+    "should_trigger": false
+  },
+  {
+    "query": "What's in today's git log for the debbox repo?",
+    "should_trigger": false
+  },
+  {
+    "query": "Set up a cron job to back up my home directory",
+    "should_trigger": false
+  }
+]

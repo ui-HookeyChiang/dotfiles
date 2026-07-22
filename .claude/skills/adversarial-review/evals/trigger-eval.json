@@ -1,0 +1,86 @@
+[
+  {
+    "prompt": "我要決定要不要關掉一條跑三年但成長停滯的產品線，幫我嚴格審視這個決定",
+    "should_trigger": true
+  },
+  {
+    "prompt": "stress test this plan before I commit the team to it for the next quarter",
+    "should_trigger": true
+  },
+  {
+    "prompt": "this is a high-stakes irreversible call and I might be fooling myself — what am I missing?",
+    "should_trigger": true
+  },
+  {
+    "prompt": "我覺得這個論述站得住腳，但幫我用對抗式的方式檢驗它哪裡會錯",
+    "should_trigger": true
+  },
+  {
+    "prompt": "run a premortem on this launch — assume it already failed and find why",
+    "should_trigger": true
+  },
+  {
+    "prompt": "is this argument actually sound, or am I just agreeing with myself?",
+    "should_trigger": true
+  },
+  {
+    "prompt": "do an epistemic audit of this strategy bet before I put real money in",
+    "should_trigger": true
+  },
+  {
+    "prompt": "我會死在哪？這個重大決定的盲區幫我用多個獨立視角審一遍",
+    "should_trigger": true
+  },
+  {
+    "prompt": "I want independent reviewers to tear apart this design from different angles, then synthesize",
+    "should_trigger": true
+  },
+  {
+    "prompt": "review this big career decision for blind spots — I'm too close to it to see them",
+    "should_trigger": true
+  },
+  {
+    "prompt": "review this pull request for bugs and security issues",
+    "should_trigger": false
+  },
+  {
+    "prompt": "幫我 code review 這個 diff",
+    "should_trigger": false
+  },
+  {
+    "prompt": "run the spec-advisory gate on this spec before phase 2 in flow-dev",
+    "should_trigger": true
+  },
+  {
+    "prompt": "review this spec before I lock it — stress test it from multiple independent angles",
+    "should_trigger": true
+  },
+  {
+    "prompt": "what's the capital of France?",
+    "should_trigger": false
+  },
+  {
+    "prompt": "幫我把這個函式改名成 fetchUser",
+    "should_trigger": false
+  },
+  {
+    "prompt": "summarize this article in three bullet points",
+    "should_trigger": false
+  },
+  {
+    "prompt": "用 Munger 的視角給我一句話評論這個策略",
+    "should_trigger": false
+  },
+  {
+    "prompt": "should I name this variable count or n? quick opinion",
+    "should_trigger": false
+  },
+  {
+    "prompt": "deploy the firmware to the test device and verify it boots",
+    "should_trigger": false
+  },
+  {
+    "prompt": "brainstorm ten new feature ideas for our app",
+    "should_trigger": false
+  }
+]

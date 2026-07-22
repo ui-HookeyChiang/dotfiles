@@ -1,0 +1,22 @@
+file: "prose-guidelines/scripts/tests/fixtures/merge/target-partial.md"
+findings:
+  - lines: "L3-L3"
+    finding_class: paragraph
+    severity_recount: MEDIUM
+    evidence_quote: |
+      The service caches reads aggressively to cut latency.
+    rewritten_text: |
+      The service caches reads to cut latency.
+    suggested_action: "Compress the first sentence."
+  - lines: "L3-L3"
+    finding_class: lexical
+    lexical_hits:
+      - {token: aggressively, subclass: B3}
+    severity_recount: LOW
+    evidence_quote: |
+      It also retries failed writes up to 3 times.
+    rewritten_text: |
+      It retries failed writes up to 3 times.
+    suggested_action: "Drop the filler in the second sentence."
+summary:
+  findings_by_class: {paragraph: 1, lexical: 1, meta: 0, hedge: 0}

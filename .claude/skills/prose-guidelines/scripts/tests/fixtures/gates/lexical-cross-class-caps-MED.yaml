@@ -1,0 +1,21 @@
+file: "prose-guidelines/scripts/tests/fixtures/gates/target.md"
+findings:
+  - lines: "L11-L11"
+    finding_class: lexical
+    preceding_heading: "Gate fixture target"
+    original_words: 26
+    rewritten_words: 18
+    ratio: 0.69
+    confidence: medium
+    rationale_bucket: false
+    lexical_hits:
+      - {token: 進行, subclass: B1}
+      - {token: 重構, subclass: B3}
+      - {token: 持續, subclass: B4}
+    evidence_quote: |
+      我們 進行 一次 完整 的 系統 重構 工作 並 持續 追蹤 後續 影響 範圍。
+    rewritten_text: |
+      我們 完整 系統 工作 並 追蹤 後續 影響 範圍。
+    suggested_action: "Mixed-class hits cap at MED."
+summary:
+  findings_by_class: {paragraph: 0, lexical: 1, meta: 0, hedge: 0}

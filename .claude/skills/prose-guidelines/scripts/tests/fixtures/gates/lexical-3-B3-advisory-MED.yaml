@@ -1,0 +1,21 @@
+file: "prose-guidelines/scripts/tests/fixtures/gates/target.md"
+findings:
+  - lines: "L25-L25"
+    finding_class: lexical
+    preceding_heading: "Gate fixture target"
+    original_words: 14
+    rewritten_words: 9
+    ratio: 0.64
+    confidence: high
+    rationale_bucket: false
+    lexical_hits:
+      - {token: "perform an analysis", subclass: B3}
+      - {token: "make a decision", subclass: B3}
+      - {token: "reach a resolution", subclass: B3}
+    evidence_quote: |
+      The team will perform an analysis, make a decision, and reach a resolution soon.
+    rewritten_text: |
+      The team will analyze, decide, and resolve it soon.
+    suggested_action: "Three B3 nominalizations — advisory, must NOT escalate to HIGH."
+summary:
+  findings_by_class: {paragraph: 0, lexical: 1, meta: 0, hedge: 0}

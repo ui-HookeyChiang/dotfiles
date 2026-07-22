@@ -1,0 +1,18 @@
+file: "prose-guidelines/scripts/tests/fixtures/gates/target.md"
+findings:
+  - lines: "L3-L3"
+    finding_class: paragraph
+    semantic_axis: G7
+    preceding_heading: "Gate fixture target"
+    original_words: 12
+    rewritten_words: 7
+    ratio: 0.58
+    confidence: high
+    rationale_bucket: false
+    evidence_quote: |
+      The retry policy waits 100ms then aborts after 3 retries unless cached.
+    rewritten_text: |
+      Retry waits 100ms then aborts unless cached.
+    suggested_action: "Tighten retry sentence."
+summary:
+  findings_by_class: {paragraph: 1, lexical: 0, meta: 0, hedge: 0}

@@ -1,0 +1,42 @@
+[
+  {
+    "prompt": "start a new feature: add LACP support to UNAS",
+    "should_trigger": true
+  },
+  {
+    "prompt": "implement this PRD for the new storage events pipeline",
+    "should_trigger": true
+  },
+  {
+    "prompt": "run the full dev pipeline for the NVMe cache feature",
+    "should_trigger": true
+  },
+  {
+    "prompt": "new task from spec: docs/spec/proposed/2026-06-02-ideal-dev-workflow.md",
+    "should_trigger": true
+  },
+  {
+    "prompt": "I have a PRD ready, kick off the stage-model workflow",
+    "should_trigger": true
+  },
+  {
+    "prompt": "fix a typo in the README",
+    "should_trigger": false
+  },
+  {
+    "prompt": "deploy the firmware to the test device",
+    "should_trigger": false
+  },
+  {
+    "prompt": "review this pull request",
+    "should_trigger": false
+  },
+  {
+    "prompt": "what does this function do?",
+    "should_trigger": false
+  },
+  {
+    "prompt": "run the NAS performance test on UNAS Pro",
+    "should_trigger": false
+  }
+]

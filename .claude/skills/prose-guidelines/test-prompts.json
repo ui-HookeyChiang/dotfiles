@@ -1,0 +1,35 @@
+{
+  "skill": "prose-guidelines",
+  "prompts": [
+    {
+      "id": "happy-skill-md",
+      "prompt": "Audit skill-semantic-audit/SKILL.md for compressible prose paragraphs. Show me the findings (lines, ratio, rewritten text) without applying changes.",
+      "expected_behaviour": "prose-guidelines triggers; spawns Haiku agent reading prose-compression-prompt.md against the target file; returns YAML findings; main agent runs validate-findings.sh; presents table to user; does NOT auto-apply (no --apply flag mentioned)."
+    },
+    {
+      "id": "happy-spec",
+      "prompt": "Compress the verbose paragraphs in docs/spec/archive/2026-05-26-stack-dev-spec-bootstrap.md and apply the rewrites.",
+      "expected_behaviour": "prose-guidelines triggers; detects spec scope; spawns Haiku agent; validates findings via validate-findings.sh; presents findings to user; on user confirmation, applies each accepted rewrite using the Edit tool by line range (not git apply)."
+    },
+    {
+      "id": "scope-refusal-long-form",
+      "prompt": "Tighten the prose in my blog post about systems programming — it's at /tmp/my-blog.md.",
+      "expected_behaviour": "prose-guidelines does NOT trigger by description routing (description explicitly excludes essay/blog). If it does trigger (e.g. user forces with /prose-guidelines), the prompt's out-of-scope detection emits empty findings + 'detected blog post, out of scope' note rather than compressing narrative prose with the SKILL.md rubric."
+    },
+    {
+      "id": "v2-find-weasel-lexical",
+      "prompt": "Find weasel words in flow-dev/SKILL.md — I want to catch leverage / various / robust / 進行 / 基本上 even if the paragraph ratio is ~0.95.",
+      "expected_behaviour": "prose-guidelines v2 triggers; spawns sonnet agent reading prose-compression-prompt.md; agent emits findings with finding_class: lexical and populated lexical_hits arrays (B1 English wordlist or B2 Chinese wordlist hits); lexical class bypasses the 0.8 ratio gate; main agent runs validate-findings.sh which enforces finding_class presence + lexical_hits when class=lexical; presents table with Class column to user."
+    },
+    {
+      "id": "v2-find-meta-self-reference",
+      "prompt": "Scan docs/spec/proposed/foo.md for meta self-reference paragraphs — lines like 'This document describes...' or '本文將介紹...' that I can delete wholesale.",
+      "expected_behaviour": "prose-guidelines v2 triggers; agent emits findings with finding_class: meta for each line-leading meta marker (A4 regex patterns); rewritten_text is empty string (rule: delete entire paragraph); meta class bypasses ratio gate; main agent presents findings with suggested_action 'Delete entire paragraph — meta self-reference adds no information'; on --apply, Edit replaces the original paragraph text with empty string."
+    },
+    {
+      "id": "v2-find-hedge-decision-layer",
+      "prompt": "Are there any hedges (might / probably / we think / 可能 / 或許) in the TL;DR or Summary of this spec? Skip Risks/Assumptions sections — hedging belongs there.",
+      "expected_behaviour": "prose-guidelines v2 triggers; agent emits findings with finding_class: hedge only when hedge tokens appear in decision-layer scope (first paragraph / ## TL;DR / ## Summary); E4 suppression set (## Risks / ## Assumptions / ## 風險 / ## 假設) suppresses hedge findings under those headings; main agent presents findings with confidence medium; on --apply, prompts user to confirm before rewriting (hedge removal can change author's stated certainty)."
+    }
+  ]
+}

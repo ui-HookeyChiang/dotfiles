@@ -1,0 +1,19 @@
+file: "prose-guidelines/scripts/tests/fixtures/gates/target.md"
+findings:
+  - lines: "L13-L13"
+    finding_class: lexical
+    preceding_heading: "Gate fixture target"
+    original_words: 9
+    rewritten_words: 8
+    ratio: 0.89
+    confidence: medium
+    rationale_bucket: false
+    lexical_hits:
+      - {token: just, subclass: B4}
+    evidence_quote: |
+      The gateway really simply just basically works under load.
+    rewritten_text: |
+      The gateway really simply basically works under load.
+    suggested_action: "Drop just intensifier."
+summary:
+  findings_by_class: {paragraph: 0, lexical: 1, meta: 0, hedge: 0}

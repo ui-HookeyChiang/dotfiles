@@ -1,0 +1,3 @@
+interface:
+  display_name: "Release Announce"
+  short_description: "Publish release notes to multiple channels — github-release (authoritative Gi..."

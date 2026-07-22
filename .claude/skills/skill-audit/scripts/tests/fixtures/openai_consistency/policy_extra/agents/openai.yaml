@@ -1,0 +1,5 @@
+interface:
+  display_name: "Policy Extra"
+  short_description: "Test fixture for extra policy block."
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,5 @@
+[
+  {"id": 1, "prompt": "Run verify-skill on prose-guidelines", "expected": "spawns 5 voters; aggregates; emits verdict + render-verdict output"},
+  {"id": 2, "prompt": "Run verify-skill on verify-skill itself (self-invocation)", "expected": "exit 3 NEEDS_HUMAN with note 'verify-skill cannot grade itself'"},
+  {"id": 3, "prompt": "Run verify-skill on a skill whose evals/trigger-eval.json is missing", "expected": "exit 2 with remediation hint to run skill-writer Phase 4 (eval refresh)"}
+]

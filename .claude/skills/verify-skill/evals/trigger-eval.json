@@ -1,0 +1,22 @@
+[
+  {"query": "verify that my refactored skill still works the same before I merge", "should_trigger": true, "rationale": "equivalence mode for refactors + before merge — survives in NEW description verbatim"},
+  {"query": "run verify-skill on prose-guidelines", "should_trigger": true, "rationale": "explicit skill name — always routes"},
+  {"query": "I added a brand-new skill, run the 5-voter effect-mode verification on it", "should_trigger": true, "rationale": "effect mode for new skills + '5 isolated voters' — both survive in NEW description"},
+  {"query": "check that my skill behaves correctly with all 5 voters", "should_trigger": true, "rationale": "5 isolated voters + verify skill behavior"},
+  {"query": "skill-writer Phase 6 quality gate", "should_trigger": true, "rationale": "mandatory skill-writer Phase 6 quality gate — survives verbatim"},
+  {"query": "do a standalone pre-PR sanity check on this skill change", "should_trigger": true, "rationale": "standalone pre-PR sanity check — survives verbatim in NEW description"},
+  {"query": "did my SKILL.md change break anything before merge", "should_trigger": true, "rationale": "regression/before-merge intent → verify a skill's behavior before merge"},
+  {"query": "verify the behavior of a skill before merge with anti-self-grading so I can't game it", "should_trigger": true, "rationale": "verify behavior before merge + corpus-freeze anti-self-grading — all survive"},
+  {"query": "aggregate the isolated voter result to APPROVE or REJECT for this skill diff", "should_trigger": true, "rationale": "aggregates to APPROVE/NEEDS_HUMAN/REJECT + isolated voters — survives (was ballot/APPROVE_WITH_NOTES-keyed, now routes via surviving verdict tokens)"},
+  {"query": "幫我在合併前用隔離投票者驗證這個 skill 的行為有沒有改變", "should_trigger": true, "rationale": "Chinese: verify skill behavior before merge with isolated voters — equivalence intent, all surviving keywords"},
+  {"query": "give me a darwin score for this skill", "should_trigger": false, "rationale": "darwin rubric scoring territory; 'darwin' dropped from description so no false pull — stays negative"},
+  {"query": "8-dimension rubric scoring of this skill", "should_trigger": false, "rationale": "darwin-skill rubric scoring, not behavior verification"},
+  {"query": "find redundant paragraphs in this skill's SKILL.md", "should_trigger": false, "rationale": "prose-guidelines / syntax-audit territory"},
+  {"query": "audit cross-skill duplication between A and B", "should_trigger": false, "rationale": "skill-semantic-audit territory"},
+  {"query": "create a new skill for X", "should_trigger": false, "rationale": "skill-writer/skill-creator territory — creation, not verification"},
+  {"query": "run verify-skill to grade verify-skill itself", "should_trigger": false, "rationale": "self-invocation refused (When NOT to use, exit 3) — tricky near-miss that names the skill but is explicitly excluded"},
+  {"query": "verify this skill in a fresh bare clone of the repo", "should_trigger": false, "rationale": "bare clone excluded (When NOT to use, exit 4) — tricky near-miss"},
+  {"query": "check this skill for performance and cost regression before merge", "should_trigger": false, "rationale": "perf/cost regression explicitly out of scope (correctness-focused); 'before merge' is a near-miss lure"},
+  {"query": "review the current diff for correctness bugs", "should_trigger": false, "rationale": "code-review territory, not skill verification"},
+  {"query": "deploy firmware to UNAS", "should_trigger": false, "rationale": "completely unrelated"}
+]

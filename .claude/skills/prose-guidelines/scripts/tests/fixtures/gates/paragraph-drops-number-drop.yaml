@@ -1,0 +1,18 @@
+file: "prose-guidelines/scripts/tests/fixtures/gates/target.md"
+findings:
+  - lines: "L5-L5"
+    finding_class: paragraph
+    semantic_axis: G7
+    preceding_heading: "Gate fixture target"
+    original_words: 15
+    rewritten_words: 11
+    ratio: 0.73
+    confidence: high
+    rationale_bucket: false
+    evidence_quote: |
+      If the upstream returns 5xx we surface ETIMEDOUT and never fall back to stale cache.
+    rewritten_text: |
+      If the upstream errors we surface ETIMEDOUT and never fall back to stale cache.
+    suggested_action: "Tighten error sentence."
+summary:
+  findings_by_class: {paragraph: 1, lexical: 0, meta: 0, hedge: 0}

@@ -1,0 +1,74 @@
+[
+  {
+    "query": "/confluence search UDX \"Firmware\"",
+    "should_trigger": true
+  },
+  {
+    "query": "search for wiki pages about NPI in the UDX space",
+    "should_trigger": true
+  },
+  {
+    "query": "/confluence read https://ubiquiti.atlassian.net/wiki/spaces/UDX/pages/1849984059",
+    "should_trigger": true
+  },
+  {
+    "query": "show me the Confluence page for Onboarding Guide",
+    "should_trigger": true
+  },
+  {
+    "query": "/confluence tree 1849984059",
+    "should_trigger": true
+  },
+  {
+    "query": "create a draft wiki page under the Firmware section",
+    "should_trigger": true
+  },
+  {
+    "query": "/confluence draft \"SOP: New Procedure\" --parent 3723297250",
+    "should_trigger": true
+  },
+  {
+    "query": "publish my draft Confluence page",
+    "should_trigger": true
+  },
+  {
+    "query": "add a comment to the wiki page about btrfs repair",
+    "should_trigger": true
+  },
+  {
+    "query": "create a subpage under the Onboarding Guide in Confluence",
+    "should_trigger": true
+  },
+  {
+    "query": "build UNAS Pro firmware from debbox",
+    "should_trigger": false
+  },
+  {
+    "query": "deploy firmware to UNAS-Pro-1",
+    "should_trigger": false
+  },
+  {
+    "query": "/jira comment UOF-4399 \"DTS work still pending\"",
+    "should_trigger": false
+  },
+  {
+    "query": "create a Jira ticket for EFG Neo fan support",
+    "should_trigger": false
+  },
+  {
+    "query": "run fio benchmarks on UNAS with RAID5",
+    "should_trigger": false
+  },
+  {
+    "query": "what changed in ucore 5.1.94",
+    "should_trigger": false
+  },
+  {
+    "query": "analyze the support file at /tmp/support-12345.tar.zst",
+    "should_trigger": false
+  },
+  {
+    "query": "debug the network issue on UDM Pro",
+    "should_trigger": false
+  }
+]

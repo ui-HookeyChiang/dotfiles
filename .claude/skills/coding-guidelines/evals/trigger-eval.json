@@ -1,0 +1,114 @@
+[
+  {
+    "query": "before I start coding this new rate-limiter, what principles should I keep in mind so I don't overbuild it?",
+    "should_trigger": true
+  },
+  {
+    "query": "remind me of the anti-LLM-mistake coding guardrails",
+    "should_trigger": true
+  },
+  {
+    "query": "I'm about to refactor the auth module. what's the disciplined way to keep the diff surgical?",
+    "should_trigger": true
+  },
+  {
+    "query": "what are the coding principles we follow in this repo? the karpathy ones",
+    "should_trigger": true
+  },
+  {
+    "query": "how should I approach this code change so I define success criteria up front instead of just hacking until it looks done",
+    "should_trigger": true
+  },
+  {
+    "query": "I keep adding speculative config flags nobody asked for. is there a guideline that tells me to stop doing that?",
+    "should_trigger": true
+  },
+  {
+    "query": "give me a checklist to think before coding — assumptions, alternatives, that kind of thing",
+    "should_trigger": true
+  },
+  {
+    "query": "what guardrails keep me from touching unrelated code when I'm only supposed to fix one function?",
+    "should_trigger": true
+  },
+  {
+    "query": "im starting a feature and want to make sure i ask clarifying questions before writing anything — what's the principle for that",
+    "should_trigger": true
+  },
+  {
+    "query": "we have a parser module and a validator module that both walk the AST. someone wants to merge them into one. should we?",
+    "should_trigger": true
+  },
+  {
+    "query": "the team is split on rewriting the job scheduler from scratch vs refactoring it incrementally. what framework should we use to decide?",
+    "should_trigger": true
+  },
+  {
+    "query": "this change would rename every occurrence of 'session' to 'context' across 40 files — is that the right approach or should we keep them separate?",
+    "should_trigger": true
+  },
+  {
+    "query": "we keep killing the idea of unifying the deploy skill and the release skill, but it comes up every sprint. how should we evaluate it this time?",
+    "should_trigger": true
+  },
+  {
+    "query": "I need to decide whether to make this config change schema-level (hard to undo) or feature-flag-level (easy to revert). what's the principle?",
+    "should_trigger": true
+  },
+  {
+    "query": "implement the new rate-limiter in src/middleware/ratelimit.ts with a sliding window and add tests",
+    "should_trigger": false
+  },
+  {
+    "query": "refactor the auth module to extract the token-validation logic into its own file and update all callers",
+    "should_trigger": false
+  },
+  {
+    "query": "review this PR for correctness bugs and tell me what to fix",
+    "should_trigger": false
+  },
+  {
+    "query": "the login test fails intermittently with a timeout — help me find the root cause",
+    "should_trigger": false
+  },
+  {
+    "query": "this paragraph in my SKILL.md is too wordy, compress it without losing any technical facts",
+    "should_trigger": false
+  },
+  {
+    "query": "fix the off-by-one in the pagination offset, it's showing duplicate rows on page 2",
+    "should_trigger": false
+  },
+  {
+    "query": "what does the SOLID acronym stand for in object-oriented design?",
+    "should_trigger": false
+  },
+  {
+    "query": "run the test suite and tell me which tests are currently failing on main",
+    "should_trigger": false
+  },
+  {
+    "query": "what's the difference between a rebase and a merge in git?",
+    "should_trigger": false
+  },
+  {
+    "query": "should I use quicksort or mergesort to sort this list of job IDs?",
+    "should_trigger": false
+  },
+  {
+    "query": "should the variable be named 'retryCount' or 'numRetries'?",
+    "should_trigger": false
+  },
+  {
+    "query": "should we add a --dry-run flag to this CLI command?",
+    "should_trigger": false
+  },
+  {
+    "query": "explain how consistent hashing works and when you'd use it",
+    "should_trigger": false
+  },
+  {
+    "query": "which HTTP client library should I use in this Node service — axios or got?",
+    "should_trigger": false
+  }
+]

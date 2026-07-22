@@ -1,0 +1,3 @@
+interface:
+  display_name: "Brief"
+  short_description: "Compose a review brief for a human reviewer — a short Slack/Teams mrkdwn me…"

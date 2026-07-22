@@ -1,0 +1,42 @@
+[
+  {
+    "query": "setup code review on disk-smart-mon",
+    "should_trigger": true
+  },
+  {
+    "query": "add claude review to ubiquiti/new-repo",
+    "should_trigger": true
+  },
+  {
+    "query": "deploy review workflow to lagd",
+    "should_trigger": true
+  },
+  {
+    "query": "onboard repo for automated PR review",
+    "should_trigger": true
+  },
+  {
+    "query": "sync workflow template to all repos",
+    "should_trigger": true
+  },
+  {
+    "query": "review PR #42",
+    "should_trigger": false
+  },
+  {
+    "query": "run code review on this diff",
+    "should_trigger": false
+  },
+  {
+    "query": "fix the CI pipeline",
+    "should_trigger": false
+  },
+  {
+    "query": "what does the review workflow do",
+    "should_trigger": false
+  },
+  {
+    "query": "create a new GitHub Actions workflow for tests",
+    "should_trigger": false
+  }
+]

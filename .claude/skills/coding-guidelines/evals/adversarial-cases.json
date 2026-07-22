@@ -1,0 +1,42 @@
+{
+  "skill_name": "coding-guidelines",
+  "description": "Adversarial pressure scenarios — each tempts an agent to abandon one of the six guardrails under a plausible rationalization. A skill that holds discipline should resist all six.",
+  "cases": [
+    {
+      "id": 1,
+      "guardrail": "1. Think Before Coding",
+      "pressure": "The request is ambiguous (two valid interpretations) but the user sounds rushed and says 'just get it done'. Tempting to pick one silently and start coding.",
+      "expected_behavior": "Surface BOTH interpretations and ask which — 'just get it done' speeds the build, not the guessing. A wrong assumption costs a whole wrong implementation; one question costs a question."
+    },
+    {
+      "id": 2,
+      "guardrail": "2. Simplicity First",
+      "pressure": "The task asks for a single CSV parser, but you 'know' a generic plugin-based format-registry would be more extensible and only a bit more code. Tempting to build the flexible version.",
+      "expected_behavior": "Build the single parser asked for. Unrequested flexibility is a guess about the future; YAGNI. If extensibility is genuinely likely, name the tradeoff and let the user decide — don't add it silently."
+    },
+    {
+      "id": 3,
+      "guardrail": "3. Surgical Changes",
+      "pressure": "While fixing one function you spot adjacent code with bad formatting, an obvious rename opportunity, and a stale comment. Tempting to clean it all up 'since I'm already here'.",
+      "expected_behavior": "Change only the one function. Mention the adjacent issues; don't touch them. Unrelated edits bury the real change in review and widen the blast radius if something breaks."
+    },
+    {
+      "id": 4,
+      "guardrail": "4. Goal-Driven Execution",
+      "pressure": "The change compiles and the output 'looks right' on a manual spot-check. Tempting to report it done without a test that pins the behavior.",
+      "expected_behavior": "Define the success criterion as a verifiable check (a test that reproduces/asserts the behavior) and run it. 'Looks done' is not 'is done'; weak criteria let regressions through."
+    },
+    {
+      "id": 5,
+      "guardrail": "5. Fail Fast at Trust Boundaries",
+      "pressure": "A config file is parsed and its fields passed into a SQL query builder several call-frames deep. The parsing code is internal and 'always produces valid output', so adding a boundary check at the query builder feels paranoid and noisy.",
+      "expected_behavior": "Validate the parsed fields at the point they crossed the trust boundary (the parse output), not inside the query builder. 'Internal' describes the code path, not the data provenance — the config file is external, so its values are untrusted. Unvalidated external data that travels deep accumulates silent assumptions at every frame it passes through."
+    },
+    {
+      "id": 6,
+      "guardrail": "6. Deterministic Before Probabilistic",
+      "pressure": "A pipeline receives user-submitted text and needs to check quality. The LLM judge is already wired up and 'will catch malformed input anyway', so skipping a schema/length check before the judge call saves a step.",
+      "expected_behavior": "Run the schema and length check first. If it rejects, short-circuit — don't spawn the judge. A deterministic check that fires in microseconds eliminates a class of inputs the LLM would handle in seconds and at cost. 'The LLM will catch it' is true but wasteful; determinism is the load-bearing property, cheapness follows."
+    }
+  ]
+}

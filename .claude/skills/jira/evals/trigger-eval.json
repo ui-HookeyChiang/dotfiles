@@ -1,0 +1,74 @@
+[
+  {
+    "query": "/jira get UOF-4399",
+    "should_trigger": true
+  },
+  {
+    "query": "get the details of Jira ticket UOF-4399",
+    "should_trigger": true
+  },
+  {
+    "query": "add a comment to UOF-4399 saying the DTS work is blocked",
+    "should_trigger": true
+  },
+  {
+    "query": "/jira comment UOF-4399 \"DTS work still pending\"",
+    "should_trigger": true
+  },
+  {
+    "query": "create a Jira subtask under UOF-4300 for EFG Neo fan support",
+    "should_trigger": true
+  },
+  {
+    "query": "search Jira for open tickets assigned to me in project UOF",
+    "should_trigger": true
+  },
+  {
+    "query": "/jira search \"project=UOF AND assignee=currentUser()\"",
+    "should_trigger": true
+  },
+  {
+    "query": "mark UOF-4399 as done in Jira",
+    "should_trigger": true
+  },
+  {
+    "query": "transition UOF-4406 to In Progress",
+    "should_trigger": true
+  },
+  {
+    "query": "what are the subtasks of UOF-4300?",
+    "should_trigger": true
+  },
+  {
+    "query": "build the ustd package for arm64 using debfactory",
+    "should_trigger": false
+  },
+  {
+    "query": "deploy the new deb to the UNAS Pro and restart the service",
+    "should_trigger": false
+  },
+  {
+    "query": "create a PR for the jira skill in prompt-hub",
+    "should_trigger": false
+  },
+  {
+    "query": "bump the version and tag a release for ustd",
+    "should_trigger": false
+  },
+  {
+    "query": "run fio benchmarks on the NAS over SMB",
+    "should_trigger": false
+  },
+  {
+    "query": "show me the CI build status for debfactory PR 456",
+    "should_trigger": false
+  },
+  {
+    "query": "add a comment to the GitHub PR about the test results",
+    "should_trigger": false
+  },
+  {
+    "query": "set up a RAID5 array on the UNAS with 4 disks",
+    "should_trigger": false
+  }
+]

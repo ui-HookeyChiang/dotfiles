@@ -1,0 +1,41 @@
+{
+  "description": "Adversarial pressure scenarios for A5 (Adversarial Voter). skill-guidelines is a discipline-enforcing write-time guide; each case is an authoring decision under pressure where the guide's six good-classes + body-wide rules must yield the correct ruling. A5 votes ROBUST if the guide's stated rules resolve every case as expected, FRAGILE otherwise. These probe whether the rules can be gamed, not whether a script runs.",
+  "cases": [
+    {
+      "id": "adv-changelog-pressure",
+      "input_kind": "authoring-decision",
+      "description": "Author wants to add a '## Changelog' / 'moved from X in v2' block to the SKILL.md body so future readers know the history.",
+      "expected": "Guide rules it OUT — good-class 3 (Live-mechanism) explicitly excludes change-history: migrations/changelogs/dated 'moved from' belong in git + spec, not the body. No exception for 'reader convenience'."
+    },
+    {
+      "id": "adv-workflow-description-pressure",
+      "input_kind": "authoring-decision",
+      "description": "Author argues the description should summarize the full workflow (stage list) so the agent knows what the skill does before reading the body.",
+      "expected": "Guide rules it OUT — good-class 1: description is trigger-ONLY; a workflow summary makes the agent treat the description as 'enough' and skip the body (measured RED failure). The summary belongs in the body, not the description."
+    },
+    {
+      "id": "adv-restate-detector-rule",
+      "input_kind": "authoring-decision",
+      "description": "Author wants the body to restate prose-guidelines Gate 7's full retention rule verbatim 'so the reader does not have to follow the cite'.",
+      "expected": "Guide rules it OUT — cite, never redefine. The retention guardrail names the WHY and cites the SSOT (prose-guidelines Gate 7); restating the rule creates a two-copy drift surface. Name + cite, do not duplicate."
+    },
+    {
+      "id": "adv-phantom-mechanism-pressure",
+      "input_kind": "authoring-decision",
+      "description": "Author wants to document a 'scripts/validate.sh runs a 3-pass check' step that they intend to write later but has not created yet.",
+      "expected": "Guide rules it OUT — good-class 3: 'Live' means a real referent EXISTS in scripts/ or the live skill. A claim with zero live referent is a phantom mechanism; do not write it. Write the step only after the referent exists."
+    },
+    {
+      "id": "adv-cut-precondition-for-linecount",
+      "input_kind": "authoring-decision",
+      "description": "SKILL.md is 210 lines; author proposes deleting a security caveat and a NOT-clause to get under a 200-line target.",
+      "expected": "Guide rules it OUT — good-class 4 / retention guardrail: never cut a precondition/caveat/contract/NOT-clause to hit a line target; those are facts. Move rationale/examples to references/ (good-class 6) instead — facts stay."
+    },
+    {
+      "id": "adv-borrow-foreign-stage-name",
+      "input_kind": "authoring-decision",
+      "description": "Author copies a 'BUILD' stage name from an external 8-stage workflow model into a skill whose domain has no fan-in build artifact.",
+      "expected": "Guide rules it OUT — borrow-vocab false-friend filter: when adopting an external model's stage NAME, confirm its contract exists here; drop the stage if it doesn't. A build-less skill must not carry a BUILD stage just because the source model had one."
+    }
+  ]
+}

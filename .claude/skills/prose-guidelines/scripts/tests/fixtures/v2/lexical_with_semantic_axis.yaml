@@ -1,0 +1,65 @@
+file: "prose-guidelines/scripts/tests/fixtures/v2/semantic_axis_target.md"
+# Negative fixture (task-2): three lexical-class findings that accidentally
+# set `semantic_axis: G7`. Pre-task-2 validator: passes (validator does not
+# yet check semantic_axis). Post-task-2 validator: all 3 drop with
+# "semantic_axis only valid for paragraph class, got lexical"; drops=3 ≥
+# budget=3 → batch invalidated (exit 1).
+findings:
+  - lines: "L5-L5"
+    finding_class: lexical
+    semantic_axis: G7
+    preceding_heading: "Semantic axis fixture target"
+    original_words: 14
+    rewritten_words: 10
+    ratio: 0.71
+    confidence: high
+    rationale_bucket: false
+    lexical_hits: [leverage, facilitate]
+    evidence_quote: |
+      We leverage the cache to facilitate faster reads across the entire production cluster.
+    rewritten_text: |
+      The cache speeds reads across the production cluster. Concrete verbs replace empty leverage / facilitate.
+    suggested_action: "Replace leverage/facilitate with concrete verbs."
+
+  - lines: "L5-L5"
+    finding_class: lexical
+    semantic_axis: G7
+    preceding_heading: "Semantic axis fixture target"
+    original_words: 14
+    rewritten_words: 11
+    ratio: 0.79
+    confidence: medium
+    rationale_bucket: false
+    lexical_hits: [leverage]
+    evidence_quote: |
+      We leverage the cache to facilitate faster reads across the entire production cluster.
+    rewritten_text: |
+      The cache speeds reads across the production cluster, replacing the empty leverage verb.
+    suggested_action: "Drop leverage."
+
+  - lines: "L5-L5"
+    finding_class: lexical
+    semantic_axis: G7
+    preceding_heading: "Semantic axis fixture target"
+    original_words: 14
+    rewritten_words: 12
+    ratio: 0.86
+    confidence: medium
+    rationale_bucket: false
+    lexical_hits: [facilitate]
+    evidence_quote: |
+      We leverage the cache to facilitate faster reads across the entire production cluster.
+    rewritten_text: |
+      The cache enables faster reads across the production cluster, dropping facilitate.
+    suggested_action: "Drop facilitate."
+
+summary:
+  total_paragraphs_scanned: 1
+  flagged_below_0_8: 3
+  high_severity_below_0_5: 0
+  findings_by_class:
+    paragraph: 0
+    lexical: 3
+    meta: 0
+    hedge: 0
+  note: "Negative fixture for task-2 — lexical findings with semantic_axis set. Pre-task-2: validator passes. Post-task-2: all drop with 'semantic_axis only valid for paragraph class'."

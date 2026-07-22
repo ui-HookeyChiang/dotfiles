@@ -1,0 +1,98 @@
+[
+  {
+    "query": "announce the release",
+    "should_trigger": true
+  },
+  {
+    "query": "publish release notes to confluence",
+    "should_trigger": true
+  },
+  {
+    "query": "post release to wiki",
+    "should_trigger": true
+  },
+  {
+    "query": "/release-announce confluence",
+    "should_trigger": true
+  },
+  {
+    "query": "create github release for v0.3.0",
+    "should_trigger": true
+  },
+  {
+    "query": "push release notes to repo and wiki",
+    "should_trigger": true
+  },
+  {
+    "query": "publish v1.0.0 release",
+    "should_trigger": true
+  },
+  {
+    "query": "/release-announce repo,confluence v0.4.0",
+    "should_trigger": true
+  },
+  {
+    "query": "announce v0.3.1 on confluence and github",
+    "should_trigger": true
+  },
+  {
+    "query": "/release-announce --dry-run confluence",
+    "should_trigger": true
+  },
+  {
+    "query": "publish the release note to the wiki page",
+    "should_trigger": true
+  },
+  {
+    "query": "create a gh release from the release notes",
+    "should_trigger": true
+  },
+  {
+    "query": "draft release notes",
+    "should_trigger": false
+  },
+  {
+    "query": "generate changelog",
+    "should_trigger": false
+  },
+  {
+    "query": "bump the version",
+    "should_trigger": false
+  },
+  {
+    "query": "create a git tag",
+    "should_trigger": false
+  },
+  {
+    "query": "build firmware",
+    "should_trigger": false
+  },
+  {
+    "query": "deploy to device",
+    "should_trigger": false
+  },
+  {
+    "query": "search confluence for a page",
+    "should_trigger": false
+  },
+  {
+    "query": "update confluence page content",
+    "should_trigger": false
+  },
+  {
+    "query": "run fio benchmarks on UNAS",
+    "should_trigger": false
+  },
+  {
+    "query": "what changed in ucore 5.1.94",
+    "should_trigger": false
+  },
+  {
+    "query": "write release notes for v0.3.0",
+    "should_trigger": false
+  },
+  {
+    "query": "curate the changelog into a summary",
+    "should_trigger": false
+  }
+]

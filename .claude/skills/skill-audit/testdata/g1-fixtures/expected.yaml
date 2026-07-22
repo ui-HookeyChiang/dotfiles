@@ -1,0 +1,21 @@
+# Expected G1 output shape for the three g1-fixtures files.
+#
+# This file documents the SEMANTIC contract the e2e test asserts against;
+# it is not loaded byte-for-byte. The e2e test verifies (a) finding count
+# >= 1 with MED severity for the a/b pair under a mock dispatch that
+# returns is_paraphrased=True, and (b) zero findings when only c is the
+# target and a/b are excluded from the corpus.
+findings:
+  - id: g1-001
+    axis: G1
+    severity: MED                 # 2 skills + >= 10 lines paraphrase
+    confidence: medium            # rubric L70-71: 2 skills => medium
+    locations_files:              # file basenames the finding must cite
+      - skill-a-debfactory.md
+      - skill-b-debfactory.md
+    requires_human: true
+    numeric_basis: null
+notes:
+  - skill-c-unrelated.md must NOT appear in any finding location.
+  - Under real-LLM dispatch (Task 6 dogfood) skill-a vs skill-b should
+    fire; skill-c remains a negative control.

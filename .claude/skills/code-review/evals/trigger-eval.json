@@ -1,0 +1,66 @@
+[
+  {
+    "query": "Review PR #42 on the ustd repo — focus on the new RAID detection logic",
+    "should_trigger": true
+  },
+  {
+    "query": "/review-pr 87",
+    "should_trigger": true
+  },
+  {
+    "query": "Can you do a code review of the open PR on debfactory? It changes the kernel header build.",
+    "should_trigger": true
+  },
+  {
+    "query": "Review the latest pull request, paying attention to security and error handling",
+    "should_trigger": true
+  },
+  {
+    "query": "review pr",
+    "should_trigger": true
+  },
+  {
+    "query": "There's a PR from Jake that refactors the storage daemon — please review it before I approve",
+    "should_trigger": true
+  },
+  {
+    "query": "I just pushed PR #15 for the CPSS port-channel changes. Can you review the diff and leave inline comments?",
+    "should_trigger": true
+  },
+  {
+    "query": "Do a code review on https://github.com/ubiquiti/debbox/pull/234",
+    "should_trigger": true
+  },
+  {
+    "query": "Write a Python function that parses JSON and returns a sorted list of keys",
+    "should_trigger": false
+  },
+  {
+    "query": "Why is my fio benchmark showing only 200 MB/s on RAID5 over SMB?",
+    "should_trigger": false
+  },
+  {
+    "query": "Help me debug this segfault in cpss-app when configuring VLAN 100 on port 0/6",
+    "should_trigger": false
+  },
+  {
+    "query": "Create a PR for the storage changes on the feat/raid-detection branch",
+    "should_trigger": false
+  },
+  {
+    "query": "Implement the JWT auth middleware and split it into stacked PRs",
+    "should_trigger": false
+  },
+  {
+    "query": "Refactor the deploy-storage script to use Lua instead of bash",
+    "should_trigger": false
+  },
+  {
+    "query": "What does the cpssDxChBrgVlanPortVidSet API do? Show me usage examples.",
+    "should_trigger": false
+  },
+  {
+    "query": "Build the ustd package from debfactory and deploy it to UNAS Pro",
+    "should_trigger": false
+  }
+]

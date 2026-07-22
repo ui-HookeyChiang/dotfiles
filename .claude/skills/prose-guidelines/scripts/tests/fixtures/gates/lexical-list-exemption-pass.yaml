@@ -1,0 +1,19 @@
+file: "prose-guidelines/scripts/tests/fixtures/gates/target.md"
+findings:
+  - lines: "L17-L17"
+    finding_class: lexical
+    preceding_heading: "Gate fixture target"
+    original_words: 12
+    rewritten_words: 13
+    ratio: 1.17
+    confidence: high
+    rationale_bucket: false
+    lexical_hits:
+      - {token: various, subclass: B1}
+    evidence_quote: |
+      We use various backends to leverage caching and facilitate faster reads everywhere.
+    rewritten_text: |
+      We use git, jq, fzf backends to leverage caching and facilitate faster reads everywhere.
+    suggested_action: "Expand various into the concrete enumeration."
+summary:
+  findings_by_class: {paragraph: 0, lexical: 1, meta: 0, hedge: 0}

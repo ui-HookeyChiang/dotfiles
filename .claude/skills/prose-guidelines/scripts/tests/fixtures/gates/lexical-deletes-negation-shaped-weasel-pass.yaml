@@ -1,0 +1,19 @@
+file: "prose-guidelines/scripts/tests/fixtures/gates/target.md"
+findings:
+  - lines: "L7-L7"
+    finding_class: lexical
+    preceding_heading: "Gate fixture target"
+    original_words: 26
+    rewritten_words: 24
+    ratio: 0.92
+    confidence: medium
+    rationale_bucket: false
+    lexical_hits:
+      - {token: 直接, subclass: B4}
+    evidence_quote: |
+      設定 逾時 為 30 秒 否則 直接 中止 連線 並 回報 錯誤 給 呼叫 端 處理。
+    rewritten_text: |
+      設定 逾時 為 30 秒 否則 中止 連線 並 回報 錯誤 給 呼叫 端 處理。
+    suggested_action: "Drop 直接 intensifier; 否則 branch stays."
+summary:
+  findings_by_class: {paragraph: 0, lexical: 1, meta: 0, hedge: 0}

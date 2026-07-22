@@ -1,0 +1,3 @@
+interface:
+  display_name: "Policy Missing"
+  short_description: "Test fixture for missing policy block."

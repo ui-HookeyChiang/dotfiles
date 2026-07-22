@@ -1,0 +1,5 @@
+interface:
+  display_name: "Agent Parity"
+  short_description: "Runtime parity diff across Claude Code and OpenCode."
+policy:
+  allow_implicit_invocation: false

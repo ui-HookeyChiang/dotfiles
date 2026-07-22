@@ -1,0 +1,205 @@
+file: "prose-guidelines/tests/fixtures/seeded-v2-baseline.md"
+findings:
+  # P1 — lexical (3 EN weasel: leverage, facilitate, various) at line 7
+  - lines: "L7-L7"
+    finding_class: lexical
+    preceding_heading: "Section A — lexical cases"
+    original_words: 35
+    rewritten_words: 22
+    ratio: 0.74
+    confidence: high
+    rationale_bucket: false
+    lexical_hits:
+      - {token: leverage, subclass: B1}
+      - {token: facilitate, subclass: B1}
+      - {token: various, subclass: B1}
+    evidence_quote: |
+      We leverage the cache to facilitate faster reads across the entire production cluster.
+    rewritten_text: |
+      The cache speeds reads across the production cluster. The team picked backends to keep operations flexible during outages. Other teams also benefit from this pipeline daily.
+    suggested_action: "Replace leverage/facilitate/various with concrete verbs and counts."
+
+  # P2 — lexical (ZH weasel 進行 + 基本上 + nominalization 做出決策) at line 9
+  - lines: "L9-L9"
+    finding_class: lexical
+    preceding_heading: "Section A — lexical cases"
+    original_words: 46
+    rewritten_words: 30
+    ratio: 0.65
+    confidence: high
+    rationale_bucket: false
+    lexical_hits:
+      - {token: "進行", subclass: B2}
+      - {token: "做出決策", subclass: B3}
+      - {token: "基本上", subclass: B2}
+    evidence_quote: |
+      在 開始 rollout 之前 我們 進行 一份 完整 的 performance benchmark 並 在 lab 環境 收集 metric 與 trace 資料。
+    rewritten_text: |
+      Rollout 前 我們 跑 完整 performance benchmark 並 在 lab 收集 metric 與 trace。 之後 團隊 決定 是否 將 cache layer 推 到 production。 Staging 已 跑 兩 週 並 通過 大部分 regression test。
+    suggested_action: "Drop 進行 / 基本上 weasel; collapse 做出決策 → 決定."
+
+  # P3 — lexical (intensifier really, simply) at line 11
+  - lines: "L11-L11"
+    finding_class: lexical
+    preceding_heading: "Section A — lexical cases"
+    original_words: 35
+    rewritten_words: 28
+    ratio: 0.94
+    confidence: medium
+    rationale_bucket: false
+    lexical_hits:
+      - {token: really, subclass: B4}
+      - {token: simply, subclass: B4}
+    evidence_quote: |
+      Running it under canary load is really straightforward once the secrets are wired in.
+    rewritten_text: |
+      The migration script handles every edge case we have seen so far. Running it under canary load is straightforward once the secrets are wired in. The on-call team checks the exit code afterward.
+    suggested_action: "Drop empty intensifiers `really` and `simply`."
+
+  # P4 — meta (English self-reference) at line 15
+  - lines: "L15-L15"
+    finding_class: meta
+    preceding_heading: "Section B — meta cases"
+    original_words: 42
+    rewritten_words: 0
+    ratio: 0.00
+    confidence: high
+    rationale_bucket: false
+    evidence_quote: |
+      This section describes the way the new cache layer fits into our existing request pipeline.
+    rewritten_text: |
+    suggested_action: "Delete entire paragraph — meta self-reference adds no information."
+
+  # P5 — meta (Chinese self-reference) at line 17
+  - lines: "L17-L17"
+    finding_class: meta
+    preceding_heading: "Section B — meta cases"
+    original_words: 36
+    rewritten_words: 0
+    ratio: 0.00
+    confidence: high
+    rationale_bucket: false
+    evidence_quote: |
+      本文 將 介紹 新 的 backup pipeline 與 既 有 batch job 之間 的 整合 方式。
+    rewritten_text: |
+    suggested_action: "Delete entire paragraph — meta self-reference adds no information."
+
+  # P6 — hedge (might) at lead paragraph, line 3
+  - lines: "L3-L3"
+    finding_class: hedge
+    preceding_heading: ""
+    original_words: 36
+    rewritten_words: 32
+    ratio: 0.89
+    confidence: medium
+    rationale_bucket: false
+    evidence_quote: |
+      The new caching layer might reduce database load by half once the rollout finishes next quarter.
+    rewritten_text: |
+      Our backend service handles user requests through two main subsystems running on the same cluster. The new caching layer reduces database load by half once the rollout finishes next quarter — numbers will follow.
+    suggested_action: "Drop `might` in lead paragraph or move to ## Risks."
+
+  # P7 — hedge (probably) under ## TL;DR, line 21
+  - lines: "L21-L21"
+    finding_class: hedge
+    preceding_heading: "TL;DR"
+    original_words: 36
+    rewritten_words: 32
+    ratio: 0.97
+    confidence: medium
+    rationale_bucket: false
+    evidence_quote: |
+      The new gateway probably scales beyond the current 10x baseline without further tuning across all data-center regions.
+    rewritten_text: |
+      The new gateway scales beyond the current 10x baseline without further tuning across all data-center regions. Internal load tests show p99 latency below 12 ms at 5x baseline load. Public docs will land before launch.
+    suggested_action: "Drop `probably` under ## TL;DR — decision-layer hedge."
+
+  # MALFORMED #1 — missing finding_class entirely (validator should drop)
+  - lines: "L25-L25"
+    preceding_heading: "Section C — negatives (must NOT flag)"
+    original_words: 34
+    rewritten_words: 30
+    ratio: 0.88
+    confidence: low
+    rationale_bucket: false
+    evidence_quote: |
+      The new index service leverages a 10k-entry LRU cache to serve hot keys without database round-trips.
+    rewritten_text: |
+      The index service uses a 10k-entry LRU cache to serve hot keys without database round-trips.
+    suggested_action: "(intentionally malformed: missing finding_class field)"
+
+  # MALFORMED #2 — finding_class with invalid value (validator should drop)
+  - lines: "L41-L41"
+    finding_class: invalid
+    preceding_heading: "Risks"
+    original_words: 37
+    rewritten_words: 30
+    ratio: 0.81
+    confidence: low
+    rationale_bucket: true
+    evidence_quote: |
+      The new cache might break under stale-key conditions if Redis is partitioned between regions.
+    rewritten_text: |
+      The new cache might break under stale-key conditions if Redis is partitioned between regions.
+    suggested_action: "(intentionally malformed: finding_class=invalid)"
+
+  # P12 — lexical (B4 basically) hard-token survival seed at line 45 (G9 Gate 7 coverage)
+  # orig hard tokens {/refresh, ECONNREFUSED, ETIMEDOUT, not, validate-findings.sh} all survive in rewrite.
+  - lines: "L45-L45"
+    finding_class: lexical
+    preceding_heading: "Section D — hard-token survival"
+    original_words: 23
+    rewritten_words: 22
+    ratio: 0.96
+    confidence: medium
+    rationale_bucket: false
+    lexical_hits:
+      - {token: basically, subclass: B4}
+    evidence_quote: |
+      The retry handler basically performs 3 retries on ETIMEDOUT via the /refresh endpoint, but does not retry on ECONNREFUSED, as documented in validate-findings.sh.
+    rewritten_text: |
+      The retry handler performs 3 retries on ETIMEDOUT via the /refresh endpoint, but does not retry on ECONNREFUSED, as documented in validate-findings.sh.
+    suggested_action: "Drop empty intensifier `basically`; every hard token (errno/path/negation) preserved."
+
+  # P13 — lexical (B4 just, caveman G8 increment) at line 49
+  - lines: "L49-L49"
+    finding_class: lexical
+    preceding_heading: "Section E — just intensifier"
+    original_words: 27
+    rewritten_words: 26
+    ratio: 0.96
+    confidence: medium
+    rationale_bucket: false
+    lexical_hits:
+      - {token: just, subclass: B4}
+    evidence_quote: |
+      The deploy script just rotates the Bearer JWT every 15-minute window so operators do not need to touch the secret store during a routine canary rollout afterward.
+    rewritten_text: |
+      The deploy script rotates the Bearer JWT every 15-minute window so operators do not need to touch the secret store during a routine canary rollout afterward.
+    suggested_action: "Drop B4 intensifier `just` (caveman increment); 15-minute / JWT / negation preserved."
+
+  # P14 — meta then fact at line 53 (G7 sentence-level: meta sentence deleted, fact sentence kept)
+  - lines: "L53-L53"
+    finding_class: meta
+    preceding_heading: "Section F — meta then fact"
+    original_words: 21
+    rewritten_words: 14
+    ratio: 0.67
+    confidence: high
+    rationale_bucket: false
+    evidence_quote: |
+      This section describes the alert routing flow.
+    rewritten_text: |
+      The pipeline runs 3 retries on ETIMEDOUT before paging the on-call operator through PagerDuty.
+    suggested_action: "Delete only the meta sentence; keep the fact sentence (3 retries / ETIMEDOUT survive)."
+
+summary:
+  total_paragraphs_scanned: 14
+  flagged_below_0_8: 7
+  high_severity_below_0_5: 0
+  findings_by_class:
+    paragraph: 0
+    lexical: 5
+    meta: 3
+    hedge: 2
+  note: "Pre-committed sample for deterministic validator unit test. 10 valid + 2 malformed = 12 total; budget=max(3, ceil(0.15*12))=max(3,2)=3; drops=2 (#7,#8) < 3 → PASS. Ratios re-baselined to CJK recount (Gate 8); lexical_hits in {token,subclass} object form."

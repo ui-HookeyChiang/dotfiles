@@ -1,0 +1,38 @@
+[
+  {
+    "prompt": "check agent parity",
+    "should_trigger": true
+  },
+  {
+    "prompt": "are my Claude and OpenCode configs in sync",
+    "should_trigger": true
+  },
+  {
+    "prompt": "parity check",
+    "should_trigger": true
+  },
+  {
+    "prompt": "what's drifted between agents",
+    "should_trigger": true
+  },
+  {
+    "prompt": "run agent-parity",
+    "should_trigger": true
+  },
+  {
+    "prompt": "fix a bug in my code",
+    "should_trigger": false
+  },
+  {
+    "prompt": "update my settings.json permissions",
+    "should_trigger": false
+  },
+  {
+    "prompt": "create a new skill",
+    "should_trigger": false
+  },
+  {
+    "prompt": "deploy firmware to my device",
+    "should_trigger": false
+  }
+]

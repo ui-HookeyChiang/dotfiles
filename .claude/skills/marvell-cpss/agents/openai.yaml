@@ -1,0 +1,3 @@
+interface:
+  display_name: "Marvell Cpss"
+  short_description: "Configure and control Marvell DxCh switches via CPSS Lua CLI."

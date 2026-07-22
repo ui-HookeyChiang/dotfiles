@@ -1,0 +1,110 @@
+[
+  {
+    "prompt": "review brief for my PR",
+    "should_trigger": true
+  },
+  {
+    "prompt": "幫我寫 review brief",
+    "should_trigger": true
+  },
+  {
+    "prompt": "組 slack review 訊息",
+    "should_trigger": true
+  },
+  {
+    "prompt": "brief the reviewer before merge",
+    "should_trigger": true
+  },
+  {
+    "prompt": "I need a slack message to ask for review",
+    "should_trigger": true
+  },
+  {
+    "prompt": "generate a review request message for the team",
+    "should_trigger": true
+  },
+  {
+    "prompt": "write a review brief for PR 1571-1577",
+    "should_trigger": true
+  },
+  {
+    "prompt": "幫我組 review 訊息貼 slack",
+    "should_trigger": true
+  },
+  {
+    "prompt": "prepare a brief for the reviewer",
+    "should_trigger": true
+  },
+  {
+    "prompt": "I want to ask someone to review my btrfs backport PRs",
+    "should_trigger": true
+  },
+  {
+    "prompt": "can you put together a message asking the team to sign off on this design doc",
+    "should_trigger": true
+  },
+  {
+    "prompt": "we need to loop in the on-call lead on the postmortem before we close the incident, draft something I can send them",
+    "should_trigger": true
+  },
+  {
+    "prompt": "誰能幫我看一下這份設計文件，麻煩幫我組個訊息貼到頻道",
+    "should_trigger": true
+  },
+  {
+    "prompt": "review this design doc for correctness",
+    "should_trigger": false
+  },
+  {
+    "prompt": "write an incident postmortem for last night's outage",
+    "should_trigger": false
+  },
+  {
+    "prompt": "review this code",
+    "should_trigger": false
+  },
+  {
+    "prompt": "merge the PR stack",
+    "should_trigger": false
+  },
+  {
+    "prompt": "run the tests",
+    "should_trigger": false
+  },
+  {
+    "prompt": "create a new PR",
+    "should_trigger": false
+  },
+  {
+    "prompt": "respond to the review feedback",
+    "should_trigger": false
+  },
+  {
+    "prompt": "deploy to staging",
+    "should_trigger": false
+  },
+  {
+    "prompt": "what PRs are open",
+    "should_trigger": false
+  },
+  {
+    "prompt": "fix the lint error",
+    "should_trigger": false
+  },
+  {
+    "prompt": "write a commit message",
+    "should_trigger": false
+  },
+  {
+    "prompt": "audit this skill",
+    "should_trigger": false
+  },
+  {
+    "prompt": "brief 輸出 html 給 reviewer",
+    "should_trigger": true
+  },
+  {
+    "prompt": "把 postmortem 組成 html attachment 上傳 slack review",
+    "should_trigger": true
+  }
+]

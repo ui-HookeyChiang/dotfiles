@@ -1,0 +1,162 @@
+[
+  {
+    "query": "This Background section in flow-dev/SKILL.md feels too wordy. Can it be tightened?",
+    "should_trigger": true,
+    "rationale": "Direct SKILL.md prose audit ask — matches 'is this section too long'"
+  },
+  {
+    "query": "Rewrite the verbose paragraphs in docs/spec/archive/2026-05-26-stack-dev-spec-bootstrap.md.",
+    "should_trigger": true,
+    "rationale": "Spec rewrite request — in-scope doc type; matches 'rewrite verbose prose'"
+  },
+  {
+    "query": "Audit my SKILL.md for compressible prose paragraphs.",
+    "should_trigger": true,
+    "rationale": "Explicit prose compression audit on a SKILL.md — matches 'audit this spec for wordy paragraphs'"
+  },
+  {
+    "query": "幫我把這份 spec 的冗贅段落壓縮一下。",
+    "should_trigger": true,
+    "rationale": "Chinese trigger for prose compression on spec — matches '幫我壓縮這份 spec'"
+  },
+  {
+    "query": "找一下 docs-lifecycle/SKILL.md 哪些段落太囉嗦。",
+    "should_trigger": true,
+    "rationale": "Chinese trigger — find wordy paragraphs in SKILL.md"
+  },
+  {
+    "query": "Run prose-guidelines on this engineering spec with --apply to land the rewrites.",
+    "should_trigger": true,
+    "rationale": "Explicit --apply opt-in step now named in the description; transformer flow on in-scope spec"
+  },
+  {
+    "query": "Compress the prose in this engineering spec and apply the changes.",
+    "should_trigger": true,
+    "rationale": "Compress + apply — full detect-then-apply flow on in-scope spec"
+  },
+  {
+    "query": "Is this Architecture description too long-winded? Show me a tighter version.",
+    "should_trigger": true,
+    "rationale": "Single-paragraph rewrite ask — matches 'is this section too long'"
+  },
+  {
+    "query": "Rewrite the wordy paragraph at lines 120-142 of this SKILL.md to be tighter.",
+    "should_trigger": true,
+    "rationale": "Line-range targeted rewrite — Edit-by-line-range workflow on SKILL.md"
+  },
+  {
+    "query": "Tighten the prose in docs/spec/proposed/foo.md so each paragraph is denser.",
+    "should_trigger": true,
+    "rationale": "Spec prose density / tightening — in-scope doc type"
+  },
+  {
+    "query": "段落改寫 — 我這份 skill 的描述段太散，幫我壓緊。",
+    "should_trigger": true,
+    "rationale": "Chinese — paragraph rewrite for skill description prose"
+  },
+  {
+    "query": "Find weasel words in this SKILL.md.",
+    "should_trigger": true,
+    "rationale": "Lexical detector now explicitly named ('find weasel words'); SKILL.md in scope"
+  },
+  {
+    "query": "Scan for meta self-reference paragraphs in this spec.",
+    "should_trigger": true,
+    "rationale": "Meta detector now explicitly named ('scan for meta self-reference'); spec in scope"
+  },
+  {
+    "query": "Any hedges in the TL;DR of this spec?",
+    "should_trigger": true,
+    "rationale": "Hedge detector now explicitly named ('any hedges in the TL;DR'); spec in scope"
+  },
+  {
+    "query": "Rewrite this verbose paragraph to be tighter.",
+    "should_trigger": true,
+    "rationale": "Baseline paragraph rewrite — matches 'rewrite verbose prose'"
+  },
+  {
+    "query": "Compress this blog post about kernel scheduling.",
+    "should_trigger": false,
+    "rationale": "Out of scope — blog post explicitly excluded; should NOT trigger"
+  },
+  {
+    "query": "Tighten the prose in my slide deck.",
+    "should_trigger": false,
+    "rationale": "Out of scope — slide deck explicitly excluded (bullets, no real prose)"
+  },
+  {
+    "query": "Rewrite this essay about Linux kernel history to be more engaging.",
+    "should_trigger": false,
+    "rationale": "Out of scope — essay / narrative voice explicitly excluded"
+  },
+  {
+    "query": "Compress this marketing landing page copy.",
+    "should_trigger": false,
+    "rationale": "Out of scope — marketing copy is narrative/long-form, not SKILL.md or spec"
+  },
+  {
+    "query": "Find paraphrased duplicate paragraphs across flow-dev and ubiquiti-flow.",
+    "should_trigger": false,
+    "rationale": "Cross-skill duplication is skill-semantic-audit G1's job, not prose-guidelines (single-file scope)"
+  },
+  {
+    "query": "Generate a flow-dev cleanup spec from existing paragraph-density findings.",
+    "should_trigger": false,
+    "rationale": "Near-miss: consumes EXISTING findings to emit a flow-dev cleanup spec — that is the flow-dev / docs-lifecycle bridge path, not prose-guidelines's detect-and-compress surface. prose-guidelines produces findings; it does not author the downstream cleanup spec from them."
+  },
+  {
+    "query": "Audit this SKILL.md for repeated instructions that appear in two locations.",
+    "should_trigger": false,
+    "rationale": "Intra-file repeated instructions route to skill-syntax-audit per the description boundary"
+  },
+  {
+    "query": "Find scriptifiable bash command chains in this SKILL.md.",
+    "should_trigger": false,
+    "rationale": "Scriptifiable steps route to skill-syntax-audit per the description boundary"
+  },
+  {
+    "query": "Score my SKILL.md on the 8-dimension rubric.",
+    "should_trigger": false,
+    "rationale": "Rubric scoring is darwin-skill, not prose compression"
+  },
+  {
+    "query": "Create a new skill called foo.",
+    "should_trigger": false,
+    "rationale": "New skill scaffolding is skill-writer, not prose-guidelines"
+  },
+  {
+    "query": "I'm about to write the design section of a new spec — what principles keep the prose tight as I draft?",
+    "should_trigger": true,
+    "rationale": "Principles mode (write-before) — writing a spec, wants tightness guidelines up front"
+  },
+  {
+    "query": "how should I word this README intro so it's not bloated? writing it now",
+    "should_trigger": true,
+    "rationale": "Principles mode — drafting README prose, write-before tightness"
+  },
+  {
+    "query": "give me the prose writing principles before I write this PR description",
+    "should_trigger": true,
+    "rationale": "Principles mode — explicit 'prose writing principles' + write-before PR body"
+  },
+  {
+    "query": "my chat replies are too long, compress how you talk to me",
+    "should_trigger": false,
+    "rationale": "Chat-output compression is caveman, NOT artifact prose — boundary near-miss"
+  },
+  {
+    "query": "write the design section of a spec for a new rate-limiter feature",
+    "should_trigger": true,
+    "rationale": "Principles mode (ambient) — writing a spec artifact; ambient design fires even without a 'tightness' meta-word"
+  },
+  {
+    "query": "add a code comment explaining why this retry loop uses exponential backoff",
+    "should_trigger": true,
+    "rationale": "Principles mode (ambient) — writing a code comment (a prose artifact); fires on the write even when tightness not named"
+  },
+  {
+    "query": "implement the rate-limiter in src/middleware/ratelimit.ts with a sliding window",
+    "should_trigger": false,
+    "rationale": "Writing CODE itself, not prose — coding-guidelines owns this; prose-guidelines explicitly excludes code"
+  }
+]

@@ -1,0 +1,137 @@
+[
+  {
+    "query": "Find paraphrased duplicate paragraphs across flow-dev/SKILL.md and ubiquiti-flow/SKILL.md",
+    "should_trigger": true,
+    "rationale": "G1 cross-skill same-meaning paragraph detection — the core axis (NEW desc keeps 'cross-skill same-meaning paragraph duplication (G1)' + 'paraphrased same-meaning paragraphs')"
+  },
+  {
+    "query": "Detect cross-skill duplication between these four SKILL.md files and propose a _shared/ extraction",
+    "should_trigger": true,
+    "rationale": "G1 with explicit _shared/ extraction suggestion — NEW desc keeps 'cross-skill duplication' trigger phrase"
+  },
+  {
+    "query": "Should this 35-line example move from SKILL.md to references/? Check for progressive disclosure violations",
+    "should_trigger": true,
+    "rationale": "G8 progressive disclosure — long-example movability; NEW desc keeps 'progressive disclosure violations (G8) where ... long examples belong in references/'"
+  },
+  {
+    "query": "Find content in my SKILL.md that should be deferred to references/ — long rationale sections and edge case lists",
+    "should_trigger": true,
+    "rationale": "G8 progressive disclosure — rationale / edge-case deferral; NEW desc keeps 'rationale ... belong in references/'"
+  },
+  {
+    "query": "幫我找出 flow-dev 跟 ubiquiti-flow 兩個 SKILL.md 中描述同一流程但措辭不同的段落",
+    "should_trigger": true,
+    "rationale": "G1 cross-skill same-meaning paragraph (zh-TW) — 'same-meaning paragraph' survives in NEW desc"
+  },
+  {
+    "query": "My SKILL.md has stale change-history baked into the prose — bullets like 'Demoted from Phase 3 ... moved to prose-guidelines (2026-05-29)'. Find the deletable historical residue.",
+    "should_trigger": true,
+    "rationale": "G8 inline_changelog — NEW desc keeps 'deletable inline change-history' + 'demoted from / moved to / renamed from' + 'removable historical residue'"
+  },
+  {
+    "query": "Audit prose-guidelines/SKILL.md for leftover 'renamed from', 'replaced by' lines in the body that are pure history and can be removed without changing behavior",
+    "should_trigger": true,
+    "rationale": "G8 inline_changelog — 'changelog-as-prose ... removable without behavior change' is verbatim NEW-desc framing; disposition=DELETE"
+  },
+  {
+    "query": "Run a semantic cleanup pass across the skills repo and hand me a YAML spec draft for flow-dev to execute the cross-skill dedup",
+    "should_trigger": true,
+    "rationale": "REPLACES old case 7 (which leaned on removed 'finding-level semantic cleanup' + 'confidence/evidence_quote' mechanism wording). NEW desc keeps 'finding-level semantic cleanup across multiple SKILL.md files' + 'flow-dev spec draft' + 'cross-skill ... duplication' — routes cleanly without the dropped mechanism detail"
+  },
+  {
+    "query": "Audit both axes — paraphrased cross-skill paragraph duplicates and progressive-disclosure content that belongs in references/ — and emit the findings as a flow-dev spec draft",
+    "should_trigger": true,
+    "rationale": "REPLACES old case 9 (which mixed in 'low-density prose', now prose-guidelines's job, and a stale 3-axis framing). Clean 2-axis G1+G8 invocation ending in 'spec draft for flow-dev'"
+  },
+  {
+    "query": "This Background paragraph in flow-dev/SKILL.md feels wordy — can it be compressed without losing technical info?",
+    "should_trigger": false,
+    "rationale": "Near-miss boundary 1/3 (prose-guidelines): paragraph compression. NEW desc explicitly 'NOT for paragraph density / prose compression (use prose-guidelines)'"
+  },
+  {
+    "query": "Run a paragraph density check on docs-lifecycle/SKILL.md and report which paragraphs have low compression ratio",
+    "should_trigger": false,
+    "rationale": "Near-miss boundary 1/3 (prose-guidelines): paragraph-density / compression-ratio detection. NEW desc 'NOT for paragraph density'"
+  },
+  {
+    "query": "This 'as of 2026-05-29' migration-deadline bullet in my SKILL.md is wordy — compress it but keep the date and the fact that v1 callers must migrate",
+    "should_trigger": false,
+    "rationale": "Tricky near-miss: LOOKS like inline-changelog history (has a date) but the date is a still-in-force contract/deadline AND the user wants COMPRESSION preserving the fact, not deletion — that is prose-guidelines, not G8 DELETE. Tests the actionable-vs-removable boundary"
+  },
+  {
+    "query": "Find repeated bash command sequences inside one SKILL.md and suggest scriptifying them into a helper",
+    "should_trigger": false,
+    "rationale": "Near-miss boundary 2/3 (skill-syntax-audit): intra-file scriptifiable detection. NEW desc 'NOT for intra-file syntax-level ... scriptifiable detection (use skill-syntax-audit)'"
+  },
+  {
+    "query": "Audit a single SKILL.md for redundant steps that appear in two locations inside the same file",
+    "should_trigger": false,
+    "rationale": "Near-miss boundary 2/3 (skill-syntax-audit): intra-file repeated-instruction redundancy (this skill is CROSS-skill). NEW desc 'NOT for intra-file syntax-level repeated-instruction ... detection'"
+  },
+  {
+    "query": "Score my SKILL.md on the 8-dimension rubric and tell me the composite score",
+    "should_trigger": false,
+    "rationale": "Near-miss boundary 3/3 (darwin-skill): top-down 8-dim rubric scoring. NEW desc 'NOT for ... top-down rubric scoring (use darwin-skill)'"
+  },
+  {
+    "query": "Give me a top-down quality grade for flow-dev/SKILL.md across all dimensions",
+    "should_trigger": false,
+    "rationale": "Near-miss boundary 3/3 (darwin-skill): top-down grading; this skill is bottom-up finding-level. NEW desc routes to darwin-skill"
+  },
+  {
+    "query": "My SKILL.md and prose-guidelines/SKILL.md both have wordy paragraphs — give me a YAML list of paragraph findings as a spec draft for the flow-dev cleanup pipeline",
+    "should_trigger": false,
+    "rationale": "NEW gap-fill: tricky near-miss on the SHARED 'spec draft for flow-dev' trigger phrase. Both skills emit a flow-dev spec draft, but PARAGRAPH-class findings (semantic_axis G7) are prose-guidelines's default mode since 2026-05-29 — the spec-draft phrase alone must NOT pull this skill when the unit is wordy paragraphs"
+  },
+  {
+    "query": "My skill's description has a low trigger rate — optimize the routing keywords with an iterative rewrite loop",
+    "should_trigger": false,
+    "rationale": "Near-miss (skill-creator Description Optimization, G9). NOTE: the description-optimization Do-NOT clause was CUT from the NEW description; routing now relies only on body When-to-use row L43 + boundary block L16-21. Still correctly negative, but description-level signal is weaker — kept to guard against regression"
+  },
+  {
+    "query": "Help me create a new skill from scratch for parsing markdown files",
+    "should_trigger": false,
+    "rationale": "Near-miss (skill-writer). NOTE: the new-skill-scaffolding Do-NOT clause was CUT from the NEW description; routing now relies only on body When-to-use row L45. Still correctly negative via body, but description-level signal is weaker — kept to guard against regression"
+  },
+  {
+    "query": "Update debian/changelog with a new entry for the v1.4.2 release using gbp dch",
+    "should_trigger": false,
+    "rationale": "Tricky near-miss: real changelog FILE maintenance (debian/changelog) = semver-release, NOT deletable changelog-as-prose inside a SKILL.md body. Guards the 'changelog-as-prose' trigger against literal-changelog collisions"
+  },
+  {
+    "query": "Refactor the duplicated logic in audit.py into a helper function",
+    "should_trigger": false,
+    "rationale": "Tricky near-miss: 'duplicated' + a file in THIS skill's own scripts/ — but it is Python code dedup, not SKILL.md cross-skill semantic paragraph duplication. Guards 'duplication' keyword against code-refactor collisions"
+  },
+  {
+    "query": "What does the flow-dev skill do? Walk me through Phase 0 step by step.",
+    "should_trigger": false,
+    "rationale": "Unrelated: user wants to LEARN a skill (mentions flow-dev, a skill this audit references), not audit/clean SKILL.md files"
+  },
+  {
+    "query": "Is the same rule paraphrased across several sections of my flow-dev/SKILL.md?",
+    "should_trigger": true,
+    "rationale": "NEW file-agnostic G1: intra-file PROSE scattered-rule near-dup (same SKILL.md, distant sections) — the relaxed single-file capability this PR adds"
+  },
+  {
+    "query": "Audit skill-writer/SKILL.md for prose paragraphs that say the same thing in two places",
+    "should_trigger": true,
+    "rationale": "NEW file-agnostic G1: single-file same-meaning PROSE paragraph pair — was cross-skill-only before, now triggers on one SKILL.md"
+  },
+  {
+    "query": "幫我看 flow-dev/SKILL.md 有沒有同一條規則在不同段落重複講",
+    "should_trigger": true,
+    "rationale": "NEW file-agnostic G1, zh: intra-file scattered-rule prose duplication within one SKILL.md"
+  },
+  {
+    "query": "run the no-LLM / script-only audit on skill-writer and report skill bloat metrics",
+    "should_trigger": true,
+    "rationale": "Covers new Triggers-on keywords: 'no-LLM / script-only audit' + 'skill bloat metrics' added in description trigger clause"
+  },
+  {
+    "query": "Is the helper function in skill-audit/scripts/run.sh still called anywhere, or is it an orphan?",
+    "should_trigger": true,
+    "rationale": "Covers new Triggers-on keyword: 'orphan function / is this script still called' — deadcode reachability query"
+  }
+]

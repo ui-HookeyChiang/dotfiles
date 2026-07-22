@@ -1,0 +1,18 @@
+[
+  { "query": "audit this skill for problems", "should_trigger": true, "axis": "holistic-audit" },
+  { "query": "give me a skill health check on flow-dev", "should_trigger": true, "axis": "holistic-audit" },
+  { "query": "what's wrong with this skill?", "should_trigger": true, "axis": "holistic-audit" },
+  { "query": "find the smells in skill-writer", "should_trigger": true, "axis": "holistic-audit" },
+  { "query": "do a full audit of this skill — bloat, dup, dead code", "should_trigger": true, "axis": "holistic-audit" },
+  { "query": "幫我 audit 這個 skill 有什麼問題", "should_trigger": true, "axis": "holistic-audit" },
+  { "query": "run a holistic audit across this skill's whole structure", "should_trigger": true, "axis": "holistic-audit" },
+  { "query": "is this skill healthy? scan it for anything off", "should_trigger": true, "axis": "holistic-audit" },
+  { "query": "is split-race.sh still called by anything, or is it dead?", "should_trigger": false, "axis": "deadcode-engine" },
+  { "query": "find cross-skill paraphrased duplicate paragraphs", "should_trigger": false, "axis": "semantic-engine" },
+  { "query": "find scriptifiable bash chains in this SKILL.md", "should_trigger": false, "axis": "syntax-engine" },
+  { "query": "compute the bloat / size-imbalance metric for this SKILL.md", "should_trigger": false, "axis": "syntax-engine" },
+  { "query": "score this skill on a 9-dimension rubric", "should_trigger": false, "axis": "rubric-scoring" },
+  { "query": "create a new skill for deploying firmware", "should_trigger": false, "axis": "skill-creation" },
+  { "query": "rewrite this verbose paragraph more tightly", "should_trigger": false, "axis": "prose" },
+  { "query": "review this pull request for bugs", "should_trigger": false, "axis": "code-review" }
+]

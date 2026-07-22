@@ -1,0 +1,3 @@
+interface:
+  display_name: "Confluence"
+  short_description: "Interact with Confluence wiki via REST API — search, read, create, update, dr..."

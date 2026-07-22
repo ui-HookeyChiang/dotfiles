@@ -1,0 +1,90 @@
+[
+  {
+    "query": "bump the version and tag a release for ustd, it's a patch fix",
+    "should_trigger": true
+  },
+  {
+    "query": "the source PR just merged, time to do a minor release and tag it",
+    "should_trigger": true
+  },
+  {
+    "query": "/semver-release fix",
+    "should_trigger": true
+  },
+  {
+    "query": "create a new git tag for version 2.0.0, this is a major release",
+    "should_trigger": true
+  },
+  {
+    "query": "I need to bump debian/changelog and create an annotated tag for the next patch release",
+    "should_trigger": true
+  },
+  {
+    "query": "run gbp dch to generate the changelog entry and tag the release",
+    "should_trigger": true
+  },
+  {
+    "query": "this repo doesn't have a debian/changelog yet, can you set one up?",
+    "should_trigger": true
+  },
+  {
+    "query": "/semver-release init",
+    "should_trigger": true
+  },
+  {
+    "query": "tag the current commit as v1.3.0 and update the changelog",
+    "should_trigger": true
+  },
+  {
+    "query": "we need to cut a release — bump patch, changelog, tag, push",
+    "should_trigger": true
+  },
+  {
+    "query": "/semver-release minor skill",
+    "should_trigger": true
+  },
+  {
+    "query": "do a full skill release — bump minor, generate notes, publish to confluence",
+    "should_trigger": true
+  },
+  {
+    "query": "commit my changes and create a PR for the ustd feature branch",
+    "should_trigger": false
+  },
+  {
+    "query": "update PKG_SOURCE_VERSION in the debfactory Makefile to point to the new tag",
+    "should_trigger": false
+  },
+  {
+    "query": "build the ustd package for arm64 using debfactory",
+    "should_trigger": false
+  },
+  {
+    "query": "deploy the new deb to the UNAS Pro and restart the service",
+    "should_trigger": false
+  },
+  {
+    "query": "review the PR at https://github.com/ubiquiti/ustd/pull/123",
+    "should_trigger": false
+  },
+  {
+    "query": "build a debbox firmware image for the UNAS Pro platform",
+    "should_trigger": false
+  },
+  {
+    "query": "set up a RAID5 array on the UNAS with 4 disks",
+    "should_trigger": false
+  },
+  {
+    "query": "run fio benchmarks on the NAS over SMB",
+    "should_trigger": false
+  },
+  {
+    "query": "add a new device at 192.168.1.50 to my SSH config",
+    "should_trigger": false
+  },
+  {
+    "query": "watch the debfactory CI and poll for the leaf URL after the build passes",
+    "should_trigger": false
+  }
+]

@@ -1,0 +1,3 @@
+interface:
+  display_name: ""
+  short_description: "Test fixture for empty display_name."

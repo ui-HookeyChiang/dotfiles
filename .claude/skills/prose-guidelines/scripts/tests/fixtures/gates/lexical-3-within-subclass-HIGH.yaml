@@ -1,0 +1,21 @@
+file: "prose-guidelines/scripts/tests/fixtures/gates/target.md"
+findings:
+  - lines: "L17-L17"
+    finding_class: lexical
+    preceding_heading: "Gate fixture target"
+    original_words: 12
+    rewritten_words: 9
+    ratio: 1.0
+    confidence: high
+    rationale_bucket: false
+    lexical_hits:
+      - {token: various, subclass: B1}
+      - {token: leverage, subclass: B1}
+      - {token: facilitate, subclass: B1}
+    evidence_quote: |
+      We use various backends to leverage caching and facilitate faster reads everywhere.
+    rewritten_text: |
+      We use git, jq, fzf backends for caching and faster reads everywhere.
+    suggested_action: "Three B1 weasels — high severity."
+summary:
+  findings_by_class: {paragraph: 0, lexical: 1, meta: 0, hedge: 0}

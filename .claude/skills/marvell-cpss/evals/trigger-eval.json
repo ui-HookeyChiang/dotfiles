@@ -1,0 +1,66 @@
+[
+  {
+    "query": "Configure a port-channel with ports 0/1 through 0/4 on the Marvell switch and set load balancing to src-dst-mac-ip",
+    "should_trigger": true
+  },
+  {
+    "query": "Create VLAN 200 on the DxCh switch and add ports 0/1-0/8 as untagged members",
+    "should_trigger": true
+  },
+  {
+    "query": "How do I set up an ACL redirect rule in CPSS Lua CLI to mirror traffic from port 0/10 to port 0/8?",
+    "should_trigger": true
+  },
+  {
+    "query": "Run cpss-api call cpssDxChPortLinkStatusGet on all ports to check which ones are up on the UDM Beast switch",
+    "should_trigger": true
+  },
+  {
+    "query": "Debug why the QoS marking isn't working — show me how to validate the PCL configuration via cpss-api search",
+    "should_trigger": true
+  },
+  {
+    "query": "Write a Lua validation script for the switch that checks trunk 20 members and VLAN 100 port membership",
+    "should_trigger": true
+  },
+  {
+    "query": "I need to understand the myGenWrapper pattern in marvell-cpss-extension — how does the Lua CLI map to C CPSS APIs?",
+    "should_trigger": true
+  },
+  {
+    "query": "Build and deploy the cpss-app package to the ENAS so I can test new VLAN configs via the Lua CLI",
+    "should_trigger": true
+  },
+  {
+    "query": "Write a Lua script that reads a CSV file and outputs JSON — no external dependencies",
+    "should_trigger": false
+  },
+  {
+    "query": "Configure VLANs on the UniFi switch via the controller UI — I need guest isolation on ports 1-4",
+    "should_trigger": false
+  },
+  {
+    "query": "Set up a Mikrotik RouterOS VLAN trunk between two switches with tagged ports",
+    "should_trigger": false
+  },
+  {
+    "query": "Build the ENAS firmware image from debbox using make PRODUCT=enas.cn10k all",
+    "should_trigger": false
+  },
+  {
+    "query": "Deploy RAID5 on the ENAS using ustgcore and then benchmark with fio over NFS",
+    "should_trigger": false
+  },
+  {
+    "query": "The UNAS Pro can't reach the internet — check the routing table and DNS config via SSH",
+    "should_trigger": false
+  },
+  {
+    "query": "Configure iptables rules on the UDM to block port 443 from the guest VLAN",
+    "should_trigger": false
+  },
+  {
+    "query": "Add the ENAS at 10.10.10.89 to my SSH config using the add-device skill",
+    "should_trigger": false
+  }
+]

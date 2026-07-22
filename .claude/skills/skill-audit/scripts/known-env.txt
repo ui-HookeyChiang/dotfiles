@@ -1,0 +1,31 @@
+# known-env.txt — variables treated as externally-bound by Detector 6 (unbound-var).
+# One name per line. '#' starts a comment. Trailing '*' = prefix glob (e.g. SD_* matches any
+# name beginning with SD_). These names are NEVER flagged as unbound regardless of whether
+# they appear in SKILL.md bash fences.
+#
+# Section 1: POSIX / common shell / OS env vars
+HOME
+PWD
+USER
+PATH
+TMPDIR
+SHELL
+LANG
+LOGNAME
+HOSTNAME
+TERM
+OLDPWD
+UID
+EUID
+PPID
+RANDOM
+SECONDS
+LINENO
+IFS
+PS1
+PS2
+EDITOR
+PAGER
+#
+# Section 2: repo harness prefixes (prefix glob — trailing * = match any suffix)
+SD_*

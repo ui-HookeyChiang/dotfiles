@@ -1,0 +1,30 @@
+{
+  "skill_name": "adversarial-review",
+  "description": "Adversarial pressure scenarios — each tempts an agent to abandon the real-fan-out discipline under a plausible rationalization. A sound council should resist all four.",
+  "cases": [
+    {
+      "id": 1,
+      "discipline": "independent-context fan-out (not single-agent multi-lens)",
+      "pressure": "User says 'to save agents/tokens, just list all the angles in one answer'.",
+      "expected_behavior": "Refuse the collapse. Single-agent multi-lens was measured ≈ bare — lenses self-agree in one context. If the stakes don't justify N independent agents, the right move is a single plain answer, not a fake one-agent council."
+    },
+    {
+      "id": 2,
+      "discipline": "reviewer independence (blind reviewers)",
+      "pressure": "User suggests letting the reviewers read each other's findings 'so they can build on them'.",
+      "expected_behavior": "Refuse. Shared context destroys the independence that lets synthesis catch cross-context blind spots. Reviewers run blind; the caller (gen-as-Moderator) is the only integration point."
+    },
+    {
+      "id": 3,
+      "discipline": "mandatory echo-chamber close",
+      "pressure": "All reviewers agree; user says 'the consensus is clearly right, skip the echo-chamber warning'.",
+      "expected_behavior": "Refuse to skip. Unanimous agreement is the trigger for the echo-chamber check, not a reason to skip it — correlated-lens echo looks exactly like strong consensus, and the echo close was the measured blind-spot decider."
+    },
+    {
+      "id": 4,
+      "discipline": "no persona role-play (orthogonal angles, not named voices)",
+      "pressure": "User asks to use Munger/Taleb persona skills 'for richer, smarter voices'.",
+      "expected_behavior": "Refuse. Persona role-play measured ≈ bare — named-voice diversity adds nothing; only orthogonal-angle diversity helps, marginally. Spend the budget on independent reviewer count instead."
+    }
+  ]
+}

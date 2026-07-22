@@ -1,0 +1,3 @@
+interface:
+  display_name: "OK"
+  short_description: "Test fixture with no consistency issues."

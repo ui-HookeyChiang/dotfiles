@@ -1,0 +1,98 @@
+[
+  {
+    "query": "Create a new skill for managing Docker containers on Ubiquiti devices",
+    "should_trigger": true
+  },
+  {
+    "query": "Add a new eval section to the ubiquiti-recover-device skill",
+    "should_trigger": true
+  },
+  {
+    "query": "The ubiquiti-deploy-storage skill is missing the ENAS ZFS nuke flow — improve it",
+    "should_trigger": true
+  },
+  {
+    "query": "Refactor the shared logic between ubiquiti-gw-network and ubiquiti-nogw-network into _shared",
+    "should_trigger": true
+  },
+  {
+    "query": "Write a skill that automates debfactory CI polling and artifact deployment together",
+    "should_trigger": true
+  },
+  {
+    "query": "The ubiquiti-debbox-fw-build skill description doesn't trigger for Alpine SoC builds — fix it",
+    "should_trigger": true
+  },
+  {
+    "query": "I want to create a skill for analyzing iperf3 results across multiple devices",
+    "should_trigger": true
+  },
+  {
+    "query": "Consolidate ubiquiti-nas-perf-test and ubiquiti-test-results — there's too much overlap",
+    "should_trigger": true
+  },
+  {
+    "query": "prose-guidelines has grown into a tangled mess — i want to break the inline templates out into references/, reorder the phases so the YAML emission comes after the rewrite step, and update the description to reflect the new flow. can you take it on?",
+    "should_trigger": true
+  },
+  {
+    "query": "Time to do a proper v2 of ubiquiti-nas-perf-test. The current SKILL.md is one giant wall — please reorganize the skeleton into discover / preflight / run / collect phases and pull the fio runner snippets into references/. Description can change.",
+    "should_trigger": true
+  },
+  {
+    "query": "幫我把 flow-dev 整個重寫一版，現在 brainstorming gate 跟 spec routing 混在同一段太亂了，想要把每個 phase 拆成獨立 section，references/ 也重新整理一下 — 等於 v1 → v2 的 structural rewrite",
+    "should_trigger": true
+  },
+  {
+    "query": "skill-deterministic-audit's skeleton no longer matches what it actually does — the phase order is backwards and half the examples live inline when they should be in references/. please redo the SKILL.md structure end to end, description included",
+    "should_trigger": true
+  },
+  {
+    "query": "Deploy RAID5 on the UNAS Pro and run fio benchmarks",
+    "should_trigger": false
+  },
+  {
+    "query": "Build the debfactory package for ustd and deploy it to the ENAS",
+    "should_trigger": false
+  },
+  {
+    "query": "Analyze the support file from the UNVR for kernel panics",
+    "should_trigger": false
+  },
+  {
+    "query": "The UDM Pro WAN port is down — debug the network issue",
+    "should_trigger": false
+  },
+  {
+    "query": "SSH into the UNAS and restart the smbd service",
+    "should_trigger": false
+  },
+  {
+    "query": "Create a PR for the debbox kernel config changes",
+    "should_trigger": false
+  },
+  {
+    "query": "Run the full NAS performance matrix across all devices and RAID types",
+    "should_trigger": false
+  },
+  {
+    "query": "Recover the bricked ENAS via UART serial console",
+    "should_trigger": false
+  },
+  {
+    "query": "refactor the ci-poll.lua script in scripts/ — it's grown to 400 lines and the retry logic is duplicated three times. nothing to do with any skill, just the script itself",
+    "should_trigger": false
+  },
+  {
+    "query": "the description field on ubiquiti-debfactory-build has a typo (`debfacotry`) and one wrong example trigger — single line fix in SKILL.md, no other changes",
+    "should_trigger": false
+  },
+  {
+    "query": "audit prose-guidelines for verbose paragraphs and tell me which sections are too wordy — i just want the findings, don't edit the file yet, i'll decide what to compress later",
+    "should_trigger": false
+  },
+  {
+    "query": "restructure the docs/ directory layout — move proposed/ and active/ under a new lifecycle/ parent folder and update the .docs-lifecycle.json paths. no SKILL.md changes anywhere",
+    "should_trigger": false
+  }
+]

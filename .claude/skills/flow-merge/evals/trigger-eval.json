@@ -1,0 +1,82 @@
+[
+  {
+    "prompt": "merge the PR stack",
+    "should_trigger": true
+  },
+  {
+    "prompt": "squash merge and cleanup",
+    "should_trigger": true
+  },
+  {
+    "prompt": "all PRs approved, merge them",
+    "should_trigger": true
+  },
+  {
+    "prompt": "merge feat/auth-redesign stack",
+    "should_trigger": true
+  },
+  {
+    "prompt": "run the merge phase",
+    "should_trigger": true
+  },
+  {
+    "prompt": "merge and close the feature",
+    "should_trigger": true
+  },
+  {
+    "prompt": "squash merge PR #42",
+    "should_trigger": true
+  },
+  {
+    "prompt": "merge and update jira",
+    "should_trigger": true
+  },
+  {
+    "prompt": "cascade merge the stack into main",
+    "should_trigger": true
+  },
+  {
+    "prompt": "everything is approved, land it",
+    "should_trigger": true
+  },
+  {
+    "prompt": "create a new PR",
+    "should_trigger": false
+  },
+  {
+    "prompt": "implement this feature",
+    "should_trigger": false
+  },
+  {
+    "prompt": "run the tests",
+    "should_trigger": false
+  },
+  {
+    "prompt": "review this code",
+    "should_trigger": false
+  },
+  {
+    "prompt": "fix the merge conflict",
+    "should_trigger": false
+  },
+  {
+    "prompt": "deploy to staging",
+    "should_trigger": false
+  },
+  {
+    "prompt": "what PRs are open",
+    "should_trigger": false
+  },
+  {
+    "prompt": "rebase this branch",
+    "should_trigger": false
+  },
+  {
+    "prompt": "resolve the conflict in PR 3",
+    "should_trigger": false
+  },
+  {
+    "prompt": "bump the version and tag a release",
+    "should_trigger": false
+  }
+]

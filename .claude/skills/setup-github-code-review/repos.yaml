@@ -1,0 +1,149 @@
+repos:
+  unifi-drive-config:
+    directive_path: .github/claude/udc-directive.md
+    domain_desc: "BTRFS / ZFS / ext4 / Samba / NFS / migration / CGO / root-daemon"
+    paths_ignore_extra:
+      - 'doc/**'
+      - 'docs/**'
+    default_branch: main
+
+  ustd:
+    directive_path: .github/claude/ustd-directive.md
+    domain_desc: "RAID / LVM / BTRFS / ext4 / root subprocess injection / statusdb / gRPC / Cython"
+    paths_ignore_extra: []
+    default_branch: master
+
+  ustate-exporter:
+    directive_path: .github/claude/ustate-exporter-directive.md
+    domain_desc: "gRPC compatibility / state-export accuracy"
+    paths_ignore_extra:
+      - 'docs/**'
+    default_branch: master
+
+  debbox-base-files:
+    directive_path: .github/claude/debbox-base-files-directive.md
+    domain_desc: "shell scripts / debian packaging / postinst"
+    paths_ignore_extra: []
+    default_branch: develop
+
+  lagd:
+    directive_path: .github/claude/lagd-directive.md
+    domain_desc: "Rust unsafe / FFI to C (libteam) / LACP state machine"
+    paths_ignore_extra: []
+    default_branch: master
+
+  libubntnas:
+    directive_path: .github/claude/libubntnas-directive.md
+    domain_desc: "exported-API stability / backward compatibility / error contract / root-subprocess injection"
+    paths_ignore_extra: []
+    default_branch: master
+
+  uof-updater:
+    directive_path: .github/claude/uof-updater-directive.md
+    domain_desc: "top/bottom phase ordering / version gating / MD RAID"
+    paths_ignore_extra: []
+    default_branch: main
+
+  ubnt-sfp-handler:
+    directive_path: .github/claude/ubnt-sfp-handler-directive.md
+    domain_desc: "SFP I2C / SFF-8079 EEPROM parsing / hotplug"
+    paths_ignore_extra: []
+    default_branch: main
+
+  ubnd:
+    directive_path: .github/claude/ubnd-directive.md
+    domain_desc: "button/GPIO event handling / libgpiod V1-V2 conditional"
+    paths_ignore_extra: []
+    default_branch: master
+
+  kmod-debbox-modules:
+    directive_path: .github/claude/kmod-debbox-modules-directive.md
+    domain_desc: "kernel API stability across versions"
+    paths_ignore_extra: []
+    default_branch: master
+
+  ubntnas:
+    directive_path: .github/claude/ubntnas-directive.md
+    domain_desc: "Go API stability / libubntnas-consuming CLI surface"
+    paths_ignore_extra: []
+    default_branch: master
+
+  ustoragecore:
+    directive_path: .github/claude/ustoragecore-directive.md
+    domain_desc: "ZFS / MD / LVM subprocess injection / RAID state"
+    paths_ignore_extra:
+      - 'CLAUDE.md'
+    default_branch: master
+
+  unifi-util:
+    directive_path: .github/claude/unifi-util-directive.md
+    domain_desc: "C memory safety / libubnt API stability / mcagent IPC"
+    paths_ignore_extra: []
+    default_branch: develop
+
+  ubios-udapi-server:
+    directive_path: .github/claude/ubios-udapi-server-directive.md
+    domain_desc: "UDAPI v1/v2 backward compat / config-migrate"
+    paths_ignore_extra:
+      - 'DESIGN.md'
+      - 'DISCOVERY.md'
+    extra_allowed_tools: "Bash(git -C third_party/device-api-doc:log:*),Bash(git -C third_party/udapi-codegen-tools:log:*)"
+    conversation_submodules: true
+    default_branch: dev
+
+  debbox:
+    directive_path: .github/claude/debbox-directive.md
+    domain_desc: "firmware build system / debbox config hierarchy / initramfs"
+    paths_ignore_extra:
+      - 'doc/**'
+      - 'docs/**'
+    default_branch: master
+    trigger_mode: label-only
+
+  debfactory:
+    directive_path: .github/claude/debfactory-directive.md
+    domain_desc: "Debian packaging / Makefile DSL / cross-compilation / Jenkins CI"
+    paths_ignore_extra:
+      - 'doc/**'
+      - 'docs/**'
+    default_branch: master
+    trigger_mode: label-only
+
+  debbox-kernel:
+    directive_path: .github/claude/debbox-kernel-directive.md
+    domain_desc: "kernel build / multi-arch / config / dtc / KASAN / KCSAN / netfilter / VFS / SMP"
+    paths_ignore_extra:
+      - 'doc/**'
+      - 'docs/**'
+    default_branch: master
+    trigger_mode: label-only
+    extra_branches:
+      - ui-4.19.y
+      - ui-4.19.y-udm-udw
+      - ui-5.4.y-udr-ultra
+      - ui-5.10.y
+      - ui-5.15.y-enterprise-nvr
+      - ui-5.15.y-qcs8550
+      - ui-5.15.y-udm-enterprise
+      - ui-6.6.y-rtd1619
+      - ui-6.6.y-udm-enterprise
+
+  zfs:
+    directive_path: .github/claude/zfs-directive.md
+    domain_desc: "ZFS kernel module / ARC / vdev / zpool / resilver / scrub / send-recv"
+    paths_ignore_extra: []
+    default_branch: main
+
+  disk-smart-mon:
+    directive_path: .github/claude/disk-smart-mon-directive.md
+    domain_desc: "C++ smartmontools wrapper / SMART attribute parsing / disk health monitoring / SAS/NVMe/SATA"
+    paths_ignore_extra: []
+    default_branch: develop
+
+  zfs:
+    directive_path: .github/claude/zfs-directive.md
+    domain_desc: "ZFS kernel module / ARC / ZIL / vdev / SPL compat / ioctl security / locking"
+    paths_ignore_extra:
+      - 'man/**'
+      - 'doc/**'
+    default_branch: main
