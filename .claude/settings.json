@@ -28,7 +28,6 @@
       "Bash(gh pr edit --title *)"
     ]
   },
-  "model": "claude-opus-4-6[1m]",
   "hooks": {
     "PreToolUse": [
       {
@@ -59,6 +58,17 @@
             "command": "bash ~/.claude/hooks/guard-stale-base.sh",
             "timeout": 15,
             "statusMessage": "Checking base branch freshness"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/guard-agent-worktree.sh",
+            "timeout": 10,
+            "statusMessage": "Enforcing agent worktree isolation"
           }
         ]
       }
@@ -112,8 +122,9 @@
     }
   },
   "alwaysThinkingEnabled": false,
-  "effortLevel": "high",
+  "effortLevel": "medium",
   "skipDangerousModePermissionPrompt": true,
   "skipWorkflowUsageWarning": true,
-  "defaultMode": "bypassPermissions"
+  "defaultMode": "bypassPermissions",
+  "model": "claude-opus-4-6"
 }

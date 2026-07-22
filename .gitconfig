@@ -76,3 +76,8 @@
 # [url "git@github.com:"]
 #     insteadOf = https://github.com/
 [url "ssh://git@github.com/"]
+[safe]
+	directory = /home/hookey/linux
+	directory = *
+[url "git@github.com:"]
+	insteadOf = https://github.com/

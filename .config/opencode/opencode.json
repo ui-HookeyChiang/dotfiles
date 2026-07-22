@@ -35,5 +35,8 @@
       "mode": "subagent",
       "prompt": "{file:./agents/explore.md}"
     }
-  }
+  },
+  "plugin": [
+    "./plugins/skill-dev-hooks.ts"
+  ]
 }
