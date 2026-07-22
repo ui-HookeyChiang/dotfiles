@@ -984,45 +984,88 @@ install_latex() {
   run brew install --cask mactex-no-gui
 }
 
+# mattpocock/skills entries to install (single-picked with -s). Mirrors the
+# skill-dev extras set. `handoff` + `teach` stay; find-skills and caveman are
+# retired (see retire_skills).
+MATTPOCOCK_SKILLS=(
+  improve-codebase-architecture grill-with-docs to-spec to-tickets wayfinder
+  triage setup-matt-pocock-skills zoom-out handoff writing-great-skills ask-matt
+  domain-modeling tdd resolving-merge-conflicts codebase-design diagnosing-bugs
+  prototype research teach
+)
+
 install_skills() {
   log "install_skills"
   if ! command -v npx >/dev/null 2>&1; then
     note "npx missing — install Node first (try --with-node)"
     return 0
   fi
-  # Skills CLI auto-symlinks into ~/.claude/skills/. Skip if all are linked.
+
+  # nuwa + darwin base skills. Skills CLI auto-symlinks into ~/.claude/skills/.
   if [[ -L "$HOME/.claude/skills/huashu-nuwa" \
-     && -L "$HOME/.claude/skills/darwin-skill" \
-     && -L "$HOME/.claude/skills/find-skills" \
-     && -L "$HOME/.claude/skills/handoff" \
-     && -L "$HOME/.claude/skills/teach" ]]; then
-    note "skip skills (huashu-nuwa + darwin-skill + find-skills + handoff + teach already linked)"
+     && -L "$HOME/.claude/skills/darwin-skill" ]]; then
+    note "skip base skills (huashu-nuwa + darwin-skill already linked)"
   else
-    note "installing nuwa-skill + darwin-skill + find-skills + handoff + teach via npx skills CLI"
+    note "installing nuwa-skill + darwin-skill via npx skills CLI"
     run npx --yes skills add -g -y alchaincyf/nuwa-skill alchaincyf/darwin-skill
-    # `vercel-labs/skills` is a multi-skill repo, so we use `-s <name>` to pick a
-    # single entry. The source positional must precede the flags — `skills add
-    # -s X SRC` makes the CLI swallow SRC as `-s`'s value and exit with
-    # `Missing required argument: source`.
-    run npx --yes skills add vercel-labs/skills -g -y -s find-skills
-    # `handoff` and `teach` are productivity skills from mattpocock's multi-skill
-    # repo, single-picked with `-s` like find-skills above (same SRC-before-flags rule).
-    run npx --yes skills add mattpocock/skills -g -y -s handoff
-    run npx --yes skills add mattpocock/skills -g -y -s teach
   fi
 
-  # caveman ships as a Claude Code plugin (not a bare skill) so its SessionStart
-  # hook auto-activates caveman mode each session. The skills-CLI route only
-  # links the passive SKILL.md with no hook. Idempotent: skip if already installed.
-  if ! command -v claude >/dev/null 2>&1; then
-    note "claude CLI missing — skip caveman plugin (install Node + claude-code first)"
-  elif grep -q '"caveman@caveman"' "$HOME/.claude/plugins/installed_plugins.json" 2>/dev/null; then
-    note "skip caveman plugin (already installed)"
+  # mattpocock multi-skill repo: single-pick each with `-s`. The source
+  # positional MUST precede the flags — `skills add -s X SRC` makes the CLI
+  # swallow SRC as `-s`'s value and exit with `Missing required argument:
+  # source`. Skip the batch only if every target is already linked.
+  local missing=0 s
+  for s in "${MATTPOCOCK_SKILLS[@]}"; do
+    [[ -L "$HOME/.claude/skills/$s" ]] || { missing=1; break; }
+  done
+  if (( missing == 0 )); then
+    note "skip mattpocock skills (${#MATTPOCOCK_SKILLS[@]} already linked)"
   else
-    note "installing caveman as a Claude Code plugin"
-    run claude plugin marketplace add JuliusBrussee/caveman
-    run claude plugin install caveman@caveman
+    note "installing ${#MATTPOCOCK_SKILLS[@]} mattpocock skills via npx skills CLI"
+    for s in "${MATTPOCOCK_SKILLS[@]}"; do
+      run npx --yes skills add mattpocock/skills -g -y -s "$s"
+    done
   fi
+}
+
+# ---------- retire_skills: actively uninstall retired extras ----------
+# Manifest-driven cleanup mirroring skill-dev/install.sh PHASE 5.5. Each line in
+# $RETIRED_MANIFEST is `name:kind1,kind2,...`. Kinds: plugin, skill, agents-dir,
+# opencode, codex. Idempotent — a no-op once the artifacts are gone.
+retire_skills() {
+  log "retire_skills"
+  local manifest="$REPO_ROOT/.claude/retired-skills.txt"
+  [[ -f "$manifest" ]] || { note "no retired-skills.txt — nothing to retire"; return 0; }
+  local line name kinds kind
+  while IFS= read -r line; do
+    case "$line" in ''|'#'*) continue ;; esac
+    name="${line%%:*}"
+    case "$name" in */*|..|.) note "retired-skills.txt: unsafe name '$name', skipping"; continue ;; esac
+    kinds="${line#*:}"
+    local IFS=','; local kind_arr=($kinds); unset IFS
+    for kind in "${kind_arr[@]}"; do
+      case "$kind" in
+        plugin)
+          command -v claude >/dev/null 2>&1 || continue
+          if claude plugin list 2>/dev/null | grep -qE "^\s*❯ ${name}@"; then
+            run claude plugin uninstall "${name}@${name}" && note "retired plugin ${name}"
+          fi
+          if claude plugin marketplace list 2>/dev/null | grep -qE "^\s*❯ ${name}$"; then
+            run claude plugin marketplace remove "${name}" && note "retired plugin marketplace ${name}"
+          fi
+          ;;
+        skill)
+          [[ -L "$HOME/.claude/skills/${name}" ]] && { run rm -f "$HOME/.claude/skills/${name}"; note "retired skill ${name}"; } ;;
+        agents-dir)
+          [[ -d "$HOME/.agents/skills/${name}" ]] && { run rm -rf "$HOME/.agents/skills/${name}"; note "retired agents-dir ${name}"; } ;;
+        opencode)
+          [[ -L "$HOME/.config/opencode/skills/${name}" ]] && { run rm -f "$HOME/.config/opencode/skills/${name}"; note "retired opencode ${name}"; } ;;
+        codex)
+          [[ -L "$HOME/.codex/skills/${name}" ]] && { run rm -f "$HOME/.codex/skills/${name}"; note "retired codex ${name}"; } ;;
+        *) note "retired-skills.txt: unknown kind '$kind' for '$name'" ;;
+      esac
+    done
+  done < "$manifest"
 }
 
 install_crg() {
@@ -1328,7 +1371,7 @@ main() {
   if (( WITH_NVIM ));     then install_nvim_deps; fi
   if (( WITH_DOCKER ));   then install_docker;   fi
   if (( WITH_LATEX ));    then install_latex;    fi
-  if (( WITH_SKILLS ));   then install_skills;   fi
+  if (( WITH_SKILLS ));   then install_skills; retire_skills; fi
   if (( WITH_CRG ));      then install_crg;      fi
   if (( WITH_PROJECTS )); then install_projects; fi
   if (( WITH_SECRETS ));  then seed_secrets;     fi
