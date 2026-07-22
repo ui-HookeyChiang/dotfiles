@@ -1,0 +1,17 @@
+# Retired extras manifest — drives retire_skills() in install.sh.
+# Format: name:artifact-kinds  (kinds comma-separated)
+# Artifact kinds: plugin, skill, agents-dir, opencode, codex
+#
+# Add an entry here whenever you drop a skill/plugin from install_skills so a
+# re-run actively uninstalls the residue. Idempotent.
+
+caveman:plugin,skill,agents-dir,opencode
+caveman-commit:skill,agents-dir
+caveman-compress:skill,agents-dir
+caveman-help:skill,agents-dir
+caveman-review:skill,agents-dir
+caveman-stats:skill,agents-dir
+find-skills:skill,agents-dir,opencode
+pua:plugin,skill,agents-dir,opencode,codex
+pua-en:skill,agents-dir,opencode,codex
+pua-loop:skill,agents-dir,opencode,codex
