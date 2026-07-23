@@ -36,6 +36,9 @@ Hard stops (override AFK):
 - **Destructive + not pre-authorized** — merge, delete branch, uninstall, force-push → ask.
 - **Taste/values call with no checkable criterion** → surface options, let user pick.
 - **Instruction conflicts safety rule** → surface conflict, don't silently pick a side.
+- **Structural replan** — scope change, new repo/module, public API change,
+  data-format/schema change, migration reorder, acceptance criteria impossible
+  → ask human; never just raise effort and continue.
 
 # Safety
 
