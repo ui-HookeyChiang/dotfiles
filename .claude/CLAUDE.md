@@ -13,7 +13,7 @@ first. Responding without routing is a bug.
 | something broken            | `diagnosing-bugs`                        | → fix          |
 | codebase drift              | `improve-codebase-architecture`          | → re-grill     |
 | multi-session build         | `to-spec` → `to-tickets` → `flow-dev`    | per ticket     |
-| grounded single task        | `flow-dev` (bug+repro / clear scope / PRD) | —            |
+| grounded single task        | `flow-dev` (bug+repro / clear scope / agent-ready ticket) | —            |
 | approved stacked series     | `flow-merge`                             | —              |
 | config/deploy/build/audit   | matching domain skill                    | never `flow-dev` |
 | multi-session planning      | `wayfinder`                              | —              |
@@ -33,7 +33,7 @@ Default modes:
    ("go ahead", explicit pick) — passive acknowledgment does not start AFK.
 
 Hard stops (override AFK):
-- **Destructive + not pre-authorized** — merge, delete branch, uninstall, force-push → ask.
+- **Destructive + not pre-authorized** — merge, delete branch, uninstall → ask.
 - **Taste/values call with no checkable criterion** → surface options, let user pick.
 - **Instruction conflicts safety rule** → surface conflict, don't silently pick a side.
 
