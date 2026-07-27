@@ -39,7 +39,8 @@ set -ag terminal-features ",xterm-256color:clipboard"
 # Trade-off: apps no longer restore the previous screen on exit, so their full
 # output stays in scrollback (visible clutter after quitting nvim/less). This
 # prioritizes "scroll Claude Code output with prefix + [" over a clean restore.
-set -ga terminal-overrides ',*:smcup@:rmcup@'
+# Disabled for agent CLI/TUI redraw behavior: alternate screen must stay enabled.
+# set -ga terminal-overrides ',*:smcup@:rmcup@'
 
 # -- mouse --------------------------------------------------------------------
 # Enable mouse so drag-select routes through tmux (pane-aware), and the
