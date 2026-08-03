@@ -1469,7 +1469,9 @@ install_locked_extras() {
     note "would install + init rtk"
   else
     if ! command -v rtk >/dev/null 2>&1; then
-      curl -fsSL "https://raw.githubusercontent.com/rtk-ai/rtk/$(_dc_lock_source_ref "rtk-ai/rtk")/install.sh" | sh
+      local rtk_ref
+      rtk_ref="$(_dc_lock_source_ref "rtk-ai/rtk")" || return 1
+      curl -fsSL "https://raw.githubusercontent.com/rtk-ai/rtk/${rtk_ref}/install.sh" | sh
     fi
     PATH="$HOME/.local/bin:$PATH" rtk init -g --hook-only
     command -v opencode >/dev/null 2>&1 && PATH="$HOME/.local/bin:$PATH" rtk init -g --opencode
