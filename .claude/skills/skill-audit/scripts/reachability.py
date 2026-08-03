@@ -894,6 +894,9 @@ def classify(model: SkillModel, corpus: list[CorpusFile],
     for c in model.candidates:
         if c.kind != "function":
             continue
+        c_base = Path(c.path).name
+        if not liveness.get(c_base) and script_test_only(c_base, corpus, model.skill_dir):
+            continue  # helper inside a test/eval-only script inherits script-level (b)
         if function_called(c.name, live_text):
             continue
         if function_qualified_called(c.name, live_corpus, scripts_dir):

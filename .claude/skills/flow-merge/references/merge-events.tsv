@@ -1,0 +1,7 @@
+# name	phase	implementation	needs	gate
+cleanup	post_merge	script:flow-merge/scripts/events/cleanup.sh		none
+ticket-done	post_merge	script:flow-merge/scripts/events/ticket-done.sh	cleanup	none
+validate-git-status	pre_merge	script:flow-merge/scripts/events/validate-git-status.sh		none
+pr-metadata-sync	pre_merge	script:flow-merge/scripts/events/pr-metadata-sync.sh		none
+semver-release	post_merge	skill:semver-release		user
+release-publish	post_merge	skill:release-publish	semver-release	user

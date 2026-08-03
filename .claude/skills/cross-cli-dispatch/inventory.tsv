@@ -1,0 +1,11 @@
+# backend<TAB>model
+claude	claude-haiku-4-5
+claude	claude-sonnet-5
+claude	claude-opus-4-6
+cursor	composer-2.5
+cursor	gemini-3.5-flash
+cursor	claude-4.6-sonnet
+cursor	gpt-5.3-codex
+cursor	gpt-5.4
+cursor	gpt-5.5
+opencode	github-copilot/claude-opus-4.6

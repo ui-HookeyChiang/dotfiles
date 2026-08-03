@@ -26,7 +26,7 @@ for t in "${TARGETS[@]}"; do
   fi
   rc=$?; [ "$rc" = 0 ] && any_problem=1; [ "$rc" = 1 ] && any_error=1
   echo "## semantic ($t)"
-  # G1 scoped to THIS skill only (no --cross corpus); G8 SKILL.md-only by nature.
+  # G1 scoped to THIS skill only (no --cross corpus); G8/IRD/GC SKILL.md-only.
   if [ "$is_ref" = 1 ]; then
     bash "$HERE/semantic_audit.sh" "$t" --no-llm --axis G1
   else

@@ -166,18 +166,54 @@ if [ -z "$agent_id" ]; then
   session_id="$(printf '%s' "$input" | jq -r '.session_id // empty' 2>/dev/null)"
   CLAIM_FILE="$PROJECT_DIR/.worktrees/.session-claim"
   SESSION_CLAIM_TTL="${SESSION_CLAIM_TTL:-1800}"
+  PROJECT_TOPLEVEL="$(realpath -m "$PROJECT_DIR" 2>/dev/null || echo "$PROJECT_DIR")"
 
   is_write_op=false
+  # Directory the write acts on — used to detect the session's own worktree.
+  # File tools: parent of file_path. Bash git: `git -C <path>` arg, else cwd.
+  target_dir=""
   case "$tool_name" in
     Edit|Write|MultiEdit|NotebookEdit|apply_patch)
       is_write_op=true
+      _fp="$(printf '%s' "$input" | jq -r '.tool_input.file_path // .tool_input.notebook_path // empty' 2>/dev/null)"
+      [ -n "$_fp" ] && target_dir="$(dirname "$_fp")"
       ;;
     Bash)
       cmd="$(printf '%s' "$input" | jq -r '.tool_input.command // empty' 2>/dev/null)"
-      WRITE_GIT_RE='git[[:space:]]+(commit|push|checkout|switch|branch[[:space:]]+-[dD]|reset|rebase|merge|cherry-pick|am|stash[[:space:]]+(drop|pop|clear))'
+      # Match write-type git even with a leading `-C <path>` (and `-c k=v`) between git and the subcommand.
+      WRITE_GIT_RE='git[[:space:]]+([[:space:]]*(-C[[:space:]]+[^[:space:]]+|-c[[:space:]]+[^[:space:]]+)[[:space:]]*)*(commit|push|checkout|switch|branch[[:space:]]+-[dD]|reset|rebase|merge|cherry-pick|am|stash[[:space:]]+(drop|pop|clear))'
       [[ "${cmd:-}" =~ $WRITE_GIT_RE ]] && is_write_op=true
+      # Effective directory: explicit `git -C <path>` (git uses the LAST one
+      # when repeated), else the tool's cwd.
+      _last_c=""
+      _rest="${cmd:-}"
+      while [[ "$_rest" =~ -C[[:space:]]+([^[:space:]]+)(.*)$ ]]; do
+        _last_c="${BASH_REMATCH[1]}"
+        _rest="${BASH_REMATCH[2]}"
+      done
+      if [ -n "$_last_c" ]; then
+        target_dir="$_last_c"
+      else
+        target_dir="$(printf '%s' "$input" | jq -r '.cwd // empty' 2>/dev/null)"
+      fi
       ;;
   esac
+
+  # Own-worktree exemption: if the write targets a registered git worktree
+  # whose toplevel differs from the shared checkout, the session has already
+  # isolated itself (EnterWorktree) — the claim protects the shared checkout
+  # only. Exempt from BOTH the claim deny and the .worktrees/** deny below.
+  if [ "$is_write_op" = true ] && [ -n "$target_dir" ]; then
+    tgt_top="$(git -C "$target_dir" rev-parse --show-toplevel 2>/dev/null)"
+    if [ -n "$tgt_top" ]; then
+      tgt_top="$(realpath -m "$tgt_top" 2>/dev/null || echo "$tgt_top")"
+      if [ "$tgt_top" != "$PROJECT_TOPLEVEL" ] \
+         && git -C "$PROJECT_DIR" worktree list --porcelain 2>/dev/null \
+              | grep -qxF "worktree $tgt_top"; then
+        exit 0
+      fi
+    fi
+  fi
 
   if [ "$is_write_op" = true ] && [ -n "$session_id" ]; then
     if [ -f "$CLAIM_FILE" ]; then

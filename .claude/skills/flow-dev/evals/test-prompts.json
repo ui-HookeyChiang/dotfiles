@@ -1,0 +1,45 @@
+{
+  "description": "Behavior corpus for flow-dev input-mode handling (verify-skill A2). Each case states the input shape and the expected entry decision — distinguishes orchestrated vs direct entry vs bounce, which trigger-eval.json (upstream routing only) cannot.",
+  "cases": [
+    {
+      "id": "orchestrated-task-list",
+      "prompt": "flow orchestrator dispatches a 3-task decomposed list with test plans and issue paths under docs/ticket/",
+      "expected": "orchestrated entry: consume the task list as-is; no self-generation; per-task loop over 3 tasks"
+    },
+    {
+      "id": "direct-bug-repro",
+      "prompt": "Fix: NAS SMB share drops connection on rename; repro script attached reproduces 10/10",
+      "expected": "direct entry: self-generate one-task list (description, test plan = repro passes, create docs/ticket/<slug>.md), then normal per-task loop; no converge/decompose dispatch"
+    },
+    {
+      "id": "direct-agent-ready-ticket",
+      "prompt": "Implement docs/ticket/2026-07-24-example.md (Status: ready-for-agent, acceptance criteria present)",
+      "expected": "direct entry: one-task list from the existing ticket; do not create a duplicate ticket file"
+    },
+    {
+      "id": "direct-clear-scope",
+      "prompt": "Rename config key foo.bar to foo.baz across the repo, update the one test that asserts it",
+      "expected": "direct entry: single grounded task, self-generated ticket; stacked PR workflow still applies"
+    },
+    {
+      "id": "bounce-spec",
+      "prompt": "Here is docs/spec/2026-07-24-big-feature.md, implement it",
+      "expected": "bounce to flow: spec skips converge but still needs decompose; flow-dev must NOT self-decompose a spec"
+    },
+    {
+      "id": "bounce-fuzzy-intent",
+      "prompt": "We should probably make the dashboard feel snappier",
+      "expected": "bounce to flow (converge): ungrounded, no acceptance criterion"
+    },
+    {
+      "id": "bounce-bug-no-repro",
+      "prompt": "Sometimes uploads fail, not sure when or why",
+      "expected": "bounce to diagnosing-bugs: produce a repro first, then re-enter flow-dev"
+    },
+    {
+      "id": "merge-not-here",
+      "prompt": "All three stacked PRs are approved, merge the stack",
+      "expected": "refuse: merge belongs to flow-merge"
+    }
+  ]
+}

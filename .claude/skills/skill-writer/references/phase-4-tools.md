@@ -154,8 +154,8 @@ default-run" above): references skips summarize, they do not trace.
 ### 4.1-ref HOLD-IN-PLACE leak check (rewrite mode only, advisory)
 
 After 4.1a-ref / 4.1b-ref, perform one advisory check: read the v1 snapshot
-(captured by INTENT · E2E baseline A-capture at
-`docs/dogfoods/<skill>-vN/iteration-M/v1-snapshot/`) and confirm that **no
+(recorded in the INTENT · expectation-spec freeze at
+`docs/dogfoods/<skill>-vN/iteration-M/expectation-spec.md`) and confirm that **no
 HOLD-IN-PLACE item** (the DEV · content-placement scan brief's critical-path list — gate
 tables / NEVER-ALWAYS bullets / routing / stage-order) was relocated from v1's
 SKILL.md into v2's `references/`. The brief contract lives in
@@ -165,12 +165,12 @@ SKILL.md into v2's `references/`. The brief contract lives in
   `references:` report summary; it adds no separate report and no STOP. The
   skip-trace carve-out above (references skips summarize, do not trace) is
   unchanged.
-- **v1-snapshot precondition.** The check requires the INTENT · E2E baseline A-capture snapshot. Since
-  INTENT · E2E baseline A-capture is MANDATORY for `rewrite` mode (no `--skip-e2e-baseline`), the
-  snapshot is guaranteed present for any rewrite that reached DEV static advisory. If the
-  snapshot is somehow absent (manual tampering), record
-  `HOLD-IN-PLACE: skipped (no v1 snapshot)` in the `references:` summary rather
-  than erroring — it never errors and never blocks. The snapshot is frozen at
+- **Spec precondition.** The check requires the INTENT · expectation-spec freeze artifact. Since
+  INTENT · expectation-spec freeze is MANDATORY for `rewrite` mode (no `--skip-expectation-spec`), the
+  spec is guaranteed present for any rewrite that reached DEV static advisory. If the
+  spec is somehow absent (manual tampering), record
+  `HOLD-IN-PLACE: skipped (no expectation spec)` in the `references:` summary rather
+  than erroring — it never errors and never blocks. The spec is frozen at
   the INTENT boundary, so staleness vs. the v1 the rebalance started from is not a concern.
 - **Matching is best-effort, not authoritative.** The detector is a coarse
   textual presence check: a HOLD-IN-PLACE block present in v1 SKILL.md that now

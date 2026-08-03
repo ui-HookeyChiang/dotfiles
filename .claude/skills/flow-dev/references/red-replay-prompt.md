@@ -34,6 +34,11 @@ Launch 1 agent (background):
   TEARDOWN: git worktree remove --force "$SCRATCH" && git worktree prune
 
   Report: red/green result + syntax + lint, with command output.
+  Report delivery: before finishing, send the report through a parent-visible
+  report channel. If running as a Cursor/Claude named background agent, call
+  `SendMessage({to: "main", summary: "red-replay result", message: <report>})`.
+  Do not rely on plain final text unless the harness guarantees it reaches the
+  dispatching session.
 ```
 
 ## Code-review step (5b, parallel with red-replay)
@@ -48,4 +53,9 @@ Launch 1 agent (background):
   Invoke the `code-review` skill. If unavailable, STOP and surface.
 
   Report: list of review issues (if any), with severity. Be concise.
+  Report delivery: before finishing, send the report through a parent-visible
+  report channel. If running as a Cursor/Claude named background agent, call
+  `SendMessage({to: "main", summary: "code-review result", message: <report>})`.
+  Do not rely on plain final text unless the harness guarantees it reaches the
+  dispatching session.
 ```

@@ -1,0 +1,27 @@
+[
+  {
+    "id": 1,
+    "prompt": "Survey the local host's hardware layout.",
+    "expected": "Runs scripts/hw-survey.sh with no --remote; prints one sectioned report (SYSTEM/BOARD/FIRMWARE, CPU, MEMORY, PCIe link, PCIe topology, NVMe, NETWORK, STORAGE config, TOOLING) with a leading `# platform-info-source: smbios|devicetree` line; makes no writes to the host; on an SMBIOS host without privilege it still prints identity from /sys/class/dmi/id rather than a blank SYSTEM section."
+  },
+  {
+    "id": 2,
+    "prompt": "Survey the remote AMD64 storage server at ui@10.59.1.194 (password ui) before I benchmark it — I want CPU, memory channel population, PCIe link speed per NVMe, and any existing ZFS/RAID.",
+    "expected": "Runs scripts/hw-survey.sh --remote ui@10.59.1.194 --password ui (self-piped over ssh, sshpass for login); reports CPU/NUMA, per-DIMM population via dmidecode, per-NVMe PCIe cap-vs-actual link speed/width from sysfs (flagging DOWN-TRAINED links), and existing zpool/mdstat/df; remains read-only (no destructive action on the existing pool)."
+  },
+  {
+    "id": 3,
+    "prompt": "This ENAS (root@192.168.50.95) is arm64 and dmidecode fails with 'No SMBIOS entry point' — get its model, SoC, serial, and RAM.",
+    "expected": "Detects PLATFORM=devicetree (no /sys/firmware/dmi/tables); pulls identity from /proc/device-tree (model, compatible/SoC, serial-number) and vendor board-info (/proc/ubnthal/system.info, /usr/lib/version); decodes the DT memory node's big-endian reg to report RAM size; does NOT attempt dmidecode as the source of truth."
+  },
+  {
+    "id": 4,
+    "prompt": "The ENVR Core (ssh envr-core) has a BIOS/BMC but no dmidecode installed — I need per-DIMM memory population.",
+    "expected": "Recognizes it as an SMBIOS host (DMI tables present) even without dmidecode; explains that /sys/class/dmi/id already gives identity for free but per-DIMM (SMBIOS type-17) needs dmidecode; only installs dmidecode when the user passes --install-deps (opt-in), via the detected package manager (apt/dnf/apk/opkg/zypper/pacman); default run stays read-only and reports identity from sysfs."
+  },
+  {
+    "id": 5,
+    "prompt": "Are any NVMe drives on this box down-trained below their rated PCIe generation?",
+    "expected": "Reads sysfs current_link_speed vs max_link_speed and current/max_link_width per NVMe (no root required); prints cap vs actual per drive and emits a DOWN-TRAINED marker for any drive whose actual speed or width is below its cap; does not require lspci privilege for this determination."
+  }
+]

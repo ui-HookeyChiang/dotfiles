@@ -29,6 +29,8 @@ import semantic_audit as audit  # noqa: E402
 from detectors import (  # noqa: E402
     g1_cross_skill_dup as g1,
     g8_progressive_disclosure as g8,
+    good_classes as gc,
+    inline_reasoning_dup as ird,
 )
 
 
@@ -60,7 +62,9 @@ def _finding(axis: str, severity: str = "MED", idx: int = 1) -> dict:
 def test_exit_0_when_any_finding_emitted(tmp_path):
     skill = _make_skill_md(tmp_path)
     with patch.object(g1, "detect", return_value=[_finding("G1")]), \
-         patch.object(g8, "detect", return_value=[]):
+         patch.object(g8, "detect", return_value=[]), \
+         patch.object(ird, "detect", return_value=[]), \
+         patch.object(gc, "detect", return_value=[]):
         rc = audit.main([str(skill)])
     assert rc == 0
 
@@ -68,7 +72,9 @@ def test_exit_0_when_any_finding_emitted(tmp_path):
 def test_exit_2_when_all_axes_clean(tmp_path):
     skill = _make_skill_md(tmp_path)
     with patch.object(g1, "detect", return_value=[]), \
-         patch.object(g8, "detect", return_value=[]):
+         patch.object(g8, "detect", return_value=[]), \
+         patch.object(ird, "detect", return_value=[]), \
+         patch.object(gc, "detect", return_value=[]):
         rc = audit.main([str(skill)])
     assert rc == 2
 
@@ -108,20 +114,24 @@ def test_exit_1_when_detector_returns_non_list(tmp_path, capsys):
 
 # ---- axis routing ----------------------------------------------------------
 
-def test_axis_all_invokes_both_detectors(tmp_path):
+def test_axis_all_invokes_all_detectors(tmp_path):
     skill = _make_skill_md(tmp_path)
     with patch.object(g1, "detect", return_value=[]) as m_g1, \
-         patch.object(g8, "detect", return_value=[]) as m_g8:
+         patch.object(g8, "detect", return_value=[]) as m_g8, \
+         patch.object(ird, "detect", return_value=[]) as m_ird, \
+         patch.object(gc, "detect", return_value=[]) as m_gc:
         audit.main([str(skill), "--axis", "all"])
-    assert m_g1.called and m_g8.called
+    assert m_g1.called and m_g8.called and m_ird.called and m_gc.called
 
 
 def test_default_axis_runs_all_remaining(tmp_path):
     skill = _make_skill_md(tmp_path)
     with patch.object(g1, "detect", return_value=[]) as m_g1, \
-         patch.object(g8, "detect", return_value=[]) as m_g8:
+         patch.object(g8, "detect", return_value=[]) as m_g8, \
+         patch.object(ird, "detect", return_value=[]) as m_ird, \
+         patch.object(gc, "detect", return_value=[]) as m_gc:
         audit.main([str(skill)])
-    assert m_g1.called and m_g8.called
+    assert m_g1.called and m_g8.called and m_ird.called and m_gc.called
 
 
 def test_axis_G1_only_calls_g1(tmp_path):
@@ -142,12 +152,10 @@ def test_axis_G8_only_calls_g8(tmp_path):
     assert m_g8.called
 
 
-# ---- detector-kwarg divergence: G8 receives llm_fn=, not llm_dispatch= -----
+# ---- shared detector kwarg: G8 receives llm_dispatch= ----------------------
 
-def test_g8_receives_llm_fn_kwarg_not_llm_dispatch(tmp_path):
-    """audit.py absorbs the detector kwarg divergence:
-       G1 gets ``llm_dispatch=``; G8 gets ``llm_fn=``.
-       Tech debt, recorded; this test pins the contract."""
+def test_g8_receives_llm_dispatch_kwarg(tmp_path):
+    """Semantic detectors share the ``llm_dispatch=`` kwarg."""
     skill = _make_skill_md(tmp_path)
     seen: dict = {}
 
@@ -160,8 +168,8 @@ def test_g8_receives_llm_fn_kwarg_not_llm_dispatch(tmp_path):
          patch.object(g1, "detect", return_value=[]):
         audit.main([str(skill), "--axis", "G8"])
 
-    assert "llm_fn" in seen["kwargs"]
-    assert "llm_dispatch" not in seen["kwargs"]
+    assert "llm_dispatch" in seen["kwargs"]
+    assert "llm_fn" not in seen["kwargs"]
 
 
 def test_g1_receives_llm_dispatch_kwarg(tmp_path):
@@ -180,6 +188,21 @@ def test_g1_receives_llm_dispatch_kwarg(tmp_path):
     assert "llm_fn" not in seen["kwargs"]
 
 
+def test_gc_receives_llm_dispatch_kwarg(tmp_path):
+    skill = _make_skill_md(tmp_path)
+    seen: dict = {}
+
+    def _spy(paths, **kwargs):
+        seen["kwargs"] = dict(kwargs)
+        return []
+
+    with patch.object(gc, "detect", side_effect=_spy):
+        audit.main([str(skill), "--axis", "GC"])
+
+    assert "llm_dispatch" in seen["kwargs"]
+    assert "llm_fn" not in seen["kwargs"]
+
+
 # ---- --no-llm passthrough --------------------------------------------------
 
 def test_no_llm_flag_passes_through_to_all_detectors(tmp_path):
@@ -193,7 +216,9 @@ def test_no_llm_flag_passes_through_to_all_detectors(tmp_path):
         return _inner
 
     with patch.object(g1, "detect", side_effect=_spy("g1")), \
-         patch.object(g8, "detect", side_effect=_spy("g8")):
+         patch.object(g8, "detect", side_effect=_spy("g8")), \
+         patch.object(ird, "detect", return_value=[]), \
+         patch.object(gc, "detect", return_value=[]):
         audit.main([str(skill), "--no-llm"])
 
     assert seen == {"g1": True, "g8": True}
@@ -265,7 +290,7 @@ def test_env_var_bad_path_falls_back_to_none(tmp_path, monkeypatch, capsys):
     assert "no-LLM" in capsys.readouterr().err
 
 
-# ---- G7 removal contract (spec 2026-05-29-prose-guidelines-g7-dedup) ---------
+# ---- removed-axis contract -------------------------------------------------
 
 def test_g7_not_in_axis_choices():
     """G7 axis was removed in 2026-05-29 — paragraph density moved to
@@ -275,13 +300,12 @@ def test_g7_not_in_axis_choices():
     assert "G7" not in audit.AXES
 
 
-def test_axis_G7_exits_1_with_redirect_message(tmp_path, capsys):
-    """User passing --axis G7 gets a hard error pointing at
-    `prose-guidelines`. Exit 1, stderr mentions prose-guidelines."""
+def test_axis_g7_rejected_by_argparse(tmp_path, capsys):
+    """G7 is no longer a semantic axis; argparse rejects it mechanically."""
     skill = _make_skill_md(tmp_path)
     with pytest.raises(SystemExit) as exc_info:
         audit.main([str(skill), "--axis", "G7"])
-    assert exc_info.value.code == 1
+    assert exc_info.value.code == 2
     err = capsys.readouterr().err
-    assert "prose-guidelines" in err
+    assert "invalid choice" in err
     assert "G7" in err

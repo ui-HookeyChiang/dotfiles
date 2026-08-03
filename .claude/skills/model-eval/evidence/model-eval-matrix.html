@@ -1,0 +1,305 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Model Eval Matrix</title>
+<style>body{font-family:monospace;margin:20px}table{border-collapse:collapse;font-size:13px}
+th,td{border:1px solid #ccc;padding:4px 8px;text-align:center}
+th{background:#f0f0f0;position:sticky;top:0}
+.pass{background:#c6efce}.partial{background:#ffeb9c}.fail{background:#ffc7ce}
+.incumbent{font-weight:bold;background:#e0e8ff}
+.na{color:#999}</style></head><body>
+<h2>Model Eval Cross-CLI Matrix (259 rows, deduped)</h2>
+<p>200 deduped rows, 67 cells, 10 fixtures</p>
+<table><tr><th>Model</th><th>Effort</th>
+<th>scanner</th>
+<th>executor-v1</th>
+<th>executor-v3</th>
+<th>review</th>
+<th>search</th>
+<th>deep-v1</th>
+<th>deep-v2</th>
+<th>planner-contexted</th>
+<th>planner-no-context</th>
+<th>decide-harness</th>
+</tr>
+<tr><td class="incumbent">claude-haiku-4-5</td><td>low</td>
+<td class="pass" title="cost=$0.013 lat=6s">100% n=3</td>
+<td class="na">-</td>
+<td class="pass" title="cost=$0.178 lat=34s">100% n=3</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+</tr>
+<tr><td class="incumbent">claude-opus-4-6</td><td>low</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="partial" title="cost=$0.343 lat=9s">67% n=3</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+</tr>
+<tr><td class="incumbent">claude-opus-4-8</td><td>low</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="pass" title="cost=- lat=91s">100% n=3</td>
+<td class="pass" title="cost=- lat=25s">100% n=3</td>
+<td class="na">-</td>
+<td class="pass" title="cost=- lat=36s">100% n=3</td>
+<td class="partial" title="cost=- lat=33s">67% n=3</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+</tr>
+<tr><td class="incumbent">claude-opus-5</td><td>low</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="fail" title="cost=$1.725 lat=11s">33% n=6</td>
+<td class="fail" title="cost=$0.800 lat=36s">0% n=3</td>
+<td class="fail" title="cost=$1.170 lat=101s">0% n=2</td>
+<td class="na">-</td>
+</tr>
+<tr><td class="incumbent">claude-sonnet-5</td><td>low</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="pass" title="cost=$0.449 lat=9s">100% n=3</td>
+<td class="partial" title="cost=$1.159 lat=54s">81% n=3</td>
+<td class="na">-</td>
+<td class="pass" title="cost=$0.073 lat=13s">100% n=3</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+</tr>
+<tr><td>composer-2.5</td><td>none</td>
+<td class="pass" title="cost=- lat=20s">100% n=3</td>
+<td class="pass" title="cost=- lat=69s">100% n=3</td>
+<td class="pass" title="cost=- lat=102s">100% n=3</td>
+<td class="pass" title="cost=- lat=31s">100% n=3</td>
+<td class="partial" title="cost=- lat=70s">86% n=3</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+</tr>
+<tr><td>gemini-3-flash</td><td>none</td>
+<td class="pass" title="cost=- lat=23s">100% n=3</td>
+<td class="pass" title="cost=- lat=72s">100% n=3</td>
+<td class="pass" title="cost=- lat=99s">100% n=3</td>
+<td class="pass" title="cost=- lat=52s">100% n=3</td>
+<td class="partial" title="cost=- lat=97s">81% n=3</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+</tr>
+<tr><td>gemini-3.1-pro</td><td>none</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="pass" title="cost=- lat=31s">100% n=3</td>
+<td class="partial" title="cost=- lat=119s">71% n=3</td>
+<td class="pass" title="cost=- lat=36s">100% n=3</td>
+<td class="fail" title="cost=- lat=391s">33% n=3</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+</tr>
+<tr><td>gemini-3.5-flash</td><td>none</td>
+<td class="pass" title="cost=- lat=24s">100% n=3</td>
+<td class="pass" title="cost=- lat=107s">100% n=3</td>
+<td class="pass" title="cost=- lat=112s">100% n=3</td>
+<td class="pass" title="cost=- lat=48s">100% n=3</td>
+<td class="pass" title="cost=- lat=154s">100% n=3</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+</tr>
+<tr><td class="incumbent">github-copilot/claude-opus-4.6</td><td>low</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="partial" title="cost=$0.079 lat=67s">86% n=3</td>
+<td class="pass" title="cost=$0.995 lat=101s">100% n=3</td>
+<td class="pass" title="cost=$0.689 lat=21s">100% n=3</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+</tr>
+<tr><td>gpt-5.3-codex</td><td>high</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="pass" title="cost=- lat=57s">100% n=3</td>
+<td class="fail" title="cost=- lat=87s">33% n=3</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+</tr>
+<tr><td>gpt-5.3-codex</td><td>low</td>
+<td class="na">-</td>
+<td class="pass" title="cost=- lat=61s">100% n=3</td>
+<td class="pass" title="cost=- lat=65s">100% n=3</td>
+<td class="pass" title="cost=- lat=18s">100% n=3</td>
+<td class="partial" title="cost=- lat=55s">71% n=3</td>
+<td class="pass" title="cost=- lat=32s">100% n=3</td>
+<td class="fail" title="cost=- lat=38s">33% n=3</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+</tr>
+<tr><td>gpt-5.3-codex</td><td>medium</td>
+<td class="na">-</td>
+<td class="fail" title="cost=- lat=4s">0% n=3</td>
+<td class="fail" title="cost=- lat=4s">0% n=3</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+</tr>
+<tr><td>gpt-5.3-codex</td><td>none</td>
+<td class="na">-</td>
+<td class="pass" title="cost=- lat=76s">100% n=3</td>
+<td class="pass" title="cost=- lat=90s">100% n=3</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+</tr>
+<tr><td>gpt-5.4</td><td>high</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="pass" title="cost=- lat=38s">100% n=3</td>
+<td class="fail" title="cost=- lat=112s">33% n=3</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+</tr>
+<tr><td>gpt-5.4</td><td>low</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="pass" title="cost=- lat=17s">100% n=3</td>
+<td class="partial" title="cost=- lat=56s">81% n=3</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+</tr>
+<tr><td>gpt-5.4</td><td>medium</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="pass" title="cost=- lat=20s">100% n=3</td>
+<td class="partial" title="cost=- lat=77s">86% n=3</td>
+<td class="partial" title="cost=- lat=33s">67% n=3</td>
+<td class="fail" title="cost=- lat=77s">0% n=3</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+</tr>
+<tr><td>gpt-5.5</td><td>high</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="pass" title="cost=- lat=28s">100% n=3</td>
+<td class="pass" title="cost=- lat=142s">100% n=3</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+</tr>
+<tr><td>gpt-5.5</td><td>low</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="pass" title="cost=- lat=18s">100% n=3</td>
+<td class="partial" title="cost=- lat=69s">76% n=3</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+</tr>
+<tr><td>gpt-5.5</td><td>medium</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="pass" title="cost=- lat=20s">100% n=3</td>
+<td class="partial" title="cost=- lat=61s">86% n=3</td>
+<td class="pass" title="cost=- lat=27s">100% n=3</td>
+<td class="fail" title="cost=- lat=89s">33% n=3</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+</tr>
+<tr><td>gpt-5.5-low</td><td>none</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="fail" title="cost=- lat=43s">0% n=3</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+</tr>
+<tr><td>gpt-5.5-medium</td><td>none</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="fail" title="cost=- lat=33s">0% n=4</td>
+</tr>
+<tr><td>opencode/deepseek-v4-flash-free</td><td>none</td>
+<td class="pass" title="cost=- lat=13s">100% n=1</td>
+<td class="fail" title="cost=- lat=29s">0% n=1</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+<td class="na">-</td>
+</tr>
+</table>
+<h3>Legend</h3><ul>
+<li><span class="pass" style="padding:2px 6px">Green</span> = ≥99% pass/acc</li>
+<li><span class="partial" style="padding:2px 6px">Yellow</span> = 50-99%</li>
+<li><span class="fail" style="padding:2px 6px">Red</span> = &lt;50%</li>
+<li><b>Bold blue</b> = Anthropic incumbent</li>
+<li>Hover cells for cost + latency</li>
+</ul></body></html>

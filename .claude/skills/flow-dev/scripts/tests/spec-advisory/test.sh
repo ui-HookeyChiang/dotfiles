@@ -293,8 +293,7 @@ rm -f "$LOOP_MOCK_DIRTY" "$LOOP_HISTORY"
 # AC12 removed — the Agent C schema test (test-agent-c-schema.sh) validated the
 # retired prompt-template file. The reviewer brief migrated into
 # adversarial-review's Spec-gating mode section; that skill's own contract
-# (frontmatter + Spec-gating mode rubric) is verified by its evals and by
-# static-checks.sh AC8a/b/c + AC-r5-10/11.
+# (frontmatter + Spec-gating mode rubric) is verified by its own evals.
 
 # AC13: sandwich sidecar removed — envelope must NOT contain sandwich key
 # (sidecar read/emit dropped; prose-guidelines fires at write-time instead)

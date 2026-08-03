@@ -102,6 +102,11 @@ Bump type: minor (0.2 -> 0.3)
 Proceed? [y/N]
 ```
 
+If invoked by `flow-merge` with `FLOW_MERGE_USER_GATES_CONFIRMED=1`, treat that
+up-front merge confirmation as the answer to this prompt for this run only.
+Release-note validation, dry-run behavior, auth checks, and channel-specific
+guards still run.
+
 If `--dry-run` is set, show the plan and stop without executing.
 
 ---

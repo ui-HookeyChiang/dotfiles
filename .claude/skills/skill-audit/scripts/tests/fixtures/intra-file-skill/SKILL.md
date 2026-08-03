@@ -8,5 +8,5 @@ description: Synthetic fixture for the intra-file-caller deadcode fix. Use when 
 Run the entry point:
 
 ```bash
-python3 scripts/audit.py
+python3 scripts/entry.py
 ```

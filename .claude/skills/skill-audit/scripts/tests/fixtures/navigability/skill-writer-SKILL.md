@@ -33,7 +33,7 @@ A holistic "what's wrong with this skill" ask → `skill-audit` (the read-side c
 | dead code / unreachable script / orphan function / unused JSON field | `skill-deterministic-audit` | `bash ~/.claude/skills/skill-deterministic-audit/scripts/run.sh <skill>` |
 | 9-dim rubric / single 0-100 score | `darwin-skill` | `Skill darwin-skill <skill>` |
 
-Each engine is standalone and read-only (never edits / commits / builds); they share one exit-code contract (`0` flagged / `1` error / `2` clean). The build-time `--with-llm` advisory dispatch inside the flow (DEV static advisory + TEST LLM-review leg) is a different thing — that runs skill-deterministic-audit / prose-guidelines *during* a build. Note: holistic `skill-audit` now covers both LLM advisory legs (skill-probabilistic-audit syntax+semantic G1/G8 + prose-guidelines) with a completion gate (`assert_audit_complete` trace assert) — not only the build path. A bare `skill-audit` run names all not-yet-dispatched legs; the gate enforces dispatch before reporting complete.
+Each engine is standalone and read-only (never edits / commits / builds); they share one exit-code contract (`0` flagged / `1` error / `2` clean). The build-time `--with-llm` advisory dispatch inside the flow (DEV static advisory + TEST LLM-review leg) is a different thing — that runs skill-deterministic-audit / prose-guidelines *during* a build. Note: holistic `skill-audit` now covers both LLM advisory legs (skill-probabilistic-audit syntax+semantic G1/G8/IRD/GC + prose-guidelines) with `audit-leg-gate.sh` completion checking — not only the build path. A bare `skill-audit` run names all not-yet-dispatched legs; the gate enforces dispatch before reporting complete.
 
 ## Flow + Mode (one map)
 

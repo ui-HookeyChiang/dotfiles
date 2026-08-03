@@ -8,7 +8,7 @@ description: Synthetic fixture for the deadcode-audit python-edge fix. Use when 
 Run the entry point:
 
 ```bash
-python3 scripts/audit.py
+python3 scripts/entry.py
 ```
 
 See [references/sample.md](references/sample.md) for a sample report.

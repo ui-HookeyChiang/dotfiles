@@ -15,8 +15,8 @@ the skill; only read its tree.
 
 ## Checks
 
-1. **Frontmatter completeness**: `name`, `description`, `argument-hint`
-   present in `SKILL.md`?
+1. **Frontmatter completeness**: `name` and `description` present in `SKILL.md`;
+   `argument-hint` present only when the skill accepts arguments?
 2. **Reference files exist**: every file path mentioned in `SKILL.md`
    (under `references/`, `scripts/`, `evals/`) actually exists on disk.
 3. **Scripts referenced exist**: every `bash`/`Skill`/file-path invocation

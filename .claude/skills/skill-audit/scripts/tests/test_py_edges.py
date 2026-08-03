@@ -54,7 +54,7 @@ def _flagged_b(out):
 
 def test_imported_module_is_live():
     """foo.py is `from detectors import foo` + foo.detect() from a root-reachable
-    audit.py -> live, NOT (c)."""
+    entry.py -> live, NOT (c)."""
     _, out, _ = _run(FIXTURE)
     assert "foo.py" not in _flagged_c(out)
 

@@ -1573,11 +1573,11 @@ def detect_unbound_vars(
     Passive (INFO severity). Never flips the exit code.
     One finding per distinct unbound var name, listing all line numbers.
 
-    known-env.txt is always loaded from audit.py's own scripts/ dir (the
+    known-env.txt is always loaded from syntax_audit.py's own scripts/ dir (the
     auditor's data file), not from the target skill's scripts/ dir.
     scripts_dir is used only for resolving sourced scripts.
     """
-    # Load known-env.txt from audit.py's own directory (always skill-audit/scripts/).
+    # Load known-env.txt from syntax_audit.py's own directory (always skill-audit/scripts/).
     _auditor_scripts = Path(__file__).resolve().parent
     known_env = _load_known_env(_auditor_scripts)
 
@@ -2050,7 +2050,7 @@ def _run_advisory(args) -> int:
     # Import advisory modules lazily so legacy mode doesn't pay the cost.
     # Note: this file lives at skill-audit/scripts/syntax_audit.py, so
     # `from advisory import ...` works because scripts/ is on sys.path
-    # when audit.py is invoked via `python3 audit.py`.
+    # when syntax_audit.py is invoked via `python3 syntax_audit.py`.
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from advisory import metrics as M
     from advisory import ranker as R

@@ -28,22 +28,10 @@ if [ -n "$agent_id" ] && [ -n "$prompt" ] && [ -n "$PROJECT_DIR" ]; then
   fi
 fi
 
-RULES='## Delivery Red Lines
-1. CLOSE THE LOOP: "done" requires evidence (test output, build log). No evidence = not done.
-2. FACT-DRIVEN: verify before blaming. Use tools to confirm before attributing cause.
-3. EXHAUST METHODOLOGY: complete all escalation steps below before reporting failure.
-
-## Failure Escalation (self-enforce)
-Track consecutive tool failures. Classify pattern:
-- SPINNING (same error repeats): you are retrying same approach. STOP. Switch immediately.
-- EXPLORING (different errors each time): keep going, you are making progress.
-
-On each failure:
-1. Switch approach (never retry same command/strategy)
-2. Reframe: 3 hypotheses, read source, search
-3. Full checklist: verify assumptions, read error word-by-word, check logs
-4+. STOP. Return failure report: what tried, what failed, root cause hypothesis
-
-Cannot report failure before step 3. Red line 3 enforces this.'
+# Single source for the injected rules — shared with install.sh, which bakes
+# the same block into OpenCode agent definitions (no SubagentStart surface there).
+RULES_FILE="$(dirname "$(readlink -f "$0")")/subagent-red-lines.md"
+[ -f "$RULES_FILE" ] || exit 0
+RULES="$(cat "$RULES_FILE")"
 
 jq -nc --arg c "$RULES" '{hookSpecificOutput:{hookEventName:"SubagentStart",additionalContext:$c}}'

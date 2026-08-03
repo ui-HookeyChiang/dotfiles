@@ -65,6 +65,9 @@ to `references/`.
   stages, each stage's reasoning (how to grill, how to decompose, how to TDD)
   belongs in the invoked skill, NOT inline. The body keeps: (a) which skill to
   invoke, (b) what input to pass, (c) gate condition after it returns.
+  A 12-stage orchestrator that inlines all reasoning is 900 lines; one that
+  delegates reasoning to skills and mechanism to `scripts/` + `references/` is
+  250.
   Litmus test: if you delete the inline reasoning and replace it with
   `Invoke Skill X`, does behavior change? No → delegate. Yes → it is a
   precondition/contract (good-class 4) or disambiguation (good-class 5), keep it.

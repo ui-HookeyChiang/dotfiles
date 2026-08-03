@@ -1,0 +1,57 @@
+=== item 1 ===
+# 2026-07-18-shared-lib-sh-adoption-gap.md
+Status: done
+10+ scripts reinvent extracted helpers in _shared/lib/sh/ (log.sh, ssh.sh).
+
+=== item 2 ===
+# 2026-07-15-guard-stale-base-false-positive.md
+Status: ready-for-agent
+guard-stale-base.sh denies branching when origin ref is fresh; fix comparison in hooks/guard-stale-base.sh line 42.
+
+=== item 3 ===
+# 2026-06-30-flow-merge-cascade-order.md
+status: Ready-For-Agent
+Cascade merges child PRs before parent when stack depth > 2. See flow-merge/SKILL.md.
+
+=== item 4 ===
+# 2026-07-02-todo-cleanup.md
+Stale TODO.md items reference deleted specs (docs/spec/2026-05-*).
+
+=== item 5 ===
+# 2026-07-19-install-symlink-guard.md
+Status: wontfix
+Symlink guard writes through dotfiles symlink — superseded by PR #878 register-flag pattern.
+
+=== item 6 ===
+# 2026-07-21-eval-terminology-drift.md
+Status: needs-info
+Eval docs mix "voter" and "judge" for the same role; which is canonical? Blocked on author.
+
+=== item 7 ===
+# 2026-07-08-hook-timeout-udm.md
+Status: ready-for-human
+PreToolUse hook takes 4.2s on UDM builds; needs human profiling on device, scripts can't reproduce.
+
+=== item 8 ===
+# 2026-07-11-worktree-orphan-dirs.md
+Status: needs-triage
+.worktrees/ accumulates orphan dirs without .git file after crashed agents.
+
+=== item 9 ===
+# 2026-07-20-register-hooks-idempotency.md
+Status: done (verified 2026-07-21)
+register-settings-hooks.sh double-registers SessionStart on second run; fixed in 16e19df0.
+
+=== item 10 ===
+# untitled-note.md
+Random observation: bats is not installed on the build host. No status assigned yet.
+
+=== item 11 ===
+# 2026-07-16-codex-hooks-json-schema.md
+Status: Needs-Triage
+hooks/codex/hooks.json lacks schema validation; malformed entries fail silently at Codex startup.
+
+=== item 12 ===
+# 2026-07-17-fstest-exclude-list.md
+Status:ready-for-agent
+UNAS btrfs profile exclude list outdated; generic/475 now passes on kernel 6.8.

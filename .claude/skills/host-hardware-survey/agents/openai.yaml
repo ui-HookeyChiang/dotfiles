@@ -1,0 +1,5 @@
+interface:
+  display_name: "Host Hardware Survey"
+  short_description: "Survey a Linux host's hardware layout over SSH (CPU, memory, PCIe, NVMe)."
+policy:
+  allow_implicit_invocation: false

@@ -17,7 +17,7 @@
   {
     "query": "Fix the off-by-one bug in the RAID resync progress calc — it requires changes in the daemon and the CLI status reader",
     "should_trigger": true,
-    "rationale": "Multi-file bug fix → the default code-change workflow."
+    "rationale": "Multi-file bug fix with clear scope → the default code-change workflow."
   },
   {
     "query": "Add JWT authentication to the API — split it into tasks and use a worktree per PR",
@@ -42,12 +42,42 @@
   {
     "query": "Fix the typo in the README, about 5 lines, and push it",
     "should_trigger": true,
-    "rationale": "Single-file <20-line fix — flow-dev now owns ALL code changes including small ones (tiny lane removed), so it MUST trigger."
+    "rationale": "Single-file grounded task with clear scope — direct entry: self-generates the one-task list and runs the per-task dev loop."
   },
   {
     "query": "Add a one-line fix to the baud-rate constant in recover-device.sh and open a quick PR",
     "should_trigger": true,
-    "rationale": "Single-file, <20-line code change. With the tiny lane removed, flow-dev handles every size → it triggers."
+    "rationale": "Single-file grounded task with clear scope — direct entry: self-generates the one-task list and runs the per-task dev loop."
+  },
+  {
+    "query": "Here's the repro: `fio --bs=4k --rw=randread` panics the daemon. Fix the null-deref in storage_cache.c line 214",
+    "should_trigger": true,
+    "rationale": "Direct entry — bug with repro steps and pinpointed location. Grounded single task; no converge or decompose needed."
+  },
+  {
+    "query": "Implement the agent-ready ticket at docs/ticket/2026-07-01-add-retry-logic.md — test plan already written",
+    "should_trigger": true,
+    "rationale": "Direct entry — agent-ready ticket with existing test plan. Grounded single task."
+  },
+  {
+    "query": "The CLI returns exit code 0 on partial failures. Repro: run `ustd --dry-run` with a missing config file. Fix it.",
+    "should_trigger": true,
+    "rationale": "Direct entry — bug with repro. Input is constraint-backed (failing behavior observable), so it is grounded."
+  },
+  {
+    "query": "Add logging to the sync handler — scope is clear: one function in sync.c, add a log line on each error path",
+    "should_trigger": true,
+    "rationale": "Direct entry — clear scope single task. Self-generates the one-task list."
+  },
+  {
+    "query": "Add the new PDU power-monitoring dashboard — four components to build across the UI, the API, and the collector",
+    "should_trigger": true,
+    "rationale": "Large multi-component feature development — default code-change workflow."
+  },
+  {
+    "query": "Correct a single misspelled string in the help text of one CLI file and ship it",
+    "should_trigger": true,
+    "rationale": "Single-file grounded task with clear scope — direct entry: self-generates the one-task list and runs the per-task dev loop."
   },
   {
     "query": "Review PR #42 on the ustd repo and leave inline comments",
@@ -75,16 +105,6 @@
     "rationale": "NEAR-MISS negative: 'PR / rebase / main' keywords overlap, but merging/rebasing is not authoring a code change → not flow-dev."
   },
   {
-    "query": "Add the new PDU power-monitoring dashboard — four components to build across the UI, the API, and the collector",
-    "should_trigger": true,
-    "rationale": "Large multi-component feature development — default code-change workflow."
-  },
-  {
-    "query": "Correct a single misspelled string in the help text of one CLI file and ship it",
-    "should_trigger": true,
-    "rationale": "Single-file <20-line edit — with the tiny lane removed, flow-dev owns small fixes too → it triggers."
-  },
-  {
     "query": "Bump the log level config and restart the service to apply it",
     "should_trigger": false,
     "rationale": "NEAR-MISS negative: config-and-restart operational work, not authoring a code change → config/deploy domain skill, excluded."
@@ -98,5 +118,25 @@
     "query": "Triage the open device-drift alerts and label the tickets that need a human",
     "should_trigger": false,
     "rationale": "NEAR-MISS negative: triage/ticket-labeling is non-code work → triage domain skill, not flow-dev."
+  },
+  {
+    "query": "I want to add some kind of caching layer — not sure if Redis or in-memory, need to figure out the approach first",
+    "should_trigger": false,
+    "rationale": "Ungrounded — fuzzy intent with no repro, no scope, no ticket. Must go to flow converge first."
+  },
+  {
+    "query": "Something is slow in the storage path, can you look into it?",
+    "should_trigger": false,
+    "rationale": "Bug without repro — ungrounded. Must go to diagnosing-bugs to produce a repro before flow-dev can accept it."
+  },
+  {
+    "query": "Users are reporting intermittent failures on RAID writes but we haven't reproduced it yet",
+    "should_trigger": false,
+    "rationale": "Bug without repro — ungrounded. diagnosing-bugs owns this; flow-dev cannot enter without a repro."
+  },
+  {
+    "query": "Maybe we should rethink the auth model — what are the options?",
+    "should_trigger": false,
+    "rationale": "Fuzzy intent / direction undecided — no grounded task. Belongs to flow converge, not flow-dev direct entry."
   }
 ]

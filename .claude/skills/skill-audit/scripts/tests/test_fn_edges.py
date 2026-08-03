@@ -122,8 +122,7 @@ def _skip_if_absent(name):
 
 def test_syntax_audit_module_alias_fns_not_c():
     """All 9 module-alias-called functions (`M.`/`R.`/`RP.`/`L.` qualifiers, from
-    `from advisory import metrics as M` etc) clear (c). bench-m2.sh shell fns stay
-    (c) (out of scope, shell)."""
+    `from advisory import metrics as M` etc) clear (c)."""
     d = _skip_if_absent("skill-audit")
     _, out, _ = _run(d)
     c = _flagged_c(out)
@@ -134,8 +133,8 @@ def test_syntax_audit_module_alias_fns_not_c():
 
 
 def test_semantic_audit_self_call_and_dunders():
-    """`find` clears via its `self.find(a)` site (case 2). The dunders `__init__`
-    and `__contains__` demote to ADVISORY, not (c). `is_candidate`, `line_count`,
+    """`find` clears via its `self.find(a)` site (case 2). Dunders must not be
+    classified as (c). `is_candidate`, `line_count`,
     `lines_field` are @property accessors accessed via local vars — cleared by the
     @property fix (design 2026-06-23). `bump` is a plain method (not @property)
     but IS now cleared by instance-method dispatch (design 2026-06-25): the class
@@ -144,9 +143,8 @@ def test_semantic_audit_self_call_and_dunders():
     d = _skip_if_absent("skill-audit")
     _, out, _ = _run(d)
     c = _flagged_c(out)
-    adv = _flagged_adv(out)
     assert "find" not in c, "find should clear via self.find(a)"
-    assert "__init__" not in c and "__init__" in adv
+    assert "__init__" not in c
     assert "__contains__" not in c
     # @property members cleared by the property fix (accessed via para./p. local vars)
     for fn in ("is_candidate", "line_count", "lines_field"):

@@ -22,7 +22,7 @@
 #     §L3 feasibility (slash commands are interactive-mode-only;
 #     upstream issue #837 tracks). L3b (expect/pty) was design-time
 #     rejected. Haiku itself is exercised only out-of-repo via the
-#     manual runbook in flow/references/loop-protocol.md.
+#     historical manual runbook from the retired spec-advisor `/goal` design.
 #   - The status-line grammar itself — that is L2's job.
 #
 # CONTRACT MIRRORED HERE (verbatim from spec §/goal contract)

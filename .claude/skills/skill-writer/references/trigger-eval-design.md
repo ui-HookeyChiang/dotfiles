@@ -101,7 +101,7 @@ Per [[feedback_advisory_non_blocking_silent_skip]], every non-run records a trac
 `verdict=skip-<reason>`, never a silent drop or a fake all-False:
 - `skip-desc-frozen` — description unchanged (above).
 - `skip-no-auth` — no `claude` CLI auth (CI / cron / `SD_AUTONOMOUS`).
-- `skip-no-skill-creator` — upstream skill-creator not resolvable.
+- `skip-no-trigger-eval` — local trigger_eval/ scripts directory not found.
 - `skip-no-corpus` — `evals/trigger-eval.json` not yet authored.
 
 ## Override

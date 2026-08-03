@@ -6,15 +6,17 @@ documented in the docstring at the bottom of this file for manual execution.
 
 M2 calibration (formula A) landed in PR #514: the ``@pytest.mark.xfail``
 markers have been removed and the two debbox assertions now use formula-A
-baselines (downshifted from the original spec expectations):
+baselines. PR #1148 later slimmed ``ubiquiti-debbox-fw-build/SKILL.md`` and
+moved build mechanics into references, so this smoke test now verifies that the
+skill is still analyzed and ranked, not that it remains a heavy hitter:
 
-- ``test_metrics_mode_against_real_debbox``: ``composite["score"] >= 39``
-  (was: > 40 pre-calibration)
+- ``test_metrics_mode_against_real_debbox``: the slimmed skill remains
+  non-empty and gets a non-zero composite score
 - ``test_rank_all_against_ubiquiti_corpus``: ``"ubiquiti-debbox-fw-build"``
-  in top 15 (was: top 5 pre-calibration)
+  appears in the ubiquiti-only ranking
 
 Full background, formula derivation, and the rationale for the downshift:
-``docs/specs/done/2026-05-23-skill-audit-m2-imbalance-calibration.md``.
+``docs/spec/archive/2026-05-23-skill-audit-m2-imbalance-calibration.md``.
 """
 import json
 import subprocess
@@ -37,22 +39,21 @@ def test_metrics_mode_against_real_debbox():
          str(TARGET), "--metrics", "--json"],
         capture_output=True, text=True, cwd=str(REPO),
     )
-    # Exit 0 (composite >= 30) is expected; debbox-fw-build is the heavy hitter.
+    # Exit 2 is acceptable for slimmed skills below the audit threshold.
     assert r.returncode in (0, 2), f"unexpected exit {r.returncode}; stderr={r.stderr}"
     data = json.loads(r.stdout)
     assert data["mode"] == "metrics"
-    assert data["metrics"]["size"]["lines_total"] >= 500
-    # Spec acceptance criterion (R3 downgrade): debbox-fw-build composite >= 39.
-    # Under formula A the composite stays at 39.00 unchanged; the rank improves
-    # via cohort dispersal (21 -> 13 in full corpus). See M2 calibration decision doc.
-    assert data["composite"]["score"] >= 39, (
+    assert data["metrics"]["size"]["lines_total"] >= 150
+    # Smoke baseline: debbox-fw-build remains a valid metrics target after
+    # PR #1148 moved most mechanics into reference docs.
+    assert data["composite"]["score"] >= 5, (
         f"debbox-fw-build composite is {data['composite']['score']}, "
-        "expected >= 39 (formula A baseline)"
+        "expected >= 5 slimmed-skill smoke baseline"
     )
 
 
 def test_rank_all_against_ubiquiti_corpus(tmp_path):
-    """--rank-all over ubiquiti-* puts debbox-fw-build in the top 5."""
+    """--rank-all over ubiquiti-* includes debbox-fw-build."""
     REPO = Path(__file__).resolve().parents[3]
     if not (REPO / "ubiquiti-debbox-fw-build").exists():
         pytest.skip("ubiquiti-* corpus not present")
@@ -75,11 +76,9 @@ def test_rank_all_against_ubiquiti_corpus(tmp_path):
     assert r.returncode == 0, f"exit {r.returncode}; stderr={r.stderr}"
     data = json.loads(r.stdout)
     ranking = data.get("ranking") or []
-    top15 = [r["name"] for r in ranking[:15]]
-    # Spec criterion G3 (downgraded R3, formula-A landed in T3):
-    # debbox-fw-build must be in the top 15 of the ubiquiti-only subset.
-    assert "ubiquiti-debbox-fw-build" in top15, (
-        f"debbox-fw-build not in top 15 of {len(ranking)}: top15={top15}"
+    names = [r["name"] for r in ranking]
+    assert "ubiquiti-debbox-fw-build" in names, (
+        f"debbox-fw-build missing from ubiquiti ranking of {len(ranking)} entries"
     )
 
 

@@ -67,5 +67,5 @@ authorial intent.
 
 A3 Equivalence voter computes the diff, runs trigger-eval comparison,
 and routes to effect vs equivalence mode. In `rewrite` mode, A3 also
-loads [`e2e-baseline-standard.md`](e2e-baseline-standard.md) to run the
-5-dimension AB test as additional evidence.
+loads [`expectation-spec-standard.md`](expectation-spec-standard.md) to
+verify the INTENT-frozen expectation spec as additional evidence.

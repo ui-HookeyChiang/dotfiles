@@ -22,6 +22,9 @@ gh pr create \
 ## Test plan
 - [x] <acceptance criteria 1 — checked after passing>
 - [x] <acceptance criteria 2 — checked after passing>
+
+## Test seam
+- <seam the tests land at — from the ticket's `Test seam:` line, or the Dev agent's choice if the ticket had none>
 EOF
 )"
 ```

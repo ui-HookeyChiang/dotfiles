@@ -20,7 +20,7 @@ from pathlib import Path
 
 import pytest
 
-# Add scripts/ to sys.path so `from audit import ...` works (conftest already
+# Add scripts/ to sys.path so direct syntax_audit imports work (conftest already
 # does this for parents[2] = scripts/).
 SCRIPTS_DIR = Path(__file__).resolve().parents[1]
 if str(SCRIPTS_DIR) not in sys.path:

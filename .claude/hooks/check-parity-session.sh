@@ -18,25 +18,35 @@ done
 # No parity script found — silent exit
 [ -n "$PARITY_SCRIPT" ] || exit 0
 
-# Detect agents — need 2+ to compare
-DETECT_SCRIPT="$(dirname "$PARITY_SCRIPT")/detect-agents.sh"
-[ -x "$DETECT_SCRIPT" ] || exit 0
+# Run parity check once; check-parity owns detection and comparability gates.
+set +e
+output=$("$PARITY_SCRIPT" --format json 2>/dev/null)
+status=$?
+set -e
+[ "$status" -eq 0 ] || [ "$status" -eq 1 ] || exit 0
 
-AGENT_COUNT=$("$DETECT_SCRIPT" 2>/dev/null | jq '[.agents[] | select(.installed)] | length' 2>/dev/null || echo 0)
-[ "$AGENT_COUNT" -ge 2 ] || exit 0
-
-# Run parity check, capture output
-output=$("$PARITY_SCRIPT" 2>/dev/null || true)
-gaps=$(echo "$output" | sed -n 's/.*\([0-9]\+\) gap.*/\1/p' | tail -1)
-warnings=$(echo "$output" | sed -n 's/.*\([0-9]\+\) warning.*/\1/p' | tail -1)
-gaps="${gaps:-0}"
-warnings="${warnings:-0}"
+gaps=$(echo "$output" | jq -r '.counts.gaps // 0' 2>/dev/null || echo 0)
+warnings=$(echo "$output" | jq -r '.counts.warnings // 0' 2>/dev/null || echo 0)
 
 # No drift — silent
 [ "$gaps" -eq 0 ] && [ "$warnings" -eq 0 ] && exit 0
 
 # Drift detected — emit condensed summary
-drift_lines=$(echo "$output" | sed -n '/MISSING\|DRIFTED\|UNDECLARED\|DIVERGED/p')
+drift_lines=$(echo "$output" | jq -r '
+  def side_text: if .side then " \(.side) only" else "" end;
+  def detail_text: if .detail then " (\(.detail))" else "" end;
+  def reason_text: if .reason then " (\(.reason))" else "" end;
+  (.gaps[]?, .warnings[]?, .accepted[]?)
+  | if .kind == "ACCEPTED" then
+      "  ACCEPTED: \(.item)\(side_text)\(reason_text)"
+    elif .kind == "DRIFTED" then
+      "  DRIFTED: \(.item)\(detail_text)"
+    elif .kind == "DIVERGED" then
+      "  DIVERGED: \(.item)\(detail_text)"
+    else
+      "  GAP: \(.item)\(side_text)"
+    end
+' 2>/dev/null || true)
 
 echo "Agent parity drift detected ($gaps gap(s), $warnings warning(s)). Run /agent-parity for details. Divergences:"
 echo "$drift_lines"

@@ -75,5 +75,17 @@ else
   echo "[INFO] no adversarial corpus at trust root — A5 will be NOT_APPLICABLE" >&2
 fi
 
+# Optional: evals/evals.json (A2 surrogate — used when test-prompts.json is
+# absent; voter-a2-behavior.md accepts this as the corpus source)
+if git show "$trust_root:$skill_relpath/evals/evals.json" \
+     > "$out_root/evals/evals.json" 2>/dev/null; then
+  :
+elif [[ "$pipeline_mode" == "auto-pipeline-create" && -f "$src_root/evals/evals.json" ]]; then
+  cp "$src_root/evals/evals.json" "$out_root/evals/evals.json"
+  echo "[WARN] auto-pipeline-create: evals.json copied from working tree" >&2
+else
+  rm -f "$out_root/evals/evals.json"
+fi
+
 echo "frozen_root=$out_root"
 exit 0
