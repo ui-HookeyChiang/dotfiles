@@ -11,21 +11,22 @@ Copy `skill-dev`'s `hooks/`, generic skills, and `docs/agents/` into the
 personal dotfiles repo at `~/dotfiles/.claude/`. Excludes `ubiquiti-*` skills
 (work-specific — must not enter personal dotfiles).
 
-**Local machine tool.** Lives in `~/.claude/skills/`, not in any repo. Not
-version-controlled, not installed by `install.sh`, not synced anywhere.
+**Dotfiles-repo tool.** Lives in this repo at
+`~/dotfiles/.claude/skills/sync-to-dotfiles/`. Not installed by skill-dev's
+`install.sh` and never synced by itself — it is the sync's destination side.
 
 ## Run
 
 Dry-run first (default — writes nothing, prints the plan):
 
 ```
-bash ~/.claude/skills/sync-to-dotfiles/scripts/sync-to-dotfiles.sh
+bash ~/dotfiles/.claude/skills/sync-to-dotfiles/scripts/sync-to-dotfiles.sh
 ```
 
 Apply:
 
 ```
-bash ~/.claude/skills/sync-to-dotfiles/scripts/sync-to-dotfiles.sh --apply
+bash ~/dotfiles/.claude/skills/sync-to-dotfiles/scripts/sync-to-dotfiles.sh --apply
 ```
 
 ## Source must be clean
@@ -36,7 +37,7 @@ Point `SRC` at a clean tree on `origin/main` first:
 
 ```
 git -C ~/.claude/skill-dev worktree add /tmp/sync-src origin/main
-SRC=/tmp/sync-src bash ~/.claude/skills/sync-to-dotfiles/scripts/sync-to-dotfiles.sh --apply
+SRC=/tmp/sync-src bash ~/dotfiles/.claude/skills/sync-to-dotfiles/scripts/sync-to-dotfiles.sh --apply
 git -C ~/.claude/skill-dev worktree remove /tmp/sync-src --force
 ```
 
