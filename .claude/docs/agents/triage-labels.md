@@ -21,3 +21,12 @@ Pocock defines no `done` triage role — upstream signals completion via GitHub
 issue-closed. The local-markdown backend has no close, so **completion is
 `Status: done`**. This repo treats `done` as the terminal success state
 (distinct from `wontfix` = terminal rejection).
+
+On completion, the file is also moved to the `done/` subdirectory:
+
+```bash
+mkdir -p docs/ticket/done
+git mv docs/ticket/YYYY-MM-DD-<slug>.md docs/ticket/done/
+```
+
+This mirrors `docs/spec/archive/` — `ls docs/ticket/` shows only open work.

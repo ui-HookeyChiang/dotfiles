@@ -17,7 +17,9 @@ Codex uses `~/.codex/config.toml` (TOML) + `~/.codex/hooks.json` (JSON).
 The JSON schema is identical. The only difference is the file path.
 
 **Hook events supported by Codex (≥ v0.143.0):** `PreToolUse`, `SubagentStart`.
-Claude Code additionally fires `PostToolUse`, `SessionStart`, `SessionEnd`.
+Claude Code additionally fires `PostToolUse`, `SessionStart`, `SessionEnd`;
+`SessionStart` remains an accepted parity exception for Codex because no
+Codex session-start hook surface is confirmed.
 
 **Codex-only PreToolUse fields** not present in Claude Code:
 - `turn_id` — turn counter within the session
@@ -26,13 +28,13 @@ Claude Code additionally fires `PostToolUse`, `SessionStart`, `SessionEnd`.
 
 **Tool name differences:** Codex uses `apply_patch` where Claude Code uses
 `Edit`/`Write`/`MultiEdit`/`NotebookEdit`. A matcher that needs to cover both
-harnesses must include `apply_patch` (see repo `hooks/codex/hooks.json`).
+harnesses must include `apply_patch` (see Codex entries in `hooks/manifest.json`).
 
 **Registration:** install user-level (`~/.codex/hooks.json`), not project
 `.codex/hooks.json`. Project-layer hooks require `projects.<path>.trust_level =
 "trusted"` in `config.toml` and are unreliable for cross-repo guards.
-The repo ships an absolute-path template at `hooks/codex/hooks.json`; the
-installed copy is `~/.codex/hooks.json` (see ticket
+The repo renders Codex hook entries from `hooks/manifest.json`; the installed
+copy is `~/.codex/hooks.json` (see ticket
 `docs/ticket/2026-07-21-codex-hooks-registration.md`).
 
 ---
@@ -117,7 +119,19 @@ Config key: `projects.<path>.trust_level` (path is the absolute repo root).
 
 ---
 
-## 5. Ready-to-paste `config.toml` snippet — filesystem-deny profile
+## 5. Agent definitions
+
+| Claude Code | Codex CLI |
+|---|---|
+| `~/.claude/agents/{scan,execute,decide}.md` | `~/.codex/agents/{scan,execute,decide}.md` |
+
+Codex CLI's `multi_agent` feature reads file-backed agent prompts from
+`~/.codex/agents`. This repo installs the Claude baseline agent vocabulary via
+`hooks/codex/agents/` when hook registration runs.
+
+---
+
+## 6. Ready-to-paste `config.toml` snippet — filesystem-deny profile
 
 Covers the three protected path classes in this repo: `.worktrees/`,
 `.claude/`, and dotfiles (`~/.*`). Install by merging into
@@ -165,3 +179,28 @@ Validate with `python3 -c "import tomllib; tomllib.loads(open('snippet.toml').re
 | Filesystem denylist | `permissions.deny[]` | hooks only (`PreToolUse`) |
 | Project trust | `projects` | `projects.<path>.trust_level` |
 | Per-project approval | `projects.<path>.defaultMode` | `projects.<path>.approval_policy` |
+| Skill invocation policy | `disable-model-invocation` frontmatter | `agents/openai.yaml` / `policy.allow_implicit_invocation` |
+| Agent definitions | `~/.claude/agents/*.md` | `~/.codex/agents/*.md` |
+
+For skills that explicitly invoke other skills, use
+`docs/agents/skill-invocation.md`. The sidecar controls implicit invocation;
+orchestrator-owned explicit steps fall back to reading the target `SKILL.md`
+inline if a harness blocks native `Skill <name>` dispatch.
+
+---
+
+## HITL gate parity
+
+Deterministically enforceable gates live as hooks; model-trusted gates stay
+prompt-level. Phase-gated HITL is only as reliable as its weakest harness —
+keep this table current when adding gates
+(docs/ticket/2026-07-22-hitl-adopt-minimal-diffs.md).
+
+| Gate | Enforcement | Claude Code | Codex CLI |
+|---|---|---|---|
+| Destructive-op confirm (merge, delete branch, force-push) | hook (`PreToolUse`) | ✅ | ✅ (`hooks/manifest.json` renders `~/.codex/hooks.json`) |
+| Merge-without-consent block | hook (`PreToolUse`) | ✅ | ✅ |
+| Worktree guard (session claim, base freshness) | hook | ✅ | ✅ (`feat/agent-worktree-guard`) |
+| Initial plan approval | prompt-level | CLAUDE.md Converge/AFK | AGENTS.md equivalent |
+| Structural replan hard stop (scope change, new module, API/schema change, migration reorder, impossible acceptance) | prompt-level | CLAUDE.md hard stops | AGENTS.md equivalent |
+| False-done artifact check | prompt-level (see model-dispatch-claude.md) | ✅ | ✅ |

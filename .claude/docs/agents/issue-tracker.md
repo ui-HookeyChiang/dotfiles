@@ -16,7 +16,9 @@ files, NOT the `gh` CLI.
     ├── spec/
     │   └── YYYY-MM-DD-<slug>.md     ← to-spec output
     ├── ticket/
-    │   └── YYYY-MM-DD-<slug>.md     ← to-tickets vertical slices
+    │   ├── YYYY-MM-DD-<slug>.md     ← to-tickets vertical slices (open)
+    │   └── done/
+    │       └── YYYY-MM-DD-<slug>.md ← completed tickets (git mv'd here)
     └── adr/
         └── NNNN-<slug>.md           ← grill-with-docs (sequential, see domain.md)
 
@@ -45,8 +47,10 @@ files, NOT the `gh` CLI.
 - **"fetch the relevant ticket"** → read the file at the referenced path. The
   user normally passes the path or `<slug>` directly.
 - **transition / label change** → edit the `Status:` line in place.
-- **completion** → set `Status: done` (Pocock has no native done state; GitHub's
-  issue-closed is replaced by this line here).
+- **completion** → set `Status: done` AND `git mv` the file to `docs/ticket/done/`.
+  This keeps `docs/ticket/` showing only open items while preserving history.
+  (Pocock has no native done state; GitHub's issue-closed is replaced by this
+  line + move.)
 
 ## Reference: prior backends
 
