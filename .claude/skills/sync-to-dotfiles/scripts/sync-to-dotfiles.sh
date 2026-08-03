@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # sync-to-dotfiles.sh — one-way sync skill-dev → personal dotfiles.
 #
-# Copies hooks, generic skills, and docs/agents into the dotfiles repo,
-# EXCLUDING ubiquiti-* skills (work-specific, must not enter personal dotfiles).
+# Copies hooks, skills, docs/agents, docs/agent-definitions, scripts, and
+# skills-lock.json into the dotfiles repo, EXCLUDING ubiquiti-* skills
+# (work-specific, must not enter personal dotfiles).
 #
 # Idempotent. Dry-run by default; pass --apply to write. Leaves dotfiles
 # UNCOMMITTED so you review + commit yourself.
@@ -53,7 +54,25 @@ while IFS= read -r skillmd; do
   s_count=$((s_count+1))
 done < <(find "$SRC" -maxdepth 2 -name SKILL.md -not -path '*/.git/*' | sort)
 
-# ── 3. docs/agent-definitions ──────────────────────────────────────────────
+# ── 3. docs/agents ─────────────────────────────────────────────────────────
+say "== docs/agents =="
+da_count=0
+if [[ -d "$SRC/docs/agents" ]]; then
+  if [[ $APPLY -eq 1 ]]; then
+    mkdir -p "$DST/docs"
+  fi
+  while IFS= read -r f; do
+    rel="${f#"$SRC"/docs/agents/}"
+    if [[ $APPLY -eq 1 ]]; then
+      mkdir -p "$DST/docs/agents/$(dirname "$rel")"
+      cp "$f" "$DST/docs/agents/$rel"
+    fi
+    say "  doc: $rel"
+    da_count=$((da_count+1))
+  done < <(find "$SRC/docs/agents" -type f 2>/dev/null | sort)
+fi
+
+# ── 4. docs/agent-definitions ──────────────────────────────────────────────
 say "== docs/agent-definitions =="
 d_count=0
 if [[ -d "$SRC/docs/agent-definitions" ]]; then
@@ -66,7 +85,7 @@ if [[ -d "$SRC/docs/agent-definitions" ]]; then
   say "  copied docs/agent-definitions/ tree"
 fi
 
-# ── 4. registration toolchain (scripts/) ─────────────────────────────────────
+# ── 5. registration toolchain (scripts/) ─────────────────────────────────────
 say "== scripts =="
 sc_count=0
 if [[ -d "$SRC/scripts" ]]; then
@@ -78,7 +97,7 @@ if [[ -d "$SRC/scripts" ]]; then
   say "  copied scripts/ tree"
 fi
 
-# ── 5. skills-lock.json ──────────────────────────────────────────────────────
+# ── 6. skills-lock.json ──────────────────────────────────────────────────────
 say "== skills-lock.json =="
 lock_count=0
 if [[ -f "$SRC/skills-lock.json" ]]; then
@@ -91,6 +110,7 @@ say ""
 say "== summary =="
 say "  hooks:                   $h_count files"
 say "  scripts:                 $sc_count files"
+say "  docs/agents:             $da_count files"
 say "  docs/agent-definitions:  $d_count files"
 say "  skills-lock.json:        $lock_count file"
 say "  skills:                  $s_count synced, $skip ubiquiti-* excluded"
