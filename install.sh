@@ -198,6 +198,9 @@ Flags:
 
 Environment (target-dir overrides, default to real paths; for testing):
   CLAUDE_DIR, OPENCODE_DIR, CURSOR_DIR, AGENTS_SKILLS_DIR
+  CURSOR_RULES_DIR (default: $REPO_ROOT/.cursor/rules — Cursor project
+  rules are repo-local by design, matching skill-dev; override only to
+  redirect a fake-HOME test run away from the real checkout)
 EOF
 }
 
@@ -1044,6 +1047,13 @@ CLAUDE_DIR="${CLAUDE_DIR:-$HOME/.claude}"
 OPENCODE_DIR="${OPENCODE_DIR:-$HOME/.config/opencode}"
 CURSOR_DIR="${CURSOR_DIR:-$HOME/.cursor}"
 AGENTS_SKILLS_DIR="${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}"
+# Cursor has no file-based user-level instruction surface; project-level
+# .cursor/rules/ in the checkout is the closest equivalent (matches
+# skill-dev install.sh's own $REPO_ROOT/.cursor/rules default — these files
+# are meant to be committed, same as skill-dev's own tracked .cursor/rules/).
+# Override only for test-seam isolation (fake-HOME runs must never write into
+# the real checkout).
+CURSOR_RULES_DIR="${CURSOR_RULES_DIR:-$REPO_ROOT/.cursor/rules}"
 
 DOTCLAUDE="$REPO_ROOT/.claude"
 
@@ -1221,7 +1231,7 @@ sync_claude_settings() {
 # paths (hooks/cursor/user-settings.json, hooks/cursor/cli-config.json).
 register_cursor_agents() {
   log "register_cursor_agents"
-  local rules_dir="$REPO_ROOT/.cursor/rules"
+  local rules_dir="$CURSOR_RULES_DIR"
   local guardrails=(memory-discipline terse-output model-dispatch-claude sandbox-protected-paths)
   run mkdir -p "$rules_dir"
   local slug src mdc desc
