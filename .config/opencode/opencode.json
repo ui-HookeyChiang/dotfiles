@@ -24,19 +24,26 @@
   },
   "instructions": [
     "~/.config/opencode/memory-discipline.md",
+    "~/.config/opencode/model-dispatch-claude.md",
+    "~/.config/opencode/sandbox-protected-paths.md",
+    "~/.config/opencode/shell-tools.md",
     "~/.config/opencode/terse-output.md"
   ],
-  "agent": {
-    "general": {
-      "mode": "subagent",
-      "prompt": "{file:./agents/general.md}"
-    },
-    "explore": {
-      "mode": "subagent",
-      "prompt": "{file:./agents/explore.md}"
-    }
-  },
   "plugin": [
     "./plugins/skill-dev-hooks.ts"
-  ]
+  ],
+  "agent": {
+    "decide": {
+      "mode": "subagent",
+      "prompt": "{file:./agents/decide.md}"
+    },
+    "execute": {
+      "mode": "subagent",
+      "prompt": "{file:./agents/execute.md}"
+    },
+    "scan": {
+      "mode": "subagent",
+      "prompt": "{file:./agents/scan.md}"
+    }
+  }
 }
