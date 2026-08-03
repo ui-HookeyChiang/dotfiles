@@ -95,3 +95,28 @@ Constraints:
 ## Test seam
 
 Shell-level against a fake `$HOME`/target-dir override. No unit framework.
+
+## Hook registration evidence (follow-up verification)
+
+Decision: `--register-hooks` stays a separate opt-in flag, not folded into
+`--with-claude-agents` by default. This matches skill-dev's own install.sh,
+which also defaults `REGISTER_HOOKS=0` and requires `--register-hooks`
+explicitly (skill-dev install.sh:93,104) — hooks are symlinked unconditionally
+but only merged into settings.json/hooks.json when the flag is passed. No
+code change needed; the earlier test run simply hadn't passed the flag.
+
+Evidence, fresh fake HOME, `install_claude_agents` with `REGISTER_HOOKS=1`:
+- `manifest.json` defines 7 hooks with a `claude` harness (block-main-edit,
+  guard-stale-base, guard-agent-worktree-files, guard-agent-worktree-bash,
+  block-bare-read, block-heredoc-continuation, subagent-dispatch-inject) —
+  no `SessionStart` entries exist for the claude harness in manifest.json.
+- After one run: `~/.claude/settings.json` has all 7, as 6 `PreToolUse`
+  entries + 1 `SubagentStart` entry — exact match.
+- `~/.cursor/hooks.json` got the 5 manifest entries with a `cursor` harness
+  (rtk is codex-only, absent as expected since codex wasn't detected).
+- Idempotency: ran twice; `diff` of settings.json before/after run 2 is
+  byte-identical (0 differences) — no duplicate hook entries.
+  register-settings-hooks.sh logs `[merged]` on every `--apply` run
+  regardless of whether content changed (that's the snapshot script's own
+  behavior, unmodified) — the diff, not the log line, is the source of
+  truth for no-duplication.
