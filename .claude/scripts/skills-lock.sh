@@ -90,7 +90,11 @@ add_skill_hashes() {
     fi
 
     local hash
-    hash="$(tree_hash "$SKILLS_ROOT/$skill")"
+    hash="$(tree_hash "$SKILLS_ROOT/$skill")" || hash=""
+    if [[ ! "$hash" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+      echo "refusing to write invalid treeHash for $skill (got: '$hash')" >&2
+      exit 1
+    fi
     skills_json="$(
       jq \
         --arg name "$skill" \

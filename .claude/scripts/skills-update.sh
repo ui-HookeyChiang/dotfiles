@@ -79,8 +79,13 @@ prepare_source_tree() {
 }
 
 hash_skill() {
-  local skill_dir="$1"
-  bash "$LOCK_SCRIPT" hash-tree "$skill_dir"
+  local skill_dir="$1" hash
+  hash="$(bash "$LOCK_SCRIPT" hash-tree "$skill_dir")" || hash=""
+  if [[ ! "$hash" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+    echo "refusing to use invalid treeHash for $skill_dir (got: '$hash')" >&2
+    return 1
+  fi
+  printf '%s\n' "$hash"
 }
 
 candidate_lock() {
@@ -281,7 +286,23 @@ EOF
   fi
 }
 
+usage() {
+  cat <<'EOF'
+Usage: scripts/skills-update.sh
+
+Gated upgrade flow for pinned upstream skills. Takes no arguments;
+configuration is env-var driven (SKILLS_UPDATE_*).
+EOF
+}
+
 main() {
+  if [[ $# -gt 0 ]]; then
+    case "$1" in
+      -h|--help) usage; exit 0 ;;
+      *) echo "unknown argument: $1" >&2; usage >&2; exit 2 ;;
+    esac
+  fi
+
   require_bin jq
   require_bin git
   require_bin curl
