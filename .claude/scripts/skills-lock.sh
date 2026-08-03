@@ -14,7 +14,7 @@ SKILLS_CLI_VERSION="${SKILLS_LOCK_SKILLS_CLI_VERSION:-1.5.20}"
 MATTPOCOCK_SOURCE="mattpocock/skills"
 MATTPOCOCK_REF="HEAD"
 MATTPOCOCK_SOURCE_REF="ed37663cc5fbef691ddfecd080dff42f7e7e350d"
-MATTPOCOCK_SKILLS="${SKILLS_LOCK_MATTPOCOCK_SKILLS:-improve-codebase-architecture grill-with-docs to-spec to-tickets wayfinder triage setup-matt-pocock-skills handoff writing-great-skills ask-matt domain-modeling tdd resolving-merge-conflicts codebase-design diagnosing-bugs prototype research}"
+MATTPOCOCK_SKILLS="${SKILLS_LOCK_MATTPOCOCK_SKILLS:-improve-codebase-architecture grill-with-docs grilling to-spec to-tickets wayfinder triage setup-matt-pocock-skills handoff writing-great-skills ask-matt domain-modeling tdd resolving-merge-conflicts codebase-design diagnosing-bugs prototype research}"
 
 DARWIN_SOURCE="alchaincyf/darwin-skill"
 DARWIN_REF="HEAD"
@@ -84,7 +84,7 @@ add_skill_hashes() {
       skill_path="."
     elif [[ "$source" == "$MATTPOCOCK_SOURCE" ]]; then
       case "$skill" in
-        handoff|writing-great-skills) skill_path="skills/productivity/$skill" ;;
+        handoff|writing-great-skills|grilling|teach) skill_path="skills/productivity/$skill" ;;
         *) skill_path="skills/engineering/$skill" ;;
       esac
     fi
