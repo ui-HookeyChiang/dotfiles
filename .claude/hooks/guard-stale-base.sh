@@ -75,7 +75,11 @@ BEGIN { in_heredoc = 0; terminator = "" }
 # Split the command on shell separators: ; && || |
 # Separators are matched longest-first (&&, || before |) to avoid |
 # being consumed from inside || or &&.
-mapfile -t segments < <(printf '%s' "$clean_cmd" | awk '
+# bash-3.2 compatible (macOS /bin/bash has no mapfile)
+segments=()
+while IFS= read -r _seg; do
+  segments+=("$_seg")
+done < <(printf '%s' "$clean_cmd" | awk '
 {
   line = $0
   while (length(line) > 0) {
@@ -279,6 +283,7 @@ check_segment() {
   exit 1
 }
 
-for seg in "${segments[@]}"; do
+# ${segments[@]+...} guards set -u on empty array under bash 3.2
+for seg in ${segments[@]+"${segments[@]}"}; do
   check_segment "$seg"
 done
