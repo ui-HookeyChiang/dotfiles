@@ -209,6 +209,11 @@ oc() {
   fi
 }
 
-# Skip folder-trust + one-time bypass-mode confirm for worktree-driven AFK sessions.
-# Deliberate CLI-flag-only escape hatch (no settings.json equivalent by design).
+# Headless coding CLIs — prompt mode with auto-approve
 alias claude='claude --dangerously-skip-permissions'
+alias cc='claude -p --dangerously-skip-permissions'
+command -v codex >/dev/null 2>&1 && alias cx='codex -a never'
+alias cur='cursor -p'
+
+# opencode
+export PATH=/Users/hookeychiang/.opencode/bin:$PATH
