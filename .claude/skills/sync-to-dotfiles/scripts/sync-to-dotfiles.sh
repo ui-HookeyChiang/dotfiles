@@ -22,20 +22,17 @@ say() { printf '%s\n' "$*"; }
 [[ -d "$SRC" ]] || { echo "missing SRC: $SRC" >&2; exit 1; }
 [[ -d "$DST" ]] || { echo "missing DST: $DST" >&2; exit 1; }
 
-# ── 1. hooks/*.sh ───────────────────────────────────────────────────────────
-say "== hooks =="
-[[ $APPLY -eq 1 ]] && mkdir -p "$DST/hooks"
+# ── 1. Full hooks/ tree ─────────────────────────────────────────────────────
+say "== hooks (full tree) =="
 h_count=0
-for f in "$SRC"/hooks/*.sh; do
-  [[ -e "$f" ]] || continue
-  base="$(basename "$f")"
-  [[ $APPLY -eq 1 ]] && cp "$f" "$DST/hooks/$base"
-  say "  hook: $base"
-  h_count=$((h_count+1))
-done
-# hook tests too, if present
-if [[ -d "$SRC/hooks/tests" ]]; then
-  [[ $APPLY -eq 1 ]] && { mkdir -p "$DST/hooks/tests"; cp "$SRC"/hooks/tests/*.sh "$DST/hooks/tests/" 2>/dev/null || true; }
+if [[ -d "$SRC/hooks" ]]; then
+  if [[ $APPLY -eq 1 ]]; then
+    rm -rf "${DST:?}/hooks"
+    cp -a "$SRC/hooks" "$DST/hooks"
+  fi
+  # Count files for summary
+  h_count=$(find "$SRC/hooks" -type f | wc -l)
+  say "  copied hooks/ tree"
 fi
 
 # ── 2. skills (exclude ubiquiti-*) ──────────────────────────────────────────
@@ -56,27 +53,47 @@ while IFS= read -r skillmd; do
   s_count=$((s_count+1))
 done < <(find "$SRC" -maxdepth 2 -name SKILL.md -not -path '*/.git/*' | sort)
 
-# ── 3. docs/agents ──────────────────────────────────────────────────────────
-say "== docs/agents =="
+# ── 3. docs/agent-definitions ──────────────────────────────────────────────
+say "== docs/agent-definitions =="
 d_count=0
-if [[ -d "$SRC/docs/agents" ]]; then
-  [[ $APPLY -eq 1 ]] && mkdir -p "$DST/docs/agents"
-  while IFS= read -r f; do
-    rel="${f#"$SRC"/docs/agents/}"
-    if [[ $APPLY -eq 1 ]]; then
-      mkdir -p "$DST/docs/agents/$(dirname "$rel")"
-      cp "$f" "$DST/docs/agents/$rel"
-    fi
-    say "  doc: $rel"
-    d_count=$((d_count+1))
-  done < <(find "$SRC/docs/agents" -type f | sort)
+if [[ -d "$SRC/docs/agent-definitions" ]]; then
+  if [[ $APPLY -eq 1 ]]; then
+    rm -rf "${DST:?}/docs/agent-definitions"
+    mkdir -p "$DST/docs"
+    cp -a "$SRC/docs/agent-definitions" "$DST/docs/"
+  fi
+  d_count=$(find "$SRC/docs/agent-definitions" -type f 2>/dev/null | wc -l)
+  say "  copied docs/agent-definitions/ tree"
+fi
+
+# ── 4. registration toolchain (scripts/) ─────────────────────────────────────
+say "== scripts =="
+sc_count=0
+if [[ -d "$SRC/scripts" ]]; then
+  if [[ $APPLY -eq 1 ]]; then
+    rm -rf "${DST:?}/scripts"
+    cp -a "$SRC/scripts" "$DST/"
+  fi
+  sc_count=$(find "$SRC/scripts" -type f | wc -l)
+  say "  copied scripts/ tree"
+fi
+
+# ── 5. skills-lock.json ──────────────────────────────────────────────────────
+say "== skills-lock.json =="
+lock_count=0
+if [[ -f "$SRC/skills-lock.json" ]]; then
+  [[ $APPLY -eq 1 ]] && cp "$SRC/skills-lock.json" "$DST/skills-lock.json"
+  say "  file: skills-lock.json"
+  lock_count=1
 fi
 
 say ""
 say "== summary =="
-say "  hooks:       $h_count"
-say "  skills:      $s_count synced, $skip ubiquiti-* excluded"
-say "  docs/agents: $d_count"
+say "  hooks:                   $h_count files"
+say "  scripts:                 $sc_count files"
+say "  docs/agent-definitions:  $d_count files"
+say "  skills-lock.json:        $lock_count file"
+say "  skills:                  $s_count synced, $skip ubiquiti-* excluded"
 say ""
 if [[ $APPLY -eq 0 ]]; then
   say "DRY RUN — no files written. Re-run with --apply to sync."
