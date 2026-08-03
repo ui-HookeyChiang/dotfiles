@@ -3,7 +3,7 @@
 | Agent | Criterion | Model × Effort | Escalation rule |
 |-------|-----------|----------------|-----------------|
 | `scan` | Bounded — input contains all needed info (grep, locate, classify, extract) | Haiku 4.5 low | verifier catches errors |
-| `scan` search-flavored | Info NOT in input — multi-hop repo lookup | Sonnet 4.6/5 low | Haiku floors here (0.14 acc) — never route |
+| `scan` search-flavored | Info NOT in input — multi-hop repo lookup | Sonnet 5 low | Haiku floors here (0.14 acc) — never route |
 | `execute` | Goal clear, success verifiable (implement, test, deploy, build) | Haiku 4.5 low | verifier failure → Sonnet 5 low → Opus 4.8 low |
 | `execute` review-shaped | Verdict on a diff/claim | Sonnet 5 low | Haiku only where false-REJECTs tolerable (errs strict, FA=0) |
 | `execute` deep-diagnosis | Root-cause from inline evidence | Sonnet 5 low (Opus 4.6 value pick) | discovery-coupled → search binding |
@@ -12,9 +12,11 @@
 
 Rules: effort stays low — "needs > medium → promote model, not effort"
 (effort-inversion). Never give Haiku math, multi-file long-horizon, or design
-generation. Bindings from local eval rounds 1-6
-(docs/ticket/2026-07-22-model-dispatch-eval-planner-executor.md); 4.6 slots
+generation. Bindings from local eval rounds 1-7
+(docs/ticket/2026-07-22-model-dispatch-eval-planner-executor.md); Round 7
+tested Opus 5 as an API challenger and did not displace Opus 4.6. 4.6 slots
 stay while API-active — rebind on Anthropic 4.6 EOL notice.
+model-eval provides evidence for binding decisions; it does not directly apply a row across different model ids, efforts, or dispatch surfaces.
 
 ## Escalation
 
