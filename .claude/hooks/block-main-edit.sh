@@ -82,9 +82,13 @@ if [ "$tool_name" = "apply_patch" ]; then
   is_main_checkout "$PWD" || exit 0
 
   # Every touched path must be release-whitelisted to pass; else deny.
-  mapfile -t files < <(printf '%s' "$patch" | grep -E '^\+\+\+ b/' | sed 's|^+++ b/||')
+  # bash-3.2 compatible (macOS /bin/bash has no mapfile)
+  files=()
+  while IFS= read -r _f; do
+    files+=("$_f")
+  done < <(printf '%s' "$patch" | grep -E '^\+\+\+ b/' | sed 's|^+++ b/||')
   [ "${#files[@]}" -eq 0 ] && exit 0
-  for f in "${files[@]}"; do
+  for f in ${files[@]+"${files[@]}"}; do
     is_release_path "$f" && continue
     deny "Blocked: apply_patch writes into the main checkout.
 
@@ -123,6 +127,14 @@ is_main_checkout "$dir" || exit 0
 if [ -n "$file_path" ]; then
   toplevel="$(git -C "$dir" rev-parse --show-toplevel 2>/dev/null)"
   if [ -n "$toplevel" ]; then
+    # Normalize to the physical path: toplevel is physical, but file_path may
+    # come through a symlink (macOS /var -> /private/var), breaking the strip.
+    # $dir is the nearest existing ancestor; keep the tail below it intact.
+    phys_dir="$(cd "$dir" 2>/dev/null && pwd -P)"
+    if [ -n "$phys_dir" ]; then
+      path_tail="${file_path#"$dir"}"
+      file_path="${phys_dir}${path_tail}"
+    fi
     rel="${file_path#"$toplevel"/}"
     is_release_path "$rel" && exit 0
   fi
