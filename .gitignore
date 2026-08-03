@@ -41,3 +41,6 @@ id_*
 .code-review-graph/
 
 **/.claude/settings.local.json
+
+# install.sh --with-claude-agents runtime bridge (register-harness.sh layout)
+/.claude/agent-parity
