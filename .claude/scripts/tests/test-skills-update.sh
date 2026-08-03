@@ -95,4 +95,11 @@ fail_after="$(sha256sum "$fail_lock" | awk '{print $1}')"
 [[ "$fail_before" == "$fail_after" ]] || { echo "FAIL: gate failure mutated lock" >&2; exit 1; }
 compgen -G "$tmpdir/tickets-fail/*.md" >/dev/null || { echo "FAIL: gate failure did not write ticket" >&2; exit 1; }
 
+help_out="$(bash "$UPDATE_SCRIPT" --help)" || { echo "FAIL: --help exited non-zero" >&2; exit 1; }
+grep -q "^Usage:" <<<"$help_out" || { echo "FAIL: --help did not print usage" >&2; exit 1; }
+if bash "$UPDATE_SCRIPT" --bogus >/dev/null 2>&1; then
+  echo "FAIL: unknown argument did not error" >&2
+  exit 1
+fi
+
 echo "[test-skills-update] PASS"

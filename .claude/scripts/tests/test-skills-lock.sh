@@ -49,4 +49,19 @@ if bash "$LOCK_SCRIPT" verify >/dev/null 2>&1; then
   exit 1
 fi
 
+git_restore_lock="$(cat "$lock_file")"
+rm -rf "$skills_root/alpha"
+if bash "$LOCK_SCRIPT" regen >/dev/null 2>"$tmpdir/regen.err"; then
+  echo "FAIL: regen succeeded with a missing skill directory" >&2
+  exit 1
+fi
+grep -q "refusing to write invalid treeHash for alpha" "$tmpdir/regen.err" || {
+  echo "FAIL: regen did not name the skill with the invalid hash" >&2
+  exit 1
+}
+[ "$(cat "$lock_file")" = "$git_restore_lock" ] || {
+  echo "FAIL: regen mutated the lock file despite failing" >&2
+  exit 1
+}
+
 echo "[test-skills-lock] PASS"
