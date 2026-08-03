@@ -29,6 +29,10 @@ WITH_CRG=0
 WITH_PROJECTS=0
 WITH_SECRETS=0
 WITH_NVIM=0
+WITH_CLAUDE_AGENTS=0
+REGISTER_HOOKS=0
+REGISTER_CURSOR=0
+SYNC_CLAUDE_SETTINGS=0
 SEED_SECRETS_MISSING=()  # (repo|KEY|service) tuples accumulated across run
 PROJECTS_DIR="${DOTFILES_PROJECTS_DIR:-$HOME}"
 PROJECT_NAMES=(llm-wiki stock-target-finder telegram-claude-bridge)
@@ -170,12 +174,33 @@ Optional modules:
   --with-nvim     Install neovim LSP servers, formatters, treesitter parsers, and plugins
                   via headless bootstrap. Auto-enables --with-node, --with-go, --with-rust.
                   Runs healthcheck after install.
+  --with-claude-agents
+                  Install Claude Code + OpenCode + Cursor agent-harness parity
+                  from the .claude/ snapshot: skills fanout, agent
+                  definitions, hooks, docs/agents symlinks, locked extras
+                  (rtk, darwin-skill, mattpocock skills), and a post-install
+                  parity/lock verification (advisory, never aborts install).
   --all           Enable all OS-compatible optional modules
+
+Optional flags for --with-claude-agents:
+  --register-hooks        Merge this repo's Claude/Codex/Cursor hooks into
+                           settings.json / hooks.json (idempotent). Without
+                           it, hooks are only symlinked.
+  --sync-claude-settings   Merge .model and the experimental-agent-teams env
+                           var into ~/.claude/settings.json.
+  --register-cursor        Write .cursor/rules/*.mdc guardrails and merge
+                           Cursor user-settings/cli-config templates.
 
 Flags:
   --dry-run       Print actions, do not execute
   --no-symlink    Skip dotfile symlinking
   -h, --help      Show this help and exit
+
+Environment (target-dir overrides, default to real paths; for testing):
+  CLAUDE_DIR, OPENCODE_DIR, CURSOR_DIR, AGENTS_SKILLS_DIR
+  CURSOR_RULES_DIR (default: $REPO_ROOT/.cursor/rules — Cursor project
+  rules are repo-local by design, matching skill-dev; override only to
+  redirect a fake-HOME test run away from the real checkout)
 EOF
 }
 
@@ -198,6 +223,10 @@ parse_flags() {
       --with-projects) WITH_PROJECTS=1 ;;
       --with-secrets) WITH_SECRETS=1 ;;
       --with-nvim)    WITH_NVIM=1 ;;
+      --with-claude-agents) WITH_CLAUDE_AGENTS=1 ;;
+      --register-hooks)     REGISTER_HOOKS=1 ;;
+      --register-cursor)    REGISTER_CURSOR=1 ;;
+      --sync-claude-settings) SYNC_CLAUDE_SETTINGS=1 ;;
       --all)
         WITH_NODE=1
         WITH_GO=1
@@ -209,6 +238,7 @@ parse_flags() {
         WITH_PROJECTS=1
         WITH_SECRETS=1
         WITH_NVIM=1
+        WITH_CLAUDE_AGENTS=1
         ;;
       -h|--help)
         usage
@@ -996,35 +1026,498 @@ MATTPOCOCK_SKILLS=(
 
 install_skills() {
   log "install_skills"
-  if ! command -v npx >/dev/null 2>&1; then
-    note "npx missing — install Node first (try --with-node)"
+  # Replaced (task 2 scope point 8): previously used unpinned `npx skills
+  # add`. Extras (darwin-skill, rtk, mattpocock skills) are now installed via
+  # install_locked_extras, driven by the lock-pinned .claude/skills-lock.json
+  # through the snapshot's scripts/skills-lock.sh. See --with-claude-agents.
+  install_locked_extras
+}
+
+# ---------------------------------------------------------------------------
+# Claude/OpenCode/Cursor agent-harness parity (from .claude/ snapshot)
+# ---------------------------------------------------------------------------
+# Reproduces skill-dev install.sh's effects for Claude Code, OpenCode, and
+# Cursor from the .claude/ snapshot synced into this repo (see
+# docs/ticket/sync-full-parity-paths.md). Source of truth for every artifact
+# below is $REPO_ROOT/.claude/..., not a skill-dev checkout — none of this
+# requires ~/.claude/skill-dev to exist.
+#
+# Target-dir overrides (fake-HOME testability; default to real paths):
+CLAUDE_DIR="${CLAUDE_DIR:-$HOME/.claude}"
+OPENCODE_DIR="${OPENCODE_DIR:-$HOME/.config/opencode}"
+CURSOR_DIR="${CURSOR_DIR:-$HOME/.cursor}"
+AGENTS_SKILLS_DIR="${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}"
+# Cursor has no file-based user-level instruction surface; project-level
+# .cursor/rules/ in the checkout is the closest equivalent (matches
+# skill-dev install.sh's own $REPO_ROOT/.cursor/rules default — these files
+# are meant to be committed, same as skill-dev's own tracked .cursor/rules/).
+# Override only for test-seam isolation (fake-HOME runs must never write into
+# the real checkout).
+CURSOR_RULES_DIR="${CURSOR_RULES_DIR:-$REPO_ROOT/.cursor/rules}"
+
+DOTCLAUDE="$REPO_ROOT/.claude"
+
+# _dc_ensure_symlink SRC DST: absent-only symlink (never replaces anything);
+# mirrors link_one's foreign-symlink/real-file backup branches so a prior
+# real install isn't clobbered.
+_dc_ensure_symlink() {
+  local src="$1" dst="$2"
+  if [[ -L "$dst" ]]; then
+    local target
+    target="$(readlink "$dst")"
+    if [[ "$target" == "$src" ]]; then
+      note "skip $(basename "$dst") (already linked)"
+      return 0
+    fi
+    ensure_backup_dir
+    note "backup foreign symlink $dst -> $target"
+    run mkdir -p "$(dirname "$BACKUP_DIR/${dst#"$HOME"/}")"
+    run mv "$dst" "$BACKUP_DIR/${dst#"$HOME"/}"
+    run ln -s "$src" "$dst"
+    return 0
+  fi
+  if [[ -e "$dst" ]]; then
+    ensure_backup_dir
+    note "backup $dst -> $BACKUP_DIR/${dst#"$HOME"/}"
+    run mkdir -p "$(dirname "$BACKUP_DIR/${dst#"$HOME"/}")"
+    run mv "$dst" "$BACKUP_DIR/${dst#"$HOME"/}"
+    run ln -s "$src" "$dst"
+    return 0
+  fi
+  run ln -s "$src" "$dst"
+  note "linked $(basename "$dst")"
+}
+
+# install_claude_agents — points 1-4: skills fanout, agent definitions,
+# hook registration, docs/agents symlinks + CLAUDE.md @-include hint.
+install_claude_agents() {
+  log "install_claude_agents"
+
+  # 1. Skills symlink fanout: every dir under .claude/skills/ into
+  #    CLAUDE_DIR/skills, plus OpenCode + codex/cursor agentskills fanout.
+  local skills_targets=("$CLAUDE_DIR/skills")
+  command -v opencode >/dev/null 2>&1 && skills_targets+=("$OPENCODE_DIR/skills")
+  { command -v codex >/dev/null 2>&1 || command -v cursor >/dev/null 2>&1; } \
+    && skills_targets+=("$AGENTS_SKILLS_DIR")
+
+  local t entry name src dst
+  for t in "${skills_targets[@]}"; do
+    run mkdir -p "$t"
+    for entry in "$DOTCLAUDE"/skills/*/; do
+      [[ -d "$entry" ]] || continue
+      name="$(basename "$entry")"
+      src="$(cd "$entry" && pwd)"
+      dst="$t/$name"
+      _dc_ensure_symlink "$src" "$dst"
+    done
+  done
+
+  # 2. Agent definitions -> CLAUDE_DIR/agents + OpenCode agents (raw copy;
+  #    OpenCode-specific frontmatter rewriting is handled in
+  #    sync_opencode_config, not here).
+  run mkdir -p "$CLAUDE_DIR/agents"
+  for entry in "$DOTCLAUDE"/docs/agent-definitions/*.md; do
+    [[ -f "$entry" ]] || continue
+    name="$(basename "$entry")"
+    _dc_ensure_symlink "$entry" "$CLAUDE_DIR/agents/$name"
+  done
+  if command -v opencode >/dev/null 2>&1; then
+    run mkdir -p "$OPENCODE_DIR/agents"
+    for entry in "$DOTCLAUDE"/docs/agent-definitions/*.md; do
+      [[ -f "$entry" ]] || continue
+      name="$(basename "$entry")"
+      _dc_ensure_symlink "$entry" "$OPENCODE_DIR/agents/$name"
+    done
+  fi
+
+  # 3. Hooks: symlink .claude/hooks/*.sh into CLAUDE_DIR/hooks, then invoke
+  #    the snapshot's own registration engine (register-harness.sh) rather
+  #    than re-porting registration-engine.sh's merge logic.
+  run mkdir -p "$CLAUDE_DIR/hooks"
+  for entry in "$DOTCLAUDE"/hooks/*.sh; do
+    [[ -f "$entry" ]] || continue
+    name="$(basename "$entry")"
+    [[ "$name" == "register-settings-hooks.sh" ]] && continue
+    _dc_ensure_symlink "$entry" "$CLAUDE_DIR/hooks/$name"
+  done
+
+  # register-harness.sh's own REPO_ROOT resolution (scripts/lib/../..) expects
+  # agent-parity as a sibling of hooks/ and scripts/; in this snapshot
+  # agent-parity landed under skills/ (it ships its own SKILL.md). Bridge with
+  # one absent-only relative symlink instead of patching the snapshot script.
+  if [[ ! -e "$DOTCLAUDE/agent-parity" ]]; then
+    run ln -s "skills/agent-parity" "$DOTCLAUDE/agent-parity"
+    note "linked .claude/agent-parity -> skills/agent-parity (register-harness.sh layout bridge)"
+  fi
+
+  if [[ -x "$DOTCLAUDE/scripts/register-harness.sh" ]] || [[ -f "$DOTCLAUDE/scripts/register-harness.sh" ]]; then
+    local rh_args=(--all)
+    (( REGISTER_HOOKS )) && rh_args+=(--configure-hooks)
+    (( DRY_RUN )) && rh_args+=(--dry-run)
+    HOME="$HOME" bash "$DOTCLAUDE/scripts/register-harness.sh" "${rh_args[@]}" \
+      || note "WARN: register-harness.sh reported a problem (continuing)"
+  fi
+
+  # 4. docs/agents/*.md -> CLAUDE_DIR/ (absent-only), same set as skill-dev's
+  #    config-doc phase. CLAUDE.md @-include registration: dotfiles already
+  #    ships CLAUDE.md with @-includes via symlink_dotfiles' CLAUDE_FILES, so
+  #    this is a verify-and-note step, not a write.
+  for entry in "$DOTCLAUDE"/docs/agents/*.md; do
+    [[ -f "$entry" ]] || continue
+    name="$(basename "$entry")"
+    local cfg_dst="$CLAUDE_DIR/$name"
+    if [[ -e "$cfg_dst" ]]; then
+      note "skip $name (present; absent-only, will not overwrite)"
+    else
+      run ln -s "$entry" "$cfg_dst"
+      note "linked $name"
+    fi
+  done
+  if [[ -L "$CLAUDE_DIR/CLAUDE.md" || -f "$CLAUDE_DIR/CLAUDE.md" ]]; then
+    if grep -q '^@docs/agents/memory-discipline\.md$' "$CLAUDE_DIR/CLAUDE.md" 2>/dev/null; then
+      note "CLAUDE.md @-includes already present (dotfiles-managed)"
+    else
+      note "CLAUDE.md missing @docs/agents/*.md includes — dotfiles CLAUDE.md should already carry these; verify $CLAUDE_DIR/CLAUDE.md is the repo-managed symlink"
+    fi
+  fi
+}
+
+# sync_claude_settings — point 5: merge .model + experimental-agent-teams env
+# into CLAUDE_DIR/settings.json (jq merge, preserve other keys).
+sync_claude_settings() {
+  log "sync_claude_settings"
+  if ! command -v jq >/dev/null 2>&1; then
+    note "jq missing; skip settings sync"
+    return 0
+  fi
+  local settings="$CLAUDE_DIR/settings.json"
+  if [[ ! -f "$settings" ]]; then
+    note "$settings not found; skip settings sync"
+    return 0
+  fi
+  local real="$settings"
+  [[ -L "$real" ]] && real="$(cd "$(dirname "$real")" && cd "$(dirname "$(readlink "$real")")" && pwd)/$(basename "$(readlink "$real")")"
+
+  local records=(
+    '.model|"claude-opus-4-6[1m]"'
+    '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS|"1"'
+  )
+  local rec key val current desired tmp
+  for rec in "${records[@]}"; do
+    IFS='|' read -r key val <<< "$rec"
+    current="$(jq -r "$key // empty" "$real" 2>/dev/null || true)"
+    desired="$(printf '%s' "$val" | jq -r '.' 2>/dev/null || true)"
+    if [[ "$current" == "$desired" ]]; then
+      note "settings $key already = $desired"
+      continue
+    fi
+    if (( DRY_RUN )); then
+      note "would set settings $key = $desired"
+      continue
+    fi
+    tmp="$(mktemp "${real}.sync.XXXXXX")"
+    if jq --argjson v "$val" "$key = \$v" "$real" > "$tmp" && jq empty "$tmp" >/dev/null 2>&1 && [[ -s "$tmp" ]]; then
+      mv "$tmp" "$real"
+      note "set settings $key = $desired"
+    else
+      rm -f "$tmp"
+      note "WARN: failed to set settings $key"
+    fi
+  done
+}
+
+# register_cursor_agents — point 6: .cursor/rules/*.mdc + Cursor settings
+# merge, ported from skill-dev's --register-cursor phase against snapshot
+# paths (hooks/cursor/user-settings.json, hooks/cursor/cli-config.json).
+register_cursor_agents() {
+  log "register_cursor_agents"
+  local rules_dir="$CURSOR_RULES_DIR"
+  local guardrails=(memory-discipline terse-output model-dispatch-claude sandbox-protected-paths)
+  run mkdir -p "$rules_dir"
+  local slug src mdc desc
+  for slug in "${guardrails[@]}"; do
+    src="$DOTCLAUDE/docs/agents/${slug}.md"
+    mdc="$rules_dir/${slug}.mdc"
+    [[ -f "$src" ]] || continue
+    if [[ -f "$mdc" ]]; then
+      note "cursor rule $slug already present"
+      continue
+    fi
+    if (( DRY_RUN )); then
+      note "would create cursor rule $mdc"
+      continue
+    fi
+    { printf -- '---\ndescription: %s guardrail\nalwaysApply: true\n---\n\n' "$slug"; cat "$src"; } > "$mdc"
+    note "created cursor rule $mdc"
+  done
+
+  if ! command -v jq >/dev/null 2>&1; then
+    note "jq missing; skip Cursor settings merge"
+    return 0
+  fi
+  local cursor_user_tpl="$DOTCLAUDE/hooks/cursor/user-settings.json"
+  local cursor_cli_tpl="$DOTCLAUDE/hooks/cursor/cli-config.json"
+  local cursor_user="$HOME/.config/Cursor/User/settings.json"
+  local cursor_cli="$CURSOR_DIR/cli-config.json"
+
+  if [[ -f "$cursor_user_tpl" ]]; then
+    if (( DRY_RUN )); then
+      note "would merge $cursor_user <- $cursor_user_tpl"
+    else
+      run mkdir -p "$(dirname "$cursor_user")"
+      [[ -f "$cursor_user" ]] || printf '{}\n' > "$cursor_user"
+      cp "$cursor_user" "${cursor_user}.bak"
+      local tmp
+      tmp="$(mktemp "${cursor_user}.tmp.XXXXXX")"
+      if jq -s '.[0] * .[1]' "$cursor_user" "$cursor_user_tpl" > "$tmp" && jq empty "$tmp" >/dev/null 2>&1 && [[ -s "$tmp" ]]; then
+        mv "$tmp" "$cursor_user"
+        note "merged Cursor user settings (backup: ${cursor_user}.bak)"
+      else
+        rm -f "$tmp"
+        note "WARN: failed to merge Cursor user settings"
+      fi
+    fi
+  fi
+
+  if [[ -f "$cursor_cli_tpl" ]]; then
+    if (( DRY_RUN )); then
+      note "would merge $cursor_cli <- $cursor_cli_tpl"
+    else
+      run mkdir -p "$(dirname "$cursor_cli")"
+      [[ -f "$cursor_cli" ]] || printf '{}\n' > "$cursor_cli"
+      cp "$cursor_cli" "${cursor_cli}.bak"
+      local tmp2
+      tmp2="$(mktemp "${cursor_cli}.tmp.XXXXXX")"
+      if jq -s '.[0] as $e | .[1] as $t | $e | .permissions //= {} | .permissions.deny = (((.permissions.deny // []) + ($t.permissions.deny // [])) | unique)' \
+          "$cursor_cli" "$cursor_cli_tpl" > "$tmp2" && jq empty "$tmp2" >/dev/null 2>&1 && [[ -s "$tmp2" ]]; then
+        mv "$tmp2" "$cursor_cli"
+        note "merged Cursor CLI config (backup: ${cursor_cli}.bak)"
+      else
+        rm -f "$tmp2"
+        note "WARN: failed to merge Cursor CLI config"
+      fi
+    fi
+  fi
+}
+
+# sync_opencode_config — point 7: opencode.json instructions/plugin/agent
+# registration, ported from skill-dev's PHASE 6.
+sync_opencode_config() {
+  log "sync_opencode_config"
+  if ! command -v opencode >/dev/null 2>&1; then
+    note "opencode not on PATH; skip config sync"
+    return 0
+  fi
+  run mkdir -p "$OPENCODE_DIR"
+
+  local plugin_src="$DOTCLAUDE/hooks/opencode/skill-dev-hooks.ts"
+  if [[ -f "$plugin_src" ]]; then
+    run mkdir -p "$OPENCODE_DIR/plugins"
+    _dc_ensure_symlink "$plugin_src" "$OPENCODE_DIR/plugins/skill-dev-hooks.ts"
+  fi
+
+  if ! command -v jq >/dev/null 2>&1; then
+    note "jq missing; skip opencode.json registration"
     return 0
   fi
 
-  # nuwa + darwin base skills. Skills CLI auto-symlinks into ~/.claude/skills/.
-  if [[ -L "$HOME/.claude/skills/huashu-nuwa" \
-     && -L "$HOME/.claude/skills/darwin-skill" ]]; then
-    note "skip base skills (huashu-nuwa + darwin-skill already linked)"
-  else
-    note "installing nuwa-skill + darwin-skill via npx skills CLI"
-    run npx --yes skills add -g -y alchaincyf/nuwa-skill alchaincyf/darwin-skill
+  local oc_config="$OPENCODE_DIR/opencode.json"
+  local oc_instructions=(
+    "~/.config/opencode/memory-discipline.md"
+    "~/.config/opencode/terse-output.md"
+    "~/.config/opencode/model-dispatch-claude.md"
+    "~/.config/opencode/sandbox-protected-paths.md"
+  )
+  local oc_agent_defs=(decide execute execute-deep execute-review scan scan-search)
+
+  if (( DRY_RUN )); then
+    note "would sync opencode config: $oc_config"
+    return 0
   fi
 
-  # mattpocock multi-skill repo: single-pick each with `-s`. The source
-  # positional MUST precede the flags — `skills add -s X SRC` makes the CLI
-  # swallow SRC as `-s`'s value and exit with `Missing required argument:
-  # source`. Skip the batch only if every target is already linked.
-  local missing=0 s
-  for s in "${MATTPOCOCK_SKILLS[@]}"; do
-    [[ -L "$HOME/.claude/skills/$s" ]] || { missing=1; break; }
-  done
-  if (( missing == 0 )); then
-    note "skip mattpocock skills (${#MATTPOCOCK_SKILLS[@]} already linked)"
+  [[ -f "$oc_config" ]] || printf '{}\n' > "$oc_config"
+  local oc_docs_json oc_agents_json tmp
+  oc_docs_json="$(printf '%s\n' "${oc_instructions[@]}" | jq -R . | jq -s .)"
+  oc_agents_json="$(printf '%s\n' "${oc_agent_defs[@]}" | jq -R . | jq -s .)"
+  tmp="$(mktemp "${oc_config}.oc.XXXXXX")"
+  if jq \
+      --arg p "./plugins/skill-dev-hooks.ts" \
+      --argjson docs "$oc_docs_json" \
+      --argjson agents "$oc_agents_json" \
+      '.instructions = (((.instructions // []) + $docs) | unique)
+       | .plugin = (((.plugin // []) + [$p]) | unique)
+       | .agent = (.agent // {})
+       | reduce $agents[] as $agent (. ; .agent[$agent] = {mode: "subagent", prompt: ("{file:./agents/" + $agent + ".md}")})' \
+      "$oc_config" > "$tmp" \
+      && jq empty "$tmp" >/dev/null 2>&1 && [[ -s "$tmp" ]]; then
+    mv "$tmp" "$oc_config"
+    note "synced opencode config: $oc_config"
   else
-    note "installing ${#MATTPOCOCK_SKILLS[@]} mattpocock skills via npx skills CLI"
-    for s in "${MATTPOCOCK_SKILLS[@]}"; do
-      run npx --yes skills add mattpocock/skills -g -y -s "$s"
-    done
+    rm -f "$tmp"
+    note "WARN: failed to sync opencode config"
+  fi
+}
+
+# install_locked_extras — point 8: rtk + lock-pinned GitHub skills
+# (darwin-skill, mattpocock), fetched per .claude/skills-lock.json. Ported
+# from skill-dev install.sh's PHASE 5 (_lock_file/_install_locked_github_skills
+# /_extras_records), pointed at the snapshot's lock file instead of
+# re-inventing the fetch-and-stage logic. Replaces the unpinned `npx skills
+# add` path previously in install_skills().
+_dc_lock_file() { printf '%s\n' "$DOTCLAUDE/skills-lock.json"; }
+
+_dc_lock_source_ref() {
+  local source="$1" ref
+  ref="$(jq -r --arg source "$source" '.sources[$source].sourceRef // empty' "$(_dc_lock_file)")"
+  if [[ -z "$ref" ]]; then
+    err "missing sourceRef for $source in $(_dc_lock_file)"
+    return 1
+  fi
+  printf '%s\n' "$ref"
+}
+
+_dc_remove_exact_line() {
+  local file="$1" line="$2" tmp
+  [[ -f "$file" ]] || return 0
+  tmp="$(mktemp "$(dirname "$file")/.$(basename "$file").tmp.XXXXXX")"
+  if awk -v line="$line" '$0 != line { print }' "$file" > "$tmp"; then
+    mv "$tmp" "$file"
+  else
+    rm -f "$tmp"
+    return 1
+  fi
+}
+
+_dc_install_locked_github_skills() {
+  local source="$1" ref tmp url
+  ref="$(_dc_lock_source_ref "$source")"
+  url="https://codeload.github.com/${source}/tar.gz/${ref}"
+  tmp="$(mktemp -d)"
+
+  run mkdir -p "$AGENTS_SKILLS_DIR"
+  note "fetch $source@$ref"
+  curl -fsSL "$url" | tar -xz -C "$tmp" --strip-components=1
+
+  local skill skill_path src dst staging
+  while IFS=$'\t' read -r skill skill_path; do
+    src="$tmp/$skill_path"
+    dst="$AGENTS_SKILLS_DIR/$skill"
+    staging="$dst.tmp"
+
+    if [[ ! -f "$src/SKILL.md" ]]; then
+      err "missing SKILL.md for $skill at $source@$ref:$skill_path"
+      rm -rf "$tmp"
+      return 1
+    fi
+
+    rm -rf "$staging"
+    mkdir -p "$staging"
+    cp -R "$src"/. "$staging"/
+    rm -rf "$dst"
+    mv "$staging" "$dst"
+  done < <(jq -r --arg source "$source" '.skills | to_entries[] | select(.value.source == $source) | [.key, (.value.skillPath // .key)] | @tsv' "$(_dc_lock_file)")
+
+  rm -rf "$tmp"
+}
+
+# _dc_canonical_skill_fanout_present SKILL...: true if every skill already
+# has a SKILL.md at AGENTS_SKILLS_DIR (the canonical store this function
+# fetches into). Mirrors skill-dev's cross-fanout check but scoped to the
+# canonical store only — dotfiles' own skills fanout (install_claude_agents)
+# handles the CLAUDE_DIR/OpenCode copies separately.
+_dc_canonical_skill_fanout_present() {
+  local skill
+  for skill in "$@"; do
+    [[ -f "$AGENTS_SKILLS_DIR/$skill/SKILL.md" ]] || return 1
+  done
+}
+
+install_locked_extras() {
+  log "install_locked_extras"
+  if [[ ! -f "$(_dc_lock_file)" ]]; then
+    note "$(_dc_lock_file) not found; skip locked extras"
+    return 0
+  fi
+  if ! command -v jq >/dev/null 2>&1 || ! command -v curl >/dev/null 2>&1; then
+    note "jq/curl required for locked extras; skipping"
+    return 0
+  fi
+
+  local mp_skills darwin_skills="darwin-skill"
+  mp_skills="${MATTPOCOCK_SKILLS[*]}"
+
+  # darwin-skill
+  if _dc_canonical_skill_fanout_present "$darwin_skills"; then
+    note "skip darwin-skill (already present)"
+  elif (( DRY_RUN )); then
+    note "would install darwin-skill from lock"
+  else
+    _dc_install_locked_github_skills "alchaincyf/darwin-skill" \
+      || note "WARN: darwin-skill install failed; continuing"
+  fi
+
+  # mattpocock skills
+  # shellcheck disable=SC2086
+  if _dc_canonical_skill_fanout_present $mp_skills; then
+    note "skip mattpocock skills (already present)"
+  elif (( DRY_RUN )); then
+    note "would install mattpocock skills from lock"
+  else
+    _dc_install_locked_github_skills "mattpocock/skills" \
+      || note "WARN: mattpocock skills install failed; continuing"
+  fi
+
+  # rtk (with hook registration)
+  local rtk_present=0
+  if command -v rtk >/dev/null 2>&1 \
+      && jq -e '.hooks.PreToolUse[]? | select(.matcher=="Bash") | .hooks[]? | select((.command // "") | test("(^|/)rtk hook claude$"))' "$CLAUDE_DIR/settings.json" >/dev/null 2>&1; then
+    rtk_present=1
+  fi
+  if (( rtk_present )); then
+    note "skip rtk (already registered)"
+  elif (( DRY_RUN )); then
+    note "would install + init rtk"
+  else
+    if ! command -v rtk >/dev/null 2>&1; then
+      local rtk_ref
+      rtk_ref="$(_dc_lock_source_ref "rtk-ai/rtk")" || return 1
+      curl -fsSL "https://raw.githubusercontent.com/rtk-ai/rtk/${rtk_ref}/install.sh" | sh
+    fi
+    PATH="$HOME/.local/bin:$PATH" rtk init -g --hook-only
+    command -v opencode >/dev/null 2>&1 && PATH="$HOME/.local/bin:$PATH" rtk init -g --opencode
+    command -v codex >/dev/null 2>&1 && PATH="$HOME/.local/bin:$PATH" rtk init -g --codex
+    command -v cursor >/dev/null 2>&1 && PATH="$HOME/.local/bin:$PATH" rtk init -g --agent cursor --no-patch
+    rm -f "$CLAUDE_DIR/RTK.md" "$HOME/.codex/RTK.md"
+    _dc_remove_exact_line "$CLAUDE_DIR/CLAUDE.md" "@RTK.md"
+    note "rtk init cannot auto-patch settings.json non-interactively — add a PreToolUse Bash hook running 'rtk hook claude' to $CLAUDE_DIR/settings.json, then restart Claude Code"
+  fi
+}
+
+# verify_claude_parity — point 9: post-install agent-parity check via the
+# snapshot's check-parity.sh, and a skills-lock verify pass. Non-zero exit
+# prints warnings but never aborts install (matches skill-dev behavior).
+verify_claude_parity() {
+  log "verify_claude_parity"
+  local parity_script="$DOTCLAUDE/skills/agent-parity/scripts/check-parity.sh"
+  if [[ -x "$parity_script" ]] || [[ -f "$parity_script" ]]; then
+    local parity_json parity_status
+    set +e
+    parity_json="$(HOME="$HOME" bash "$parity_script" --format json 2>/dev/null)"
+    parity_status=$?
+    set -e
+    if [[ "$parity_status" -eq 0 || "$parity_status" -eq 1 ]] && command -v jq >/dev/null 2>&1; then
+      local gaps warnings
+      gaps="$(printf '%s' "$parity_json" | jq -r '.counts.gaps // 0' 2>/dev/null || echo 0)"
+      warnings="$(printf '%s' "$parity_json" | jq -r '.counts.warnings // 0' 2>/dev/null || echo 0)"
+      note "agent-parity: $gaps gap(s), $warnings warning(s)"
+    else
+      note "agent-parity check did not run cleanly (exit $parity_status); continuing"
+    fi
+  fi
+  if [[ -x "$DOTCLAUDE/scripts/skills-lock.sh" ]] || [[ -f "$DOTCLAUDE/scripts/skills-lock.sh" ]]; then
+    SKILLS_LOCK_FILE="$DOTCLAUDE/skills-lock.json" SKILLS_LOCK_SKILLS_ROOT="$AGENTS_SKILLS_DIR" \
+      bash "$DOTCLAUDE/scripts/skills-lock.sh" verify \
+      || note "WARN: skills-lock verify failed (non-fatal)"
   fi
 }
 
@@ -1375,6 +1868,14 @@ main() {
   if (( WITH_CRG ));      then install_crg;      fi
   if (( WITH_PROJECTS )); then install_projects; fi
   if (( WITH_SECRETS ));  then seed_secrets;     fi
+  if (( WITH_CLAUDE_AGENTS )); then
+    install_claude_agents
+    (( SYNC_CLAUDE_SETTINGS )) && sync_claude_settings
+    (( REGISTER_CURSOR )) && register_cursor_agents
+    sync_opencode_config
+    install_locked_extras
+    verify_claude_parity
+  fi
 
   log "done"
 }
