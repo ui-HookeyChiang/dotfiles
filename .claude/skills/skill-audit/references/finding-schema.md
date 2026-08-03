@@ -26,7 +26,7 @@ Every finding emitted by `skill-audit` (axes G1 / G8; G7 moved to prose-guidelin
 
 ## Anti-hallucination — line-number validation contract
 
-The CLI (`scripts/audit.py` shim → `scripts/syntax_audit.py`, lands in a separate task) **must** validate every `evidence_quote` before writing the finding to stdout:
+The CLI (`scripts/semantic_audit.py`) **must** validate every `evidence_quote` before writing the finding to stdout:
 
 1. Parse each `locations[].lines` value (format `"Lstart-Lend"`).
 2. Open the referenced `file` and count its lines.

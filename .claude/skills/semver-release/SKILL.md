@@ -140,6 +140,10 @@ Release summary:
 Push commit to main, then tag and push tag? [y/N]
 ```
 
+If invoked by `flow-merge` with `FLOW_MERGE_USER_GATES_CONFIRMED=1`, treat that
+up-front merge confirmation as the answer to this prompt for this run only.
+All other guards still run.
+
 After explicit confirmation. **Guard 3 — PUSH-THEN-TAG**: push commit → confirm → tag pushed SHA → push tag:
 
 ```bash

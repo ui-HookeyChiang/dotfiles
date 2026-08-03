@@ -1,0 +1,202 @@
+{
+  "hooks": [
+    {
+      "name": "block-main-edit",
+      "description": "Block edits in main working tree (forces worktree isolation)",
+      "harnesses": {
+        "claude": {
+          "event": "PreToolUse",
+          "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+          "command": "bash ~/.claude/hooks/block-main-edit.sh",
+          "statusMessage": "Enforcing worktree-only edits",
+          "timeout": 10,
+          "shape": "nested"
+        },
+        "codex": {
+          "event": "PreToolUse",
+          "matcher": "Edit|Write|MultiEdit|NotebookEdit|apply_patch",
+          "command": "bash $HOME/.claude/hooks/block-main-edit.sh",
+          "statusMessage": "Enforcing worktree-only edits",
+          "timeout": 10,
+          "shape": "nested"
+        },
+        "cursor": {
+          "event": "preToolUse",
+          "matcher": "Write|Read",
+          "command": "bash $HOME/.claude/hooks/cursor/translate-hook.sh $HOME/.claude/hooks/block-main-edit.sh",
+          "timeout": 10,
+          "shape": "flat"
+        },
+        "opencode": {
+          "externalHook": "block-main-edit"
+        }
+      }
+    },
+    {
+      "name": "guard-stale-base",
+      "description": "Block branching from bare local refs, auto-fetch remote refs",
+      "harnesses": {
+        "claude": {
+          "event": "PreToolUse",
+          "matcher": "Bash",
+          "command": "bash ~/.claude/hooks/guard-stale-base.sh",
+          "statusMessage": "Checking base branch freshness",
+          "timeout": 15,
+          "shape": "nested"
+        },
+        "codex": {
+          "event": "PreToolUse",
+          "matcher": "Bash",
+          "command": "bash $HOME/.claude/hooks/guard-stale-base.sh",
+          "statusMessage": "Checking base branch freshness",
+          "timeout": 15,
+          "shape": "nested"
+        },
+        "cursor": {
+          "event": "preToolUse",
+          "matcher": "Shell",
+          "command": "bash $HOME/.claude/hooks/cursor/translate-hook.sh $HOME/.claude/hooks/guard-stale-base.sh",
+          "timeout": 10,
+          "shape": "flat"
+        },
+        "opencode": {
+          "externalHook": "guard-stale-base"
+        }
+      }
+    },
+    {
+      "name": "guard-agent-worktree-files",
+      "description": "Block subagent file edits outside assigned worktree",
+      "harnesses": {
+        "claude": {
+          "event": "PreToolUse",
+          "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+          "command": "bash ~/.claude/hooks/guard-agent-worktree.sh",
+          "statusMessage": "Enforcing agent worktree isolation",
+          "timeout": 10,
+          "shape": "nested"
+        },
+        "cursor": {
+          "event": "preToolUse",
+          "matcher": "Write|Shell",
+          "command": "bash $HOME/.claude/hooks/cursor/translate-hook.sh $HOME/.claude/hooks/guard-agent-worktree.sh",
+          "timeout": 10,
+          "shape": "flat"
+        },
+        "opencode": {
+          "externalHook": "guard-agent-worktree"
+        }
+      }
+    },
+    {
+      "name": "guard-agent-worktree-bash",
+      "description": "Block subagent write-type git ops outside assigned worktree",
+      "harnesses": {
+        "claude": {
+          "event": "PreToolUse",
+          "matcher": "Bash",
+          "command": "bash ~/.claude/hooks/guard-agent-worktree.sh",
+          "statusMessage": "Enforcing agent worktree isolation",
+          "timeout": 10,
+          "shape": "nested"
+        },
+        "codex": {
+          "event": "PreToolUse",
+          "matcher": "Bash|Edit|Write|MultiEdit|NotebookEdit|apply_patch",
+          "command": "bash $HOME/.claude/hooks/guard-agent-worktree.sh",
+          "statusMessage": "Checking worktree isolation...",
+          "timeout": 10,
+          "shape": "nested"
+        }
+      }
+    },
+    {
+      "name": "block-bare-read",
+      "description": "Block bare cat/head/tail - use Read tool instead",
+      "harnesses": {
+        "claude": {
+          "event": "PreToolUse",
+          "matcher": "Bash",
+          "command": "bash ~/.claude/hooks/block-bare-read.sh",
+          "statusMessage": "Checking for bare cat/head/tail",
+          "timeout": 10,
+          "shape": "nested"
+        },
+        "codex": {
+          "event": "PreToolUse",
+          "matcher": "Bash",
+          "command": "bash $HOME/.claude/hooks/block-bare-read.sh",
+          "statusMessage": "Checking for bare cat/head/tail",
+          "timeout": 10,
+          "shape": "nested"
+        },
+        "cursor": {
+          "event": "preToolUse",
+          "matcher": "Shell",
+          "command": "bash $HOME/.claude/hooks/cursor/translate-hook.sh $HOME/.claude/hooks/block-bare-read.sh",
+          "timeout": 10,
+          "shape": "flat"
+        },
+        "opencode": {
+          "externalHook": "block-bare-read"
+        }
+      }
+    },
+    {
+      "name": "block-heredoc-continuation",
+      "description": "Block heredoc terminators followed by shell continuations",
+      "harnesses": {
+        "claude": {
+          "event": "PreToolUse",
+          "matcher": "Bash",
+          "command": "bash ~/.claude/hooks/block-heredoc-continuation.sh",
+          "statusMessage": "Checking heredoc command shape",
+          "timeout": 10,
+          "shape": "nested"
+        },
+        "cursor": {
+          "event": "preToolUse",
+          "matcher": "Shell",
+          "command": "bash $HOME/.claude/hooks/cursor/translate-hook.sh $HOME/.claude/hooks/block-heredoc-continuation.sh",
+          "timeout": 10,
+          "shape": "flat"
+        }
+      }
+    },
+    {
+      "name": "rtk",
+      "description": "Apply rtk command guardrails",
+      "harnesses": {
+        "codex": {
+          "event": "PreToolUse",
+          "matcher": "Bash",
+          "command": "$HOME/.local/bin/rtk hook claude",
+          "statusMessage": "Applying rtk command guardrails",
+          "timeout": 10,
+          "shape": "nested"
+        }
+      }
+    },
+    {
+      "name": "subagent-dispatch-inject",
+      "description": "Inject delivery red lines and failure escalation into subagents",
+      "harnesses": {
+        "claude": {
+          "event": "SubagentStart",
+          "matcher": "",
+          "command": "bash ~/.claude/hooks/subagent-dispatch-inject.sh",
+          "timeout": 10,
+          "shape": "nested"
+        },
+        "codex": {
+          "event": "SubagentStart",
+          "matcher": ".*",
+          "command": "bash $HOME/.claude/hooks/subagent-dispatch-inject.sh",
+          "statusMessage": "Recording agent map...",
+          "timeout": 10,
+          "shape": "nested"
+        }
+      }
+    }
+  ]
+}

@@ -17,15 +17,15 @@ Anti-hallucination (``references/finding-schema.md`` L27-37):
       must be a literal substring of the corresponding paragraph text.
     * Invalid judgments are dropped (stderr warning + drop counter++).
     * On reaching ``_drop_limit`` failures (default 3) in one ``detect()``
-      call, ``RuntimeError`` is raised so ``audit.py`` can catch and exit 1.
+      call, ``RuntimeError`` is raised so ``semantic_audit.py`` can catch and
+      exit 1.
 
 Severity (severity-rubric.md L9-14): HIGH = >=3 skills; MED = 2 skills
 AND shared content >= 10 lines; LOW = 2 skills AND < 10 lines.
 
-Word-floor: ``MIN_CANDIDATE_WORDS = 30`` follows spec L168 ("≥ 30 詞 / ≥ 5 行").
-This is deliberately *not* the G7 floor (spec L203: ≥ 80 words OR ≥ 3 sentences) —
-the two axes have different floors by design (G7 measures prose density on a
-single paragraph, G1 measures cross-skill semantic dup on shorter chunks).
+Word-floor: ``MIN_CANDIDATE_WORDS = 30`` follows the G1 design target
+("≥ 30 words / ≥ 5 lines") so shorter same-meaning skill paragraphs can still
+reach semantic comparison.
 
 Intra-file pairs: G1 now also judges paragraph pairs within a single file.
 Same-file findings carry a ``disposition`` field:
@@ -423,7 +423,7 @@ def detect(
                         raise RuntimeError(
                             f"g1: >= {_drop_limit} evidence_quote out-of-bounds "
                             "in single run, result untrustworthy "
-                            "(audit.py should exit 1)"
+                            "(semantic_audit.py should exit 1)"
                         )
                     continue
                 # Record disposition for same-file pairs.

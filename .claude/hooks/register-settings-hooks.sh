@@ -20,6 +20,14 @@ done
 
 command -v jq >/dev/null 2>&1 || { echo "  WARN: jq not found; cannot check settings hooks" >&2; exit 0; }
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+MANIFEST="$SCRIPT_DIR/manifest.json"
+# shellcheck source=hooks/lib/registration-engine.sh
+source "$SCRIPT_DIR/lib/registration-engine.sh"
+# shellcheck source=scripts/lib/agent-detect.sh
+source "$SCRIPT_DIR/../scripts/lib/agent-detect.sh"
+registration_configure "$APPLY" "$DRY_RUN"
+
 SETTINGS_LINK="$HOME/.claude/settings.json"
 [ -e "$SETTINGS_LINK" ] || { echo "  WARN: $SETTINGS_LINK missing; skipping hook registration" >&2; exit 0; }
 
@@ -29,184 +37,162 @@ else
   SETTINGS="$SETTINGS_LINK"
 fi
 
-# Hook registry as parallel arrays (avoids delimiter conflicts with matcher pipes)
-HOOK_EVENTS=(     "PreToolUse"    "PreToolUse"  "PreToolUse"  "PreToolUse"  "SubagentStart")
-HOOK_MATCHERS=(   "Edit|Write|MultiEdit|NotebookEdit" "Bash" \
-                  "Edit|Write|MultiEdit|NotebookEdit" "Bash" "")
-HOOK_CMDS=(       "bash ~/.claude/hooks/block-main-edit.sh" \
-                  "bash ~/.claude/hooks/guard-stale-base.sh" \
-                  "bash ~/.claude/hooks/guard-agent-worktree.sh" \
-                  "bash ~/.claude/hooks/guard-agent-worktree.sh" \
-                  "bash ~/.claude/hooks/subagent-dispatch-inject.sh")
-HOOK_TIMEOUTS=(   10 15 10 10 10)
-HOOK_STATUS_MSGS=("Enforcing worktree-only edits" \
-                  "Checking base branch freshness" \
-                  "Enforcing agent worktree isolation" \
-                  "Enforcing agent worktree isolation" \
-                  "")
-HOOK_DESCS=(      "Block edits in main working tree (forces worktree isolation)" \
-                  "Block branching from bare local refs, auto-fetch remote refs" \
-                  "Block subagent file edits outside assigned worktree" \
-                  "Block subagent write-type git ops outside assigned worktree" \
-                  "Inject delivery red lines and failure escalation into subagents")
-
-MISSING=0
-PRESENT=0
-REGISTERED=0
-HOOK_COUNT=${#HOOK_EVENTS[@]}
-
-for ((i=0; i<HOOK_COUNT; i++)); do
-  event="${HOOK_EVENTS[$i]}"
-  matcher="${HOOK_MATCHERS[$i]}"
-  cmd="${HOOK_CMDS[$i]}"
-  timeout="${HOOK_TIMEOUTS[$i]}"
-  status_msg="${HOOK_STATUS_MSGS[$i]}"
-  description="${HOOK_DESCS[$i]}"
-
-  # Check if already registered
-  if jq -e --arg c "$cmd" \
-        "[.hooks.${event}[]?.hooks[]?.command] | any(. == \$c)" \
-        "$SETTINGS" >/dev/null 2>&1; then
-    PRESENT=$((PRESENT + 1))
-    continue
-  fi
-
-  MISSING=$((MISSING + 1))
-
-  if [ "$APPLY" -eq 0 ]; then
-    printf "  [missing] %-12s %-50s\n" "$event:" "$description"
-    continue
-  fi
-
-  if [ "$DRY_RUN" -eq 1 ]; then
-    printf "  [would register] %-12s %s\n" "$event:" "$cmd"
-    continue
-  fi
-
-  # Build hook object
-  hook_obj="{\"type\":\"command\",\"command\":$(jq -n --arg c "$cmd" '$c'),\"timeout\":$timeout"
-  [ -n "$status_msg" ] && hook_obj+=",\"statusMessage\":$(jq -n --arg s "$status_msg" '$s')"
-  hook_obj+="}"
-
-  # Build entry object (with or without matcher)
-  if [ -n "$matcher" ]; then
-    entry_obj="{\"matcher\":$(jq -n --arg m "$matcher" '$m'),\"hooks\":[$hook_obj]}"
+render_manifest_for() {
+  local harness="$1" expand_home="${2:-0}" rendered
+  rendered="$(registration_render_manifest_hooks "$MANIFEST" "$harness")"
+  if [ "$expand_home" -eq 1 ]; then
+    printf '%s' "$rendered" | registration_expand_home_json
   else
-    entry_obj="{\"hooks\":[$hook_obj]}"
+    printf '%s' "$rendered"
+  fi
+}
+
+register_manifest_hooks_file() {
+  local harness="$1" target="$2" label="$3" shape="$4" expand_home="$5"
+  local rendered missing existing merged tmp success
+
+  rendered="$(render_manifest_for "$harness" "$expand_home")"
+
+  if [ "$APPLY" -eq 1 ]; then
+    if [ -f "$target" ]; then
+      if registration_emit_dry_run "  [would merge] $label"; then
+        return 0
+      fi
+      existing="$(cat "$target")"
+      success="  [merged] $label (backup: ${target}.bak)"
+    else
+      if registration_emit_dry_run "  [would install] $label (new)"; then
+        return 0
+      fi
+      existing="{}"
+      success="  [installed] $label (new)"
+    fi
+
+    mkdir -p "$(dirname "$target")"
+    merged="$(registration_merge_hooks_json "$existing" "$rendered" "$shape")"
+    tmp="$(mktemp "${target}.tmp.XXXXXX")"
+    printf '%s' "$merged" | jq '.' > "$tmp"
+    registration_write_json_file "$target" "$tmp" "$label" "$success"
+    return
   fi
 
-  TMP="$(mktemp "${SETTINGS}.tmp.XXXXXX")"
-
-  if ! jq --argjson entry "$entry_obj" \
-        ".hooks //= {}
-         | .hooks.${event} //= []
-         | .hooks.${event} += [\$entry]" \
-        "$SETTINGS" > "$TMP"; then
-    echo "  WARN: jq merge failed for $cmd; skipping" >&2
-    rm -f "$TMP"
-    continue
+  if [ ! -f "$target" ]; then
+    echo ""
+    echo "  [missing] $label — hooks not installed."
+    echo "  To install, re-run: ./install.sh --register-hooks"
+    return
   fi
 
-  if ! jq empty "$TMP" >/dev/null 2>&1 || [ ! -s "$TMP" ]; then
-    echo "  WARN: validation failed for $cmd; skipping" >&2
-    rm -f "$TMP"
-    continue
+  missing="$(registration_count_missing_hooks "$target" "$rendered" "$shape")"
+  if [ "$missing" -gt 0 ]; then
+    echo ""
+    echo "  [missing] $missing hook(s) not registered in $label"
+    echo "  To install, re-run: ./install.sh --register-hooks"
   fi
+}
 
-  cp "$SETTINGS" "${SETTINGS}.bak"
-  mv "$TMP" "$SETTINGS"
-  printf "  [registered] %-12s %s\n" "$event:" "$description"
-  REGISTERED=$((REGISTERED + 1))
-done
-
-# Summary
-if [ "$APPLY" -eq 0 ] && [ "$MISSING" -gt 0 ]; then
-  echo ""
-  echo "  $MISSING hook(s) not registered. To enable, re-run:"
-  echo "      ./install.sh --register-hooks"
-  echo "  This merges hooks into ~/.claude/settings.json (backed up first)."
-  echo "  Restart Claude Code to activate."
-fi
-
-if [ "$REGISTERED" -gt 0 ]; then
-  echo ""
-  echo "  $REGISTERED hook(s) registered. Backup: ${SETTINGS}.bak"
-  echo "  Restart Claude Code to activate."
-fi
+register_manifest_hooks_file "claude" "$SETTINGS" "~/.claude/settings.json" "nested" 0
 
 # ============================================================================
 # Codex CLI hooks registration
 # ============================================================================
-# Installs hooks/codex/hooks.json as ~/.codex/hooks.json (merge-preserving).
+# Installs manifest-rendered hooks into ~/.codex/hooks.json (merge-preserving).
 # Only runs when --apply is passed AND codex is installed (or ~/.codex/ exists).
 
 CODEX_DIR="$HOME/.codex"
 CODEX_HOOKS="$CODEX_DIR/hooks.json"
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-CODEX_TEMPLATE="$SCRIPT_DIR/codex/hooks.json"
 
-if [ "$APPLY" -eq 1 ] && [ -f "$CODEX_TEMPLATE" ]; then
-  # Gate: only if codex is installed or ~/.codex/ already exists
-  if command -v codex >/dev/null 2>&1 || [ -d "$CODEX_DIR" ]; then
-    mkdir -p "$CODEX_DIR"
+if agent_installed codex; then
+  register_manifest_hooks_file "codex" "$CODEX_HOOKS" "~/.codex/hooks.json" "nested" 1
+fi
 
-    if [ ! -f "$CODEX_HOOKS" ]; then
-      # Expand $HOME in template and install fresh
-      sed "s|\\\$HOME|$HOME|g" "$CODEX_TEMPLATE" > "$CODEX_HOOKS"
-      echo "  [installed] ~/.codex/hooks.json (new)"
-    else
-      # Merge: add our hook entries that aren't already present (by command string)
-      cp "$CODEX_HOOKS" "${CODEX_HOOKS}.bak"
+# ============================================================================
+# Codex parity config and agent definitions
+# ============================================================================
+# Installs repo-managed deny manifest and multi-agent prompts used by parity
+# checks. Codex enforces denials through hooks; this file records the mirrored
+# policy surface for deterministic parity accounting.
 
-      EXPANDED_TEMPLATE="$(sed "s|\\\$HOME|$HOME|g" "$CODEX_TEMPLATE")"
-      MERGED="$(jq -n \
-        --argjson existing "$(cat "$CODEX_HOOKS")" \
-        --argjson template "$EXPANDED_TEMPLATE" '
-        $existing
-        | .hooks //= {}
-        | reduce ($template.hooks | to_entries[]) as {$key, $value} (.;
-            .hooks[$key] //= []
-            | reduce $value[] as $entry (.;
-                if ([.hooks[$key][]?.hooks[]?.command] | any(. == ($entry.hooks[0].command)))
-                then .
-                else .hooks[$key] += [$entry]
-                end
-            )
-        )
-      ')"
+CODEX_CONFIG="$CODEX_DIR/cli-config.json"
+CODEX_CONFIG_TEMPLATE="$SCRIPT_DIR/codex/cli-config.json"
+CODEX_AGENTS_DIR="$CODEX_DIR/agents"
+CODEX_AGENTS_TEMPLATE_DIR="$SCRIPT_DIR/codex/agents"
 
-      if printf '%s' "$MERGED" | jq empty >/dev/null 2>&1; then
-        printf '%s' "$MERGED" | jq '.' > "$CODEX_HOOKS"
-        echo "  [merged] ~/.codex/hooks.json (backup: ${CODEX_HOOKS}.bak)"
+if [ -f "$CODEX_CONFIG_TEMPLATE" ]; then
+  if agent_installed codex; then
+    if [ "$APPLY" -eq 1 ]; then
+      if registration_emit_dry_run "  [would install] ~/.codex/cli-config.json"; then
+        :
       else
-        echo "  WARN: Codex hooks merge produced invalid JSON; skipping" >&2
+        mkdir -p "$CODEX_DIR"
+        TMP="$(mktemp "${CODEX_CONFIG}.tmp.XXXXXX")"
+        jq '.' "$CODEX_CONFIG_TEMPLATE" > "$TMP"
+        registration_write_json_file "$CODEX_CONFIG" "$TMP" "~/.codex/cli-config.json" "  [installed] ~/.codex/cli-config.json"
       fi
+    elif [ ! -f "$CODEX_CONFIG" ]; then
+      echo ""
+      echo "  [missing] ~/.codex/cli-config.json — Codex deny parity manifest not installed."
+      echo "  To install, re-run: ./install.sh --register-hooks"
     fi
   fi
-elif [ "$APPLY" -eq 0 ] && [ -f "$CODEX_TEMPLATE" ]; then
-  if command -v codex >/dev/null 2>&1 || [ -d "$CODEX_DIR" ]; then
-    if [ ! -f "$CODEX_HOOKS" ]; then
-      echo ""
-      echo "  [missing] ~/.codex/hooks.json — Codex hooks not installed."
-      echo "  To install, re-run: ./install.sh --register-hooks"
+fi
+
+if [ -d "$CODEX_AGENTS_TEMPLATE_DIR" ]; then
+  if agent_installed codex; then
+    if [ "$APPLY" -eq 1 ]; then
+      if registration_emit_dry_run "  [would install] ~/.codex/agents/{scan,execute,decide}.md"; then
+        :
+      else
+        mkdir -p "$CODEX_AGENTS_DIR"
+        for template in "$CODEX_AGENTS_TEMPLATE_DIR"/*.md; do
+          [ -e "$template" ] || continue
+          target="$CODEX_AGENTS_DIR/$(basename "$template")"
+          if [ -f "$target" ] && cmp -s "$template" "$target"; then
+            continue
+          fi
+          [ ! -f "$target" ] || cp "$target" "${target}.bak"
+          cp "$template" "$target"
+        done
+        echo "  [installed] ~/.codex/agents/{scan,execute,decide}.md"
+      fi
     else
-      # Check if our hooks are already present
-      EXPANDED_TEMPLATE="$(sed "s|\\\$HOME|$HOME|g" "$CODEX_TEMPLATE")"
-      CODEX_MISSING=0
-      while IFS= read -r cmd; do
-        if ! jq -e --arg c "$cmd" \
-              '[.hooks[]?[]?.hooks[]?.command] | any(. == $c)' \
-              "$CODEX_HOOKS" >/dev/null 2>&1; then
-          CODEX_MISSING=$((CODEX_MISSING + 1))
-        fi
-      done < <(printf '%s' "$EXPANDED_TEMPLATE" | jq -r '.hooks[]?[]?.hooks[]?.command')
-      if [ "$CODEX_MISSING" -gt 0 ]; then
+      CODEX_AGENT_MISSING=0
+      for template in "$CODEX_AGENTS_TEMPLATE_DIR"/*.md; do
+        [ -e "$template" ] || continue
+        target="$CODEX_AGENTS_DIR/$(basename "$template")"
+        [ -f "$target" ] || CODEX_AGENT_MISSING=$((CODEX_AGENT_MISSING + 1))
+      done
+      if [ "$CODEX_AGENT_MISSING" -gt 0 ]; then
         echo ""
-        echo "  [missing] $CODEX_MISSING Codex hook(s) not registered in ~/.codex/hooks.json"
+        echo "  [missing] $CODEX_AGENT_MISSING Codex agent definition(s) not installed in ~/.codex/agents"
         echo "  To install, re-run: ./install.sh --register-hooks"
       fi
     fi
   fi
+fi
+
+# ============================================================================
+# Cursor hooks registration
+# ============================================================================
+# Installs manifest-rendered hooks into ~/.cursor/hooks.json (merge-preserving).
+# Also symlinks translate-hook.sh into ~/.claude/hooks/cursor/ so commands
+# in the template resolve. Only runs when --apply AND cursor is detected.
+
+CURSOR_DIR="$HOME/.cursor"
+CURSOR_HOOKS="$CURSOR_DIR/hooks.json"
+CURSOR_TRANSLATE="$SCRIPT_DIR/cursor/translate-hook.sh"
+
+_cursor_detected() {
+  agent_installed cursor
+}
+
+if _cursor_detected; then
+  if [ "$APPLY" -eq 1 ]; then
+    registration_symlink "$CURSOR_TRANSLATE" "$HOME/.claude/hooks/cursor/translate-hook.sh" \
+      "  [would symlink] ~/.claude/hooks/cursor/translate-hook.sh" \
+      "  [symlinked] ~/.claude/hooks/cursor/translate-hook.sh"
+  fi
+  register_manifest_hooks_file "cursor" "$CURSOR_HOOKS" "~/.cursor/hooks.json" "flat" 1
 fi
 
 exit 0

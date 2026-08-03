@@ -19,6 +19,16 @@ FAIL_NAMES=()
 pass() { PASSED=$((PASSED+1)); echo "  PASS: $1"; }
 fail() { FAILED=$((FAILED+1)); FAIL_NAMES+=("$1"); echo "  FAIL: $1 — $2"; }
 
+make_fake_flock() {
+  local bindir="$1"
+  mkdir -p "$bindir"
+  cat > "$bindir/flock" <<'SHIM'
+#!/usr/bin/env bash
+exit 0
+SHIM
+  chmod +x "$bindir/flock"
+}
+
 # Build a tmp git repo with N stacked task branches (real branches, real refs).
 make_repo() {
   local tmp="$1" feature_prefix="$2" total="$3"
@@ -64,9 +74,10 @@ test_bad_args() {
 test_happy() {
   local tmp; tmp=$(mktemp -d)
   trap 'rm -rf "$tmp"' RETURN
+  make_fake_flock "$tmp/bin"
   local work; work=$(make_repo "$tmp" feat/foo 3)
   local out rc
-  out=$( cd "$work" && SD_SKIP_REMOTE=1 \
+  out=$( cd "$work" && SD_SKIP_REMOTE=1 PATH="$tmp/bin:$PATH" \
          bash "$SCRIPT" stack feat/foo 3 main 2>&1 ) && rc=0 || rc=$?
   if [[ "$rc" == 0 ]] && echo "$out" | grep -q 'OK: post-merge-cleanup stack done'; then
     pass "case happy 3 tasks -> exit 0 + OK line"
@@ -82,11 +93,12 @@ test_happy() {
 test_idempotent() {
   local tmp; tmp=$(mktemp -d)
   trap 'rm -rf "$tmp"' RETURN
+  make_fake_flock "$tmp/bin"
   local work; work=$(make_repo "$tmp" feat/foo 2)
   local rc1 rc2 out2
-  ( cd "$work" && SD_SKIP_REMOTE=1 \
+  ( cd "$work" && SD_SKIP_REMOTE=1 PATH="$tmp/bin:$PATH" \
     bash "$SCRIPT" stack feat/foo 2 main >/dev/null 2>&1 ) && rc1=0 || rc1=$?
-  out2=$( cd "$work" && SD_SKIP_REMOTE=1 \
+  out2=$( cd "$work" && SD_SKIP_REMOTE=1 PATH="$tmp/bin:$PATH" \
           bash "$SCRIPT" stack feat/foo 2 main 2>&1 ) && rc2=0 || rc2=$?
   if [[ "$rc1" == 0 && "$rc2" == 0 ]] && echo "$out2" | grep -q 'OK: post-merge-cleanup stack done'; then
     pass "case idempotent -> second run exit 0 (branches already gone, no error)"
@@ -101,6 +113,7 @@ test_idempotent() {
 test_lock_removal() {
   local tmp; tmp=$(mktemp -d)
   trap 'rm -rf "$tmp"' RETURN
+  make_fake_flock "$tmp/bin"
   local work; work=$(make_repo "$tmp" feat/foo 1)
   # Place lock at the worktree root (the path cleanup_all_locks resolves).
   # Use valid v1 JSON (no parallel_layers) so the I2 unparseable-lock guard
@@ -112,7 +125,7 @@ test_lock_removal() {
 EOF
   [[ -f "$work/.flow-dev-lock" ]] || { fail "lock-removal" "pre-condition: lock not created"; return; }
   local out rc
-  out=$( cd "$work" && SD_SKIP_REMOTE=1 \
+  out=$( cd "$work" && SD_SKIP_REMOTE=1 PATH="$tmp/bin:$PATH" \
          bash "$SCRIPT" stack feat/foo 1 main 2>&1 ) && rc=0 || rc=$?
   if [[ "$rc" == 0 ]] && [[ ! -f "$work/.flow-dev-lock" ]]; then
     pass "case lock-removal -> lock file gone after cleanup"

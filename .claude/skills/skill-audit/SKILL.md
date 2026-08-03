@@ -24,7 +24,7 @@ Exit code: `0` = at least one engine found a problem, `2` = all clean, `1` = an 
 | # | Leg | Runner | Tag |
 |---|---|---|---|
 | 1 | deterministic (deadcode + syntax-metrics + semantic-prefilter) | `skill-audit/scripts/run.sh <skill-dir>` | deterministic (script) |
-| 2 | probabilistic (syntax 6-axes + semantic G1/G8) | LLM agent (single, internal file loop) | LLM-advisory (agent) |
+| 2 | probabilistic (syntax 6-axes + semantic G1/G8/IRD/GC) | LLM agent (single, internal file loop) | LLM-advisory (agent) |
 | 3 | prose density / meta self-reference | agent: `Skill prose-guidelines <skill>/SKILL.md` (no `--apply`, SKILL.md only, gated > 200 lines) | LLM-advisory (agent) |
 
 Leg 1 runs via the composer script; legs 2-3 are LLM-advisory and dispatched by
@@ -43,10 +43,11 @@ bash ~/.claude/skills/skill-audit/scripts/run.sh <skill-dir>
 |---|---|---|
 | deadcode reachability | reachability graph | whole skill-dir, one pass |
 | syntax metrics | size/imbalance/staleness composite | SKILL.md ∪ references/*.md, `--skill-root` for refs |
-| semantic rule-prefilter | G1/G8 candidate detection | SKILL.md (+ G1 over references/*.md) |
+| semantic rule-prefilter | G1/G8/IRD/GC candidate detection | SKILL.md (+ G1 over references/*.md) |
 
-Open-concept axes (G1, G8 inline_changelog) emit **candidates labelled "needs
-probabilistic confirm"** — the final verdict is owned by the probabilistic leg.
+Open-concept axes (G1, G8 inline_changelog, GC) emit **candidates labelled
+"needs probabilistic confirm"** — the final verdict is owned by the
+probabilistic leg. IRD is deterministic and advisory.
 
 ## Probabilistic leg (LLM)
 
@@ -60,11 +61,12 @@ agent per file.
    path, LLM on) and collect findings. For reference files, treat path-links as
    resolving against `<skill-dir>` (skill-root semantics) and suppress
    frontmatter findings on non-SKILL targets.
-3. **Semantic G1/G8** — run
+3. **Semantic G1/G8/IRD/GC** — run
    `python3 ~/.claude/skills/skill-audit/scripts/semantic_audit.py <skill-dir>/SKILL.md`
-   on SKILL.md only. G8 is SKILL.md-only by nature. G1 is scoped to **this
-   skill** — intra-file plus intra-skill near-dup across this skill's own
-   `SKILL.md ∪ references/`. Neither G1 nor G8 may use a cross-skill corpus.
+   on SKILL.md only. G8, IRD, and GC are SKILL.md-only by nature. G1 is
+   scoped to **this skill** — intra-file plus intra-skill near-dup across this
+   skill's own `SKILL.md ∪ references/`. These semantic axes may not use a
+   cross-skill corpus except IRD's sibling-skill description lookup.
 4. Fold every syntax + semantic finding into one finding set and emit under
    `## probabilistic`.
 
@@ -76,12 +78,13 @@ their findings into the report:
 
 1. **probabilistic** — run the probabilistic leg contract (above) as a single
    agent; fold all findings under a `probabilistic` heading. After dispatching,
-   write the trace: `write_audit_leg_trace probabilistic <skill> <log>`.
+   mark the trace:
+   `bash skill-audit/scripts/audit-leg-gate.sh mark probabilistic <skill> <log>`.
 
 2. **prose** — run `Skill prose-guidelines <skill>/SKILL.md` (no `--apply`,
    SKILL.md only, gated: SKILL.md > 200 lines); fold findings under a `prose`
    heading. After dispatching, write the trace:
-   `write_audit_leg_trace prose <skill> <log>`.
+   `bash skill-audit/scripts/audit-leg-gate.sh mark prose <skill> <log>`.
 
 ## GATE — hard-stop rule (before reporting complete)
 
@@ -90,13 +93,12 @@ trace for this skill. If any leg is missing, STOP — dispatch it first, do not
 write the final report.**
 
 ```bash
-source "${HOME}/.claude/skill-dev/_shared/lib/sh/sandwich-trace.sh"
-assert_audit_complete <skill-name> "$(cd "$(git rev-parse --git-common-dir)" && pwd)/flow-dev-sandwich.log" || exit 1
+bash skill-audit/scripts/audit-leg-gate.sh assert <skill-name> "$(cd "$(git rev-parse --git-common-dir)" && pwd)/flow-dev-sandwich.log"
 ```
 
-The gate is objective and log-backed: `assert_audit_complete` checks for
-`gate=audit-leg` lines written by `write_audit_leg_trace` after each LLM
-dispatch. An absent line means the leg was not dispatched — STOP and dispatch.
+The gate is objective and log-backed: `audit-leg-gate.sh assert` checks for
+`gate=audit-leg` lines written after each LLM dispatch. An absent line means
+the leg was not dispatched — STOP and dispatch.
 
 ## Not this skill
 

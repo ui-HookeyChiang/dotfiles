@@ -1,6 +1,6 @@
 ---
 name: flow-dev
-description: "Dev executor for per-task implementation — receives decomposed tasks from the flow orchestrator, runs the dev loop (implement + self-test in isolated worktree), pushes stacked PRs, and drives red-replay + code-review fan-in. Use for all code changes dispatched by flow. Do NOT invoke directly for converge/spec/decompose (flow owns those) or merge (flow-merge owns that)."
+description: "Dev executor for per-task implementation — runs the dev loop (implement + self-test in isolated worktree), pushes stacked PRs, and drives red-replay + code-review fan-in. Input contract: grounded task(s). Two entries — a task list decomposed by the flow orchestrator, or direct entry with a single grounded task (bug+repro, clear scope, agent-ready ticket; self-generates the one-task list). NOT for specs (a spec skips converge but still needs decompose — flow owns that), NOT for ungrounded work (fuzzy intent goes to flow converge; bug without repro goes to diagnosing-bugs first), NOT for merge (flow-merge owns that)."
 argument-hint: "<feature-description>"
 test-devices: local
 landing-group: workflow
@@ -8,7 +8,7 @@ landing-group: workflow
 
 # Stacked Feature Development
 
-Dev executor backend — receives decomposed task list from `flow` orchestrator. Per-task: Dev agent → red-replay + code-review loop. Post-dev: integration test via `flow` Stage 6.
+Dev executor backend — takes grounded tasks (from `flow` orchestrator, or direct entry). Per-task: Dev agent → red-replay + code-review loop. Post-dev: integration test via `flow` Stage 6.
 
 ## Overview
 
@@ -31,7 +31,22 @@ All tasks done → **integration test** on final worktree.
 
 ## Entry Point
 
-flow-dev receives a task list (already decomposed by `flow` orchestrator). Required inputs:
+Input contract: **grounded task(s)** — acceptance criterion already exists. Two entries:
+
+- **Orchestrated** — task list already decomposed by the `flow` orchestrator.
+- **Direct (single grounded task)** — bug+repro, clear scope, or an agent-ready
+  ticket: self-generate the one-task list (description, test plan, issue
+  path; create `docs/ticket/<slug>.md` if absent), then run the same per-task
+  loop. Full flow ceremony is skipped — a single grounded task has nothing to
+  converge or decompose.
+- **Not direct entry**: a spec → `flow` (skips converge, still needs
+  decompose into tasks). Ungrounded input bounces: fuzzy intent → `flow`
+  (converge); bug without repro → `diagnosing-bugs` (produce the repro, then
+  re-enter here).
+
+Required inputs:
+
+Handoff contract: `references/handoff-contract.json`. Validate orchestrated handoffs with `scripts/validate-handoff-contract.sh <handoff.json>` before creating task worktrees. Direct single-ticket entry may synthesize the same shape in-memory, but completion reports still use the contract output fields.
 
 - **Task list** — each task with description, test plan, and issue path (`docs/ticket/<slug>.md`)
 - **Feature prefix** — branch naming root (e.g., `feat/short-name`)
@@ -58,10 +73,10 @@ WORKTREE_NS="${SD_WORKTREE_NS:-${FEATURE_PREFIX#feat/}}"
 **BASE_BRANCH dual-mode**: linear (N-1 chain) vs parallel (prior-layer first group). Rationale: `references/parallel-stacks.md`.
 
 ```bash
-eval "$(bash scripts/create-task-worktree.sh "$FEATURE_PREFIX" "$N" "$DEFAULT_BRANCH" "$WORKTREE_NS")"
+eval "$(bash scripts/create-task-worktree.sh "$FEATURE_PREFIX" "$N" "$DEFAULT_BRANCH" "$WORKTREE_NS" "$TICKET_PATH")"
 ```
 
-The script resolves `BASE_BRANCH` (linear vs parallel from `.flow-dev-lock`), creates the worktree, and outputs `WORKTREE_DIR`, `TASK_BRANCH`, `BASE_BRANCH` as eval-able assignments. STOP-SAFEs on lock corruption or missing GROUP_ID.
+The script resolves `BASE_BRANCH` (linear vs parallel from `.flow-dev-lock`), creates the worktree, and outputs `WORKTREE_DIR`, `TASK_BRANCH`, `BASE_BRANCH` as eval-able assignments. Lock reads/writes, base resolution, parent-gate checks, and status updates live behind `scripts/lock.sh`; `create-task-worktree.sh` and `update-task-status.sh` are adapters. STOP-SAFEs on lock corruption, missing GROUP_ID, blocked dependencies, or base branch not present on origin (unpushed local branch).
 
 Hand off spec draft from main → worktree (copy → verify → remove → git add). No-op if no untracked specs.
 
@@ -74,6 +89,8 @@ Dispatched subagents are path-guarded to their assigned worktree by `guard-agent
 ### Step 3: Dev agent (implement + self-test)
 
 Single agent: implement + test, loops until pass. Called again if feedback found.
+
+Before implementation, the Dev agent MUST load `coding-guidelines` and apply the relevant guardrails to the task. For trivial tasks, keep the skill's judgment clause: loading the guardrails is mandatory; ritualizing cheap work is not.
 
 Prompt: **[references/dev-agent-prompt.md](references/dev-agent-prompt.md)**.
 
@@ -118,9 +135,9 @@ Append `## Review results` to PR. Mark `completed`.
 (cd ".worktrees/${WORKTREE_NS}/task-$((N+1))" && git fetch origin && git rebase "origin/${FEATURE_PREFIX}/task-${N}")
 ```
 
-### Layer advancement gate (parallel mode, Amendment A5)
+### Parent-gate enforcement (Amendment A5)
 
-Before opening any worktree for layer L+1, verify all groups in layer L are `completed`. Pseudocode: `references/parallel-stacks.md` § *A5 advancement gate pseudocode*.
+`create-task-worktree.sh` parses each ticket's `Blocked by:` edges, writes them into `.flow-dev-lock` `.tasks[]`, and STOP-SAFEs if any blocker's status ≠ `completed`. Per-task status is updated via `update-task-status.sh`. This supersedes the coarse layer barrier — dependencies are now per-ticket, not per-layer.
 
 ## Feature Integration
 

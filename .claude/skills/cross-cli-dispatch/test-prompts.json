@@ -1,0 +1,5 @@
+[
+  {"id": 1, "prompt": "Pin scan tier to claude-haiku-4-5 at effort low via model-dispatch/native.tsv", "expected": "edits model-dispatch/native.tsv row for scan tier; validate-bindings.sh passes; bindings.tsv chain tail matches the native row"},
+  {"id": 2, "prompt": "Change execute tier's model in model-dispatch/native.tsv to claude-sonnet-5 and update bindings.tsv", "expected": "updates both model-dispatch/native.tsv execute row model field AND the Anthropic API tail in bindings.tsv execute chain; validate-bindings.sh passes after both edits"},
+  {"id": 3, "prompt": "Add a new tier 'plan' to model-dispatch/native.tsv with escalation to decide", "expected": "adds row plan<TAB>model<TAB>effort<TAB>decide; updates CANONICAL_EDGES in model-dispatch/scripts/validate-native.sh to whitelist plan:decide; validate-bindings.sh passes"}
+]

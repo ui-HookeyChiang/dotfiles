@@ -19,7 +19,7 @@ SCRIPTS_DIR = Path(__file__).resolve().parents[1]
 if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
-from audit import (  # noqa: E402
+from syntax_audit import (  # noqa: E402
     NAV_PROJECT_THRESHOLD,
     project_metric_finding,
     Finding,

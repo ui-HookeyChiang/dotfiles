@@ -1,14 +1,15 @@
 ---
 name: flow
 description: >-
-  Thin pipeline orchestrator that composes matt skills into the stage-model
-  dev workflow. Each stage is a gen/adver pair — converge, spec, decompose,
-  dev, fan-in, integration, build, deploy, e2e, done. Use when starting a
-  new feature, implementing from a PRD, or running the full dev pipeline.
-  Triggers on "start feature", "implement this PRD", "run the pipeline",
-  "new task from spec". NOT for single-file fixes without a spec (use
-  flow-dev directly until migration completes). NOT for non-code work.
-argument-hint: "<feature-description|PRD-path>"
+  Thin pipeline orchestrator that composes the mattpocock engineering skills
+  into the stage-model dev workflow. Each stage is a gen/adver pair —
+  converge, spec, decompose, dev, fan-in, integration, build, deploy, e2e,
+  done. Use when starting a new feature, implementing from a spec, or running
+  the full dev pipeline. Triggers on "start feature", "implement this spec"
+  (or "PRD"), "run the pipeline", "new task from spec". NOT for a single grounded task
+  (bug+repro, clear scope, agent-ready ticket — use flow-dev direct entry).
+  NOT for non-code work.
+argument-hint: "<feature-description|spec-path>"
 landing-group: workflow
 ---
 
@@ -29,6 +30,7 @@ Determines whether m=2 gen fan-out is needed before adver runs.
 | Constraint-backed (failing test, repro steps) | yes | skip |
 | Adver feedback from prior loop | yes | skip |
 | Mechanically verifiable (code + passing tests) | yes | skip |
+| Grill-confirmed converge output (user gated each decision) | yes | skip |
 | Single-agent prose (to-spec output, design doc) | no | **m=2 fan-out** |
 
 Rule: if input is grounded, gen produces once. If ungrounded (single-agent prose
@@ -57,6 +59,23 @@ agent, per adversarial-review §3), then the gen agent receives moderated findin
 
 The gen agent does NOT moderate its own review findings (D7 experiment: gen-as-Moderator
 rubber-stamps all findings uncritically).
+
+## Per-stage model×effort bindings
+
+Flagship models only for gen and final gates; adver fan-out rides cheap
+models — quality comes from independent count, not per-agent intelligence
+(adversarial-review experiments). Tier semantics and the escalation ladder:
+`docs/agents/model-dispatch-claude.md` (effort-inversion applies: needs >
+medium → promote model, not effort). Bindings from local eval rounds 1-6
+(`docs/ticket/2026-07-22-model-dispatch-model-effort-bindings.md`).
+
+| Stage | Gen | Adver | Moderator |
+|---|---|---|---|
+| converge / spec | Opus 4.8 high | Sonnet 5 medium × n | Sonnet 5 medium |
+| decompose | Sonnet 5 medium | Sonnet 5 low n=1 | Sonnet 5 low |
+| dev (per task) | Sonnet 5 medium | red-replay/review Sonnet 5 medium | — |
+| dev stuck (after 3-step methodology) | Opus 4.8 | — | — |
+| fan-in / integration | — | Opus 4.8 medium | — |
 
 ## Pipeline stages
 
@@ -99,20 +118,27 @@ When AFK + vague input (ungrounded path from decision table):
 
 ### 2. Spec
 
-Produce a PRD from clarified intent.
+Produce a spec (PRD) from clarified intent.
 
-- **Gen:** `Skill to-spec` — m=2 independent drafts (ungrounded: agent prose)
-- **Adver:** `Skill adversarial-review` n=2 (spec-gating mode)
-- **Gate:** independent Moderator synthesizes findings → gen fixes spec
+- **Gen:** `Skill to-spec`. Grounded → single draft. AFK ungrounded → m=2
+  independent draft agents, orchestrator merges before adver. Seam check
+  (to-spec step 2): interactive → ask the user as written; AFK → record seam
+  assumptions prominently in the spec for adver+Moderator to attack.
+- **Adver:** `Skill adversarial-review` n=2 (spec-gating mode) — reviewers
+  dispatched as `execute` agent type, model passed explicitly per bindings
+- **Gate:** independent Moderator (`decide` agent type, explicit model)
+  synthesizes findings → gen fixes spec
 - **Output:** spec published to configured tracker
 
 ### 3. Decompose
 
 Split spec into independently-grabbable vertical slices.
 
-- **Gen:** `Skill to-tickets` — produces issue files
-- **Adver:** `Skill adversarial-review` n=1 (challenge split — lightweight)
-- **Gate:** independent Moderator → gen fixes split if findings warrant
+- **Gen:** `Skill to-tickets`
+- **Adver:** `Skill adversarial-review` n=1 (challenge split — lightweight),
+  `execute` agent type, explicit model
+- **Gate:** independent Moderator (`decide` agent type) → gen fixes split if
+  findings warrant
 - **Output:** tickets on configured tracker (one per task)
 
 ### 4. Dev (per-task, parallel)
@@ -124,6 +150,20 @@ Implement each issue as a stacked branch.
 - **Adver (execution):** tdd red-replay (scratch checkout)
 - **Gate:** independent Moderator receives code-review findings → gen fixes → commit
 - **Context:** issue body is full context (no HANDOFF.md)
+
+#### Dispatch
+
+All tasks run inside ONE background execute agent. Before dispatch, materialize or validate the Stage 4 handoff against `flow-dev/references/handoff-contract.json` using `flow-dev/scripts/validate-handoff-contract.sh <handoff.json>`. The prompt includes:
+
+1. Ticket file path list + feature prefix
+2. `Skill flow-dev` (dev-loop details defined by flow-dev/SKILL.md)
+3. Completion-report requirements from the contract: `per_task_status`, `failed_tasks`, `tests_run`, and `completion_summary`
+4. "Update harness task tracker if available" (conditional — cross-CLI compat)
+
+Single agent = single-writer for lock/merge-train/A5. Issue body is full context
+(fresh context, not fork — fork breaks reproducibility and can't pin model tier;
+if dev needs conversation-only context, fix the ticket). No user gates inside the
+dev loop — interactive and AFK use the same dispatch path.
 
 For skill tasks:
 - **Gen:** `Skill skill-writer`
@@ -179,9 +219,9 @@ Push artifact to target environment. Agent-first, CI fallback.
 
 ### 9. E2E
 
-Real target, real deps, no mocks. A/B comparison against baseline.
+Real target, real deps, no mocks. e2e suite = frozen expectations; gate pass/fail against deployed target; regression = block.
 
-- **Mechanism:** e2e test suite against deployed target
+- **Mechanism:** e2e test suite against deployed target, judged against frozen expectations
 - **Gate:** pass/fail; regression = block
 - **Skip:** skill repos → jump to done
 
@@ -195,16 +235,9 @@ Squash-merge, cleanup, status updates.
 
 ## Loop: spec-discipline
 
-When dev reveals a spec gap:
-
-| Gap type | Path | Action |
-|---|---|---|
-| Bug in spec (wrong requirement) | edit-in-place | fix spec, re-decompose affected tasks |
-| Replacement (obsoletes spec) | supersedes | new spec with `Supersedes:` header |
-| Addition (new requirement) | extends | new ticket linking to original spec |
-
-Trigger: `Skill spec-discipline` — auto-invoked when dev agent detects
-requirement mismatch.
+When dev reveals a spec gap or requirement mismatch, trigger
+`Skill spec-discipline`; that skill owns the spec lifecycle cases and returns
+the pipeline to review → decompose → dev.
 
 ## Domain context injection
 

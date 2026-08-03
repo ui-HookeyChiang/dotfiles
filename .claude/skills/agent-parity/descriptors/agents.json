@@ -1,0 +1,206 @@
+{
+  "agents": [
+    {
+      "name": "claude",
+      "detection": {
+        "probes": [
+          {
+            "type": "command",
+            "value": "claude"
+          }
+        ]
+      },
+      "paths": {
+        "settings": "~/.claude/settings.json",
+        "instructions": "~/.claude/CLAUDE.md",
+        "hooks": "~/.claude/hooks"
+      }
+    },
+    {
+      "name": "opencode",
+      "detection": {
+        "probes": [
+          {
+            "type": "command",
+            "value": "opencode"
+          }
+        ]
+      },
+      "paths": {
+        "settings": "~/.config/opencode/opencode.json",
+        "instructions": "~/.config/opencode/AGENTS.md",
+        "hooks": "~/.config/opencode/plugins"
+      },
+      "accepted_gaps": {
+        "deny": {
+          "opencode": [
+            {
+              "item": "grep",
+              "reason": "OpenCode-only deny forcing rg; Claude enforces this via rtk hook instead",
+              "review_by": "2027-02-03"
+            },
+            {
+              "item": "egrep",
+              "reason": "OpenCode-only deny forcing rg; Claude enforces this via rtk hook instead",
+              "review_by": "2027-02-03"
+            },
+            {
+              "item": "fgrep",
+              "reason": "OpenCode-only deny forcing rg; Claude enforces this via rtk hook instead",
+              "review_by": "2027-02-03"
+            },
+            {
+              "item": "find",
+              "reason": "OpenCode-only deny forcing fd/rg; Claude enforces this via rtk hook instead",
+              "review_by": "2027-02-03"
+            }
+          ]
+        },
+        "doc": {
+          "opencode": [
+            {
+              "item": "shell-tools.md",
+              "reason": "OpenCode-only shell tooling guidance; user opted to keep Claude CLAUDE.md without it (2026-08-03)",
+              "review_by": "2027-02-03"
+            }
+          ]
+        },
+        "hook": {
+          "opencode": [
+            {
+              "item": "skill-dev-hooks",
+              "reason": "OpenCode plugin wrapper hosts Claude hook equivalents; Claude registers hooks directly",
+              "review_by": "2027-02-03"
+            }
+          ],
+          "claude": [
+            {
+              "item": "block-heredoc-continuation",
+              "reason": "OpenCode plugin does not yet implement heredoc continuation guard",
+              "review_by": "2027-02-03"
+            }
+          ]
+        },
+        "agent-definition": {
+          "opencode": [
+            {
+              "item": "explore",
+              "reason": "OpenCode-only built-in style exploration agent; Claude counterpart not defined yet",
+              "review_by": "2027-02-03"
+            },
+            {
+              "item": "general",
+              "reason": "OpenCode-only general fallback agent; Claude counterpart not defined yet",
+              "review_by": "2027-02-03"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "codex",
+      "detection": {
+        "probes": [
+          {
+            "type": "command",
+            "value": "codex"
+          },
+          {
+            "type": "dir",
+            "value": "~/.codex"
+          }
+        ]
+      },
+      "paths": {
+        "settings": "~/.codex/config.toml",
+        "instructions": "~/.codex/AGENTS.md",
+        "hooks": "~/.codex/hooks.json",
+        "permissions": "~/.codex/cli-config.json",
+        "agent_definitions": "~/.codex/agents"
+      },
+      "accepted_model_reason": "Codex uses the configured GPT channel as a documented local exception; safety parity is enforced through permissions, hooks, and instructions.",
+      "accepted_model_review_by": "2027-02-03",
+      "accepted_gaps": {
+        "hook": {
+          "claude": [
+            {
+              "item": "check-parity-session",
+              "reason": "Codex supports PreToolUse and SubagentStart, but no confirmed SessionStart hook surface",
+              "review_by": "2027-02-03"
+            },
+            {
+              "item": "block-heredoc-continuation",
+              "reason": "Codex hooks.json does not yet implement heredoc continuation guard",
+              "review_by": "2027-02-03"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "cursor",
+      "detection": {
+        "probes": [
+          {
+            "type": "command",
+            "value": "cursor"
+          },
+          {
+            "type": "dir",
+            "value": "~/.cursor"
+          }
+        ]
+      },
+      "paths": {
+        "settings": "~/.cursor/cli-config.json",
+        "instructions": "",
+        "hooks": "~/.cursor/hooks.json",
+        "agent_definitions": ".cursor/agents"
+      },
+      "accepted_model_reason": "Cursor active model is a documented local exception",
+      "accepted_model_review_by": "2027-02-03",
+      "accepted_gaps": {
+        "hook": {
+          "claude": [
+            {
+              "item": "check-parity-session",
+              "reason": "Cursor has no confirmed equivalent registration for this Claude hook",
+              "review_by": "2027-02-03"
+            },
+            {
+              "item": "subagent-dispatch-inject",
+              "reason": "Cursor has no confirmed SubagentStart equivalent",
+              "review_by": "2027-02-03"
+            }
+          ]
+        },
+        "agent-definition": {
+          "claude": [
+            {
+              "item": "decide",
+              "reason": "Cursor subscription model binding for decide is not yet validated",
+              "review_by": "2027-02-03"
+            },
+            {
+              "item": "execute-deep",
+              "reason": "Cursor subscription model binding for execute-deep is not yet validated",
+              "review_by": "2027-02-03"
+            }
+          ],
+          "cursor": [
+            {
+              "item": "execute-review",
+              "reason": "Cursor-native review tier split (PR #1236); Claude counterpart not defined yet",
+              "review_by": "2027-02-03"
+            },
+            {
+              "item": "scan-search",
+              "reason": "Cursor-native search tier split (PR #1236); Claude counterpart not defined yet",
+              "review_by": "2027-02-03"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

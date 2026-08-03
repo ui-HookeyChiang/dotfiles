@@ -29,7 +29,7 @@ No context suppression for G1 — cross-skill duplication is always actionable; 
 
 ### G7 context suppression — heading-aware downgrade
 
-If a paragraph sits under a heading whose name signals it is **deliberately explanatory** (rather than instructional), drop the finding's severity by one level (HIGH → MED, MED → LOW, LOW → no report). The three suppression buckets are borrowed from `skill-syntax-audit/scripts/audit.py` line 70-82 **as a design pattern**, with regex rewritten for prose context:
+If a paragraph sits under a heading whose name signals it is **deliberately explanatory** (rather than instructional), drop the finding's severity by one level (HIGH → MED, MED → LOW, LOW → no report). The three suppression buckets are borrowed from `skill-audit/scripts/syntax_audit.py` **as a design pattern**, with regex rewritten for prose context:
 
 | Bucket | Heading regex (case-insensitive) |
 |---|---|

@@ -1,0 +1,55 @@
+[
+  {
+    "id": "q1",
+    "q": "Which hook script blocks edits on the default branch, and what environment variable bypasses it?",
+    "accept_all": [
+      "block-main-edit",
+      "ALLOW_MAIN_EDIT"
+    ]
+  },
+  {
+    "id": "q2",
+    "q": "What is the default TTL in seconds for the worktree session claim, and which script defines it?",
+    "accept_all": [
+      "1800",
+      "guard-agent-worktree"
+    ]
+  },
+  {
+    "id": "q3",
+    "q": "Which script fails a PR when a skill name is removed without a matching retired-skills.txt entry?",
+    "accept_all": [
+      "ci-check-retired"
+    ]
+  },
+  {
+    "id": "q4",
+    "q": "Which doc file maps Codex CLI settings to Claude Code settings?",
+    "accept_all": [
+      "codex-settings-mapping"
+    ]
+  },
+  {
+    "id": "q5",
+    "q": "Which install.sh phase removes stale dangling symlinks?",
+    "accept_all": [
+      "PHASE 6"
+    ]
+  },
+  {
+    "id": "q6",
+    "q": "What are the five canonical triage Status roles (excluding the done completion state)?",
+    "accept_all": [
+      "needs-triage",
+      "needs-info",
+      "ready-for-agent",
+      "ready-for-human",
+      "wontfix"
+    ]
+  },
+  {
+    "id": "q7",
+    "q": "What is the value of MAX_PARALLEL_WORKERS in the repo's dispatch configuration file?",
+    "abstain": true
+  }
+]

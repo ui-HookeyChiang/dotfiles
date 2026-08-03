@@ -7,14 +7,14 @@
 # Three assertions (per HANDOFF.md Task 8):
 #   A1. Composer banner names probabilistic + prose, NEVER syntax-llm.
 #       Tested against flow-dev (12 references) to prove ref-count-independence.
-#   A2. Trace gate: 1 leg written -> assert_audit_complete fails;
-#                   2 legs written -> assert_audit_complete passes.
+#   A2. Trace gate: 1 leg written -> audit-leg-gate assert fails;
+#                   2 legs written -> audit-leg-gate assert passes.
 #   A3. Deterministic run.sh exits 0 or 2 (never 1) against flow-dev.
 set -u
 
 HERE="$(cd "$(dirname "$0")/.." && pwd)"
 ROOT="$(cd "$HERE/.." && pwd)"
-TRACE_SH="$ROOT/_shared/lib/sh/sandwich-trace.sh"
+GATE="$ROOT/skill-audit/scripts/audit-leg-gate.sh"
 SKILL="$ROOT/flow-dev"
 PASS=0; FAIL=0
 
@@ -63,28 +63,22 @@ fi
 # would let A2b pass on A2a's leftover 'probabilistic' line — masking an A2a
 # regression.) A2a: only probabilistic. A2b: both legs from scratch.
 LOG_A="$(mktemp)"
-bash -c "
-  source '$TRACE_SH'
-  write_audit_leg_trace probabilistic flow-dev '$LOG_A'
-  assert_audit_complete flow-dev '$LOG_A'
-" >/dev/null 2>&1
+bash "$GATE" mark probabilistic flow-dev "$LOG_A" >/dev/null 2>&1
+bash "$GATE" assert flow-dev "$LOG_A" >/dev/null 2>&1
 rc=$?
 [ "$rc" != 0 ] \
-  && pass "A2a: 1-of-2 legs -> assert_audit_complete correctly returns non-zero (rc=$rc)" \
-  || fail "A2a: 1-of-2 legs -> assert_audit_complete incorrectly returned 0"
+  && pass "A2a: 1-of-2 legs -> audit-leg-gate correctly returns non-zero (rc=$rc)" \
+  || fail "A2a: 1-of-2 legs -> audit-leg-gate incorrectly returned 0"
 rm -f "$LOG_A"
 
 LOG_B="$(mktemp)"
-bash -c "
-  source '$TRACE_SH'
-  write_audit_leg_trace probabilistic flow-dev '$LOG_B'
-  write_audit_leg_trace prose         flow-dev '$LOG_B'
-  assert_audit_complete flow-dev '$LOG_B'
-" >/dev/null 2>&1
+bash "$GATE" mark probabilistic flow-dev "$LOG_B" >/dev/null 2>&1
+bash "$GATE" mark prose flow-dev "$LOG_B" >/dev/null 2>&1
+bash "$GATE" assert flow-dev "$LOG_B" >/dev/null 2>&1
 rc=$?
 [ "$rc" = 0 ] \
-  && pass "A2b: 2-of-2 legs -> assert_audit_complete returns 0" \
-  || fail "A2b: 2-of-2 legs -> assert_audit_complete returned non-zero (rc=$rc)"
+  && pass "A2b: 2-of-2 legs -> audit-leg-gate returns 0" \
+  || fail "A2b: 2-of-2 legs -> audit-leg-gate returned non-zero (rc=$rc)"
 rm -f "$LOG_B"
 
 # ── A3: Deterministic run.sh exits 0 or 2 (no LLM, no agent) ─────────────────

@@ -18,7 +18,7 @@ SCRIPTS_DIR = Path(__file__).resolve().parents[1]
 if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
-from audit import (  # noqa: E402
+from syntax_audit import (  # noqa: E402
     detect_unbound_vars,
     parse_code_blocks,
     Finding,
@@ -30,7 +30,7 @@ FIXTURES = Path(__file__).parent / "fixtures" / "unbound"
 def _run_on(name: str) -> list[Finding]:
     """Run detect_unbound_vars on fixtures/unbound/<name>/SKILL.md.
 
-    known-env.txt is always loaded from audit.py's own scripts/ dir (the
+    known-env.txt is always loaded from syntax_audit.py's own scripts/ dir (the
     auditor's data file), so we don't need to pass it from the test.
     scripts_dir is passed as the fixture's scripts/ subdir (for source resolution).
     """
@@ -155,7 +155,7 @@ def test_v_findings_have_correct_kind_and_severity():
 # dogfood callers branching on exit 2 = clean).
 
 def test_passive_exit_code_v_only(capsys):
-    from audit import main
+    from syntax_audit import main
     rc = main([str(FIXTURES / "positive" / "SKILL.md"), "--no-spec"])
     capsys.readouterr()  # swallow the report
     assert rc == 2, (
@@ -166,7 +166,7 @@ def test_passive_exit_code_v_only(capsys):
 
 def test_render_report_includes_unbound_column():
     """render_report table header must contain 'Unbound vars' column."""
-    from audit import render_report
+    from syntax_audit import render_report
     md = render_report(
         target=FIXTURES / "clean" / "SKILL.md",
         skill_name="clean",

@@ -9,7 +9,7 @@ historical residue in a SKILL.md body (e.g. a `## See Also` bullet that says
   - leave the stable 3-kind move-path untouched (regression in
     test_g8_disclosure.py).
 
-LLM verdict contract (reused from the existing llm_fn dict):
+LLM verdict contract (reused from the existing llm_dispatch dict):
   classification in ("reference", "rationale") -> the marker is pure
     change-history; removing it does NOT change behavior -> CONFIRM -> emit.
   classification == "actionable" -> the marker is contract-relevant
@@ -149,7 +149,7 @@ def test_inline_changelog_llm_confirm_emits_med_delete(tmp_path: Path) -> None:
         "- `skill-semantic-audit` — G7 axis moved to `prose-guidelines` (2026-05-29).",
     ])
     p = _make_skill(tmp_path, body)
-    findings = g8.detect([str(p)], llm_fn=_llm_confirm_removable)
+    findings = g8.detect([str(p)], llm_dispatch=_llm_confirm_removable)
     # exactly the one inline_changelog finding (the bullet is a single line,
     # well below the <10-line move gate, but must NOT be dropped).
     cl = [f for f in findings if f["id"].startswith("g8cl-")]
@@ -209,7 +209,7 @@ def test_inline_changelog_contract_relevant_dropped(tmp_path: Path) -> None:
         "- All v1 callers must migrate by 2026-05-29 or the shim is removed.",
     ])
     p = _make_skill(tmp_path, body)
-    findings = g8.detect([str(p)], llm_fn=_llm_says_contract_relevant)
+    findings = g8.detect([str(p)], llm_dispatch=_llm_says_contract_relevant)
     cl = [f for f in findings if f["id"].startswith("g8cl-")]
     assert cl == []
 
@@ -227,7 +227,7 @@ def test_inline_changelog_inside_move_segment_suppressed(tmp_path: Path) -> None
     bullets[4] = "- item 5 was demoted from Phase 3 (2026-05-29)"  # inner line
     body = "\n".join(["# H", *bullets])
     p = _make_skill(tmp_path, body)
-    findings = g8.detect([str(p)], llm_fn=_llm_confirm_removable)
+    findings = g8.detect([str(p)], llm_dispatch=_llm_confirm_removable)
     cl = [f for f in findings if f["id"].startswith("g8cl-")]
     move = [f for f in findings if f["id"].startswith("g8-")]
     assert cl == []                       # contained changelog bullet suppressed
@@ -244,7 +244,7 @@ def test_inline_changelog_outside_move_segment_still_emits(tmp_path: Path) -> No
         "- normal bullet.",
     ])
     p = _make_skill(tmp_path, body)
-    findings = g8.detect([str(p)], llm_fn=_llm_confirm_removable)
+    findings = g8.detect([str(p)], llm_dispatch=_llm_confirm_removable)
     cl = [f for f in findings if f["id"].startswith("g8cl-")]
     assert len(cl) == 1
 
@@ -256,12 +256,12 @@ def test_inline_changelog_outside_move_segment_still_emits(tmp_path: Path) -> No
 # detect() must report those segments even though the regex never hit them.
 
 def _make_recall_llm(recalled_texts: list[str]) -> g8.LLMFn:
-    """Return an llm_fn that, in recall mode, proposes hard-coded text
+    """Return an llm_dispatch that, in recall mode, proposes hard-coded text
     segments (mimicking what an LLM would find by semantic scan).  In classify
     mode it returns 'reference' so the finding is emitted.
 
-    Protocol: detect() calls llm_fn with a sentinel Segment whose kind is
-    ``"recall_probe"``; the llm_fn must return a dict with
+    Protocol: detect() calls llm_dispatch with a sentinel Segment whose kind is
+    ``"recall_probe"``; the dispatch callable must return a dict with
     ``classification == "recall_proposals"`` and a ``proposals`` list of
     ``{"start": int, "end": int, "snippet": str}`` dicts."""
     def _fn(seg: g8.Segment, lines: list[str]) -> dict:
@@ -287,11 +287,11 @@ def _make_recall_llm(recalled_texts: list[str]) -> g8.LLMFn:
 
 
 def test_llm_recall_finds_open_set_phrases(tmp_path: Path) -> None:
-    """§6 case-3: llm_fn recall mode must surface segments the regex misses.
+    """§6 case-3: llm_dispatch recall mode must surface segments the regex misses.
 
     "Consolidated from the DEV static advisory…" and "(was v1 Phase 3.4)" carry
     no change-history verb from the narrow whitelist, so _scan_inline_changelog
-    never proposes them.  With an injected llm_fn whose recall mode DOES return
+    never proposes them.  With an injected llm_dispatch whose recall mode DOES return
     them, detect() must emit g8cl- findings for those lines.
     """
     body = "\n".join([
@@ -305,7 +305,7 @@ def test_llm_recall_finds_open_set_phrases(tmp_path: Path) -> None:
         "Consolidated from the DEV static advisory",
         "was v1 Phase 3.4",
     ])
-    findings = g8.detect([str(p)], llm_fn=llm)
+    findings = g8.detect([str(p)], llm_dispatch=llm)
     cl = [f for f in findings if f["id"].startswith("g8cl-")]
     # Both open-set bullets must be reported; the normal instruction must not.
     assert len(cl) == 2, f"expected 2 g8cl findings, got {len(cl)}: {[f['evidence_quote'] for f in cl]}"

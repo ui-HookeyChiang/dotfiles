@@ -15,7 +15,7 @@ is extracted via the YAML block between the leading `---` delimiters. The
 `scripts/` directory is walked to build a file listing used by later phases.
 
 **Phase 2 — Detect.** Advisory metrics (size, imbalance, staleness, phrase
-hints) are computed by `scripts/audit.py`. The LLM advisory pass is dispatched
+hints) are computed by `scripts/syntax_audit.py`. The LLM advisory pass is dispatched
 by the main agent after `audit.sh` returns.
 
 **Phase 3 — Report.** The metric brief and LLM findings are merged and emitted

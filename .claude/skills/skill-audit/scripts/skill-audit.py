@@ -30,7 +30,10 @@ def missing_legs_banner(legs_ran: set[str]) -> str | None:
     return (
         f"NOTE: dispatch the remaining LLM legs before reporting complete: "
         f"{', '.join(missing)}. Run the probabilistic leg (1 agent, "
-        f"syntax 6-axes + semantic G1/G8) and prose-guidelines (SKILL.md > 200 lines)."
+        f"syntax 6-axes + semantic G1/G8/IRD/GC) and prose-guidelines "
+        f"(SKILL.md > 200 lines). Mark each leg with "
+        f"`skill-audit/scripts/audit-leg-gate.sh mark`, then run "
+        f"`skill-audit/scripts/audit-leg-gate.sh assert`."
     )
 
 

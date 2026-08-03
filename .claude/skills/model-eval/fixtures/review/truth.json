@@ -1,0 +1,38 @@
+{
+  "d1": {
+    "accept": true,
+    "tags": []
+  },
+  "d2": {
+    "accept": true,
+    "tags": []
+  },
+  "d3": {
+    "accept": false,
+    "tags": [
+      "forbidden-file",
+      "fake-test"
+    ]
+  },
+  "d4": {
+    "accept": false,
+    "tags": [
+      "must-preserve",
+      "signature"
+    ]
+  },
+  "d5": {
+    "accept": false,
+    "tags": [
+      "scope-creep",
+      "new-file"
+    ]
+  },
+  "d6": {
+    "accept": false,
+    "tags": [
+      "incomplete",
+      "wrong-fix"
+    ]
+  }
+}

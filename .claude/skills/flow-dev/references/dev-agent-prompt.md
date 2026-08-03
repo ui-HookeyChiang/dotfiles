@@ -14,24 +14,33 @@ Launch 1 agent (subagent_type: general-purpose):
   # Include ONLY when re-running after red-replay / code-review feedback:
   These issues were found — fix them: <paste red-replay log and/or review findings>
 
-  Phase 1 — Implement (or fix):
+  Implement or fix:
   - Read `docs/ticket/<slug>.md` for what to do, which files to modify, and relevant context
   - Keep changes focused on this task only
-  - MUST invoke `Skill coding-guidelines` before writing any code — apply the four guardrails (think before coding, simplicity first, surgical changes, goal-driven execution)
+  - MUST invoke `Skill coding-guidelines` before writing any code; apply the relevant guardrails to the task. For trivial tasks, use the skill's judgment clause — load the guardrails, but do not ritualize cheap work.
   - MUST invoke `Skill tdd` before writing any code
+  - If the ticket has a `Test seam:` line, your tests MUST land at that seam —
+    it was agreed at spec time; do not pick a different one. If absent, pick
+    the seam yourself (prefer existing seams, highest possible) and state your
+    choice in the report so it can be recorded in the PR body.
   - Follow Red-Green-Refactor: write failing test, verify it fails, write minimal code, verify pass
   - Stage and commit with conventional commit messages
 
-  Phase 2 — Self-test:
+  Self-test:
   - Run the test plan from the issue file
   - Run the project's test suite (auto-detect: make test, npm test, pytest, etc.)
   - If anything fails, fix and re-test. Loop until all pass.
 
-  Phase 3 — Commit:
+  Commit:
   - Stage all changes and commit with conventional commit messages
   - If `git status` shows a pre-staged `.md` under `docs/spec/archive/` or `docs/superpowers/specs/`, include it in your first commit alongside code changes
   - Do NOT stage or commit the issue file if it was copied into the worktree
   - Do NOT push or create PRs
 
   Report: what you changed, test results, and any decisions you made.
+  Report delivery: before finishing, send the report through a parent-visible
+  report channel. If running as a Cursor/Claude named background agent, call
+  `SendMessage({to: "main", summary: "dev-agent result", message: <report>})`.
+  Do not rely on plain final text unless the harness guarantees it reaches the
+  dispatching session.
 ```

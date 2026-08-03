@@ -1,5 +1,10 @@
 # Model Dispatch
 
+`model-dispatch/native.tsv` is the editable authority for tier -> model,
+effort, and escalation. This file is the human-readable runtime guidance.
+`model-dispatch/runtime-model-pins.tsv` records which runtime surfaces can
+enforce those pins and where each descriptor lives.
+
 | Agent | Criterion | Model × Effort | Escalation rule |
 |-------|-----------|----------------|-----------------|
 | `scan` | Bounded — input contains all needed info (grep, locate, classify, extract) | Haiku 4.5 low | verifier catches errors |
@@ -17,6 +22,39 @@ generation. Bindings from local eval rounds 1-7
 tested Opus 5 as an API challenger and did not displace Opus 4.6. 4.6 slots
 stay while API-active — rebind on Anthropic 4.6 EOL notice.
 model-eval provides evidence for binding decisions; it does not directly apply a row across different model ids, efforts, or dispatch surfaces.
+
+## Runtime Enforcement
+
+| Runtime | Enforcement |
+|---------|-------------|
+| Claude Code | Advisory only for model pins. Subagents inherit the main model; `SubagentStart` can inject escalation rules but cannot pin per-agent model. |
+| OpenCode | Enforced through agent definition frontmatter installed from `docs/agent-definitions/*.md` to `~/.config/opencode/agents/*.md`, then registered in `opencode.json`. |
+| Cursor | Enforced with a routing caveat through project descriptors generated from `docs/agent-definitions/*.md` to `.cursor/agents/*.md`. Cursor descriptors use Cursor model IDs from `cross-cli-dispatch/bindings.tsv`; `effort` is encoded in `model:` bracket parameters. Task routing still depends on subagent description matching or explicit invocation. |
+| Codex | Capability gap placeholder. Keep native bindings as reference until Codex exposes per-agent model pins. |
+
+## Runtime Agent Mapping
+
+| Tier | Agent definition | Runtime binding |
+|------|------------------|-----------------|
+| `scan` | `docs/agent-definitions/scan.md` | `model: claude-haiku-4-5`, `effort: low` |
+| `scan-search` | `docs/agent-definitions/scan-search.md` | `model: claude-sonnet-5`, `effort: low` |
+| `execute` | `docs/agent-definitions/execute.md` | `model: claude-haiku-4-5`, `effort: low` |
+| `execute-review` | `docs/agent-definitions/execute-review.md` | `model: claude-sonnet-5`, `effort: low` |
+| `execute-deep` | `docs/agent-definitions/execute-deep.md` | `model: claude-sonnet-5`, `effort: low` |
+| `decide` | `docs/agent-definitions/decide.md` | `model: claude-opus-4-6`, `effort: low` |
+
+`cross-cli-dispatch/agent-def-map.tsv` maps these tiers to agent definitions so
+`cross-cli-dispatch/scripts/check-agent-defs.sh` rejects drift from
+`model-dispatch/native.tsv`.
+
+`model-dispatch/scripts/sync-cursor-agent-defs.py` generates Cursor descriptors
+from mapped agent definitions plus Cursor rows in
+`model-dispatch/runtime-model-pins.tsv`; `model-dispatch/scripts/validate-runtime-pins.py`
+checks descriptor presence, Cursor model syntax, and runtime binding drift.
+
+`fable` remains a native escalation-only tier (`decide` -> `fable` -> `user`).
+It is not registered as an OpenCode or Cursor agent until runtime support for
+`claude-fable-5` is confirmed on that runtime.
 
 ## Escalation
 

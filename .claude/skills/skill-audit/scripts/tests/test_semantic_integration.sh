@@ -4,7 +4,7 @@
 #
 # Scope (Task 17 / spec L411-440):
 #   1. Self-dogfood: run audit on skill-audit/SKILL.md itself
-#      (G7 + G8 axes only — G1 needs --cross and is exercised separately
+#      (G8 axis; G1 needs --cross and is exercised separately
 #      against the testdata fixture pair).
 #   2. Cross-skill dogfood: run G8 against skill-audit and
 #      flow-dev SKILL.md (multi-references case).
@@ -33,10 +33,33 @@ G1_FIXTURE_DIR="${SKILL_ROOT}/testdata/g1-fixtures"
 EVAL_JSON="${SKILL_ROOT}/evals/trigger-eval.json"
 DOGFOODS_ROOT="${REPO_ROOT}/docs/dogfoods"
 
-# Shared Smoke-evidence emitter (run-id/dir logic lives ONLY in this file,
-# shared with the syntax-leg integration test; PR3 of resident-dogfood). The audit exit
-# code is CAPTURED into smoke/<cmd>.exit and is NOT an auto-fail (Open Q6).
-source "${REPO_ROOT}/_shared/lib/sh/sandwich-trace.sh"
+# Local smoke-evidence helpers. The audit exit code is CAPTURED into
+# smoke/<cmd>.exit and is NOT an auto-fail (Open Q6).
+dogfood_next_run_dir() {
+  local skill="$1" root="$2" n=1
+  local base="${root}/${skill}"
+  mkdir -p "$base"
+  while [ -e "${base}/run-$(printf '%03d' "$n")" ]; do
+    n=$((n + 1))
+  done
+  local run_dir="${base}/run-$(printf '%03d' "$n")"
+  mkdir -p "${run_dir}/smoke"
+  printf '%s\n' "$run_dir"
+}
+
+dogfood_emit_smoke() {
+  local run_dir="$1" cmd="$2" rc="$3" combined="$4"
+  mkdir -p "${run_dir}/smoke"
+  cp "$combined" "${run_dir}/smoke/${cmd}.log"
+  printf '%s\n' "$rc" > "${run_dir}/smoke/${cmd}.exit"
+}
+
+dogfood_emit_trace() {
+  local gate="$1" spec_hash="$2" depth="$3" run="$4" verdict="$5" log="$6"
+  mkdir -p "$(dirname "$log")"
+  printf 'gate=e2e-pass:%s spec=%s depth=%s run=%s verdict=%s\n' \
+    "$gate" "$spec_hash" "$depth" "$run" "$verdict" >>"$log" 2>/dev/null || true
+}
 
 PASS=0
 FAIL=0
@@ -44,8 +67,7 @@ log_pass() { echo "  PASS: $1"; PASS=$((PASS+1)); }
 log_fail() { echo "  FAIL: $1" >&2; FAIL=$((FAIL+1)); }
 
 # assert_dispatch_clean — accept exit ∈ {0,2}, OR exit 1 *only* when the
-# detector explicitly logs the documented stub message (G7/G8 detectors are
-# still stubs on this branch — Task 13/14 land downstream of task-9).
+# detector explicitly logs a documented stub message.
 # Args: $1=label, $2=actual_exit, $3=stderr_file (optional)
 assert_dispatch_clean() {
   local label="$1" rc="$2" errfile="${3:-}"
@@ -55,7 +77,7 @@ assert_dispatch_clean() {
   fi
   if [ "$rc" -eq 1 ] && [ -n "$errfile" ] && [ -f "$errfile" ] \
        && grep -qE 'detector not implemented .* pending Task [0-9]+ \(#1[34]\)' "$errfile"; then
-    log_pass "${label}: exit=1 + documented G7/G8 stub message (Task 13/14 pending)"
+    log_pass "${label}: exit=1 + documented stub message"
     return
   fi
   log_fail "${label}: exit was ${rc} (unexpected); stderr=${errfile:-<none>}"
@@ -73,17 +95,16 @@ done
 [ "$FAIL" -eq 0 ] || { echo "preflight failed, aborting" >&2; exit 1; }
 log_pass "preflight: all required artifacts present"
 
-# Step 1: contract — G7 axis was removed 2026-05-29
-# (per docs/specs/active/2026-05-29-prose-guidelines-g7-dedup.md).
-# Confirm `--axis G7` now exits 1 with the redirect message.
+# Step 1: contract — G7 axis is absent.
+# Confirm `--axis G7` is rejected mechanically by argparse.
 set +e
 bash "$AUDIT_SH" "$SELF_SKILL" --axis G7 --no-llm >/tmp/sa-it-self-g7-removed.out 2>/tmp/sa-it-self-g7-removed.err
 RC=$?
 set -e
-if [ "$RC" -eq 1 ] && grep -q "prose-guidelines" /tmp/sa-it-self-g7-removed.err; then
-  log_pass "G7 axis removed: --axis G7 exits 1 and redirects to prose-guidelines"
+if [ "$RC" -eq 2 ] && grep -q "invalid choice" /tmp/sa-it-self-g7-removed.err; then
+  log_pass "G7 axis absent: --axis G7 rejected by argparse"
 else
-  log_fail "G7 axis removal contract: expected RC=1 + 'prose-guidelines' in stderr; got RC=$RC"
+  log_fail "G7 axis removal contract: expected RC=2 + invalid choice in stderr; got RC=$RC"
 fi
 
 # Step 2: self-dogfood — G8 against skill-audit/SKILL.md.
@@ -122,8 +143,8 @@ else
   log_fail "G1 stdout missing 'findings:' YAML key (see /tmp/sa-it-g1.out)"
 fi
 
-# Step 6: cross-skill rg verification — skill-audit is referenced by peers.
-for f in skill-writer/SKILL.md flow-dev/SKILL.md skill-audit/SKILL.md; do
+# Step 6: cross-skill rg verification — skill-audit is referenced by live docs.
+for f in skill-writer/SKILL.md skill-audit/SKILL.md; do
   if rg -q "skill-audit" "${REPO_ROOT}/${f}"; then
     log_pass "cross-ref present in ${f}"
   else
@@ -131,28 +152,21 @@ for f in skill-writer/SKILL.md flow-dev/SKILL.md skill-audit/SKILL.md; do
   fi
 done
 
-# Step 7: routing-collision static schema check (read-only on trigger-eval.json).
-# Requirement (spec L444): trigger-eval.json's should_trigger:false set must
-# include ≥ 3 near-miss queries naming sibling skills (skill-syntax-audit / darwin /
-# skill-creator / skill-writer). We check this by counting rationale-field
-# substring matches — read-only inspection, no mutation.
-NEG_HITS=$(python3 - "$EVAL_JSON" <<'PY'
+# Step 7: trigger-eval static schema check (read-only on trigger-eval.json).
+EVAL_COUNTS=$(python3 - "$EVAL_JSON" <<'PY'
 import json, sys
 d = json.load(open(sys.argv[1]))
-negs = [x for x in d if x.get("should_trigger") is False]
-hit = 0
-for x in negs:
-    blob = (x.get("query") or "") + " " + (x.get("rationale") or "")
-    blob = blob.lower()
-    if any(name in blob for name in ("skill-audit", "skill-syntax-audit", "darwin", "skill-creator", "skill-writer")):
-        hit += 1
-print(hit)
+pos = sum(1 for x in d if x.get("should_trigger") is True)
+neg = sum(1 for x in d if x.get("should_trigger") is False)
+print(f"{pos} {neg}")
 PY
 )
-if [ "${NEG_HITS:-0}" -ge 3 ]; then
-  log_pass "trigger-eval.json: ${NEG_HITS} routing-collision negatives (≥3 required)"
+POS_COUNT="${EVAL_COUNTS%% *}"
+NEG_COUNT="${EVAL_COUNTS##* }"
+if [ "${POS_COUNT:-0}" -ge 8 ] && [ "${NEG_COUNT:-0}" -ge 8 ]; then
+  log_pass "trigger-eval.json: ${POS_COUNT} positive / ${NEG_COUNT} negative cases"
 else
-  log_fail "trigger-eval.json: only ${NEG_HITS:-0} collision negatives (≥3 required)"
+  log_fail "trigger-eval.json: expected ≥8 positive and ≥8 negative cases; got ${POS_COUNT:-0}/${NEG_COUNT:-0}"
 fi
 
 # Step 8: emit Smoke evidence onto the PR1 resident contract

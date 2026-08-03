@@ -1,11 +1,35 @@
-# Legacy detector internals
+# Detector internals
 
-The legacy detector pipeline (reached only via `--write-spec` / `--no-spec`) runs
-six detectors against the parsed SKILL.md + `scripts/`. Detectors 1 and 2 are
-first-class findings (HIGH/MED/LOW severity, shown in the summary table).
-Detectors 3 and 6 are passive — info-level hints only, never flip the exit code.
-Detectors 4 (frontmatter, kind=F) and 5 (broken links, kind=L) are documented
-inline in `scripts/syntax_audit.py` (via `scripts/audit.py` shim) (`detect_frontmatter_pathology` / `detect_broken_links`).
+## Semantic axes
+
+`scripts/semantic_audit.py` runs four semantic axes on `SKILL.md` by default:
+
+1. **G1** — same-meaning paragraph duplication. It compares intra-file and
+   intra-skill candidate paragraphs and needs LLM confirmation for real
+   same-meaning judgments. Under `--no-llm`, it emits a
+   `needs_probabilistic_confirm` candidate rather than a verdict.
+2. **G8** — progressive disclosure violations and inline changelog residue.
+   Deterministic rules find long movable blocks and changelog-shaped bullets;
+   the LLM path confirms whether the content belongs in `references/` or can be
+   deleted.
+3. **IRD** — inline reasoning duplication. It deterministically flags long
+   multi-step workflows in `SKILL.md` that overlap sibling skill descriptions,
+   suggesting delegation via `Invoke Skill X` plus a gate condition. Findings
+   are LOW advisory.
+4. **GC** — good-class conformance. It checks whether top-level `SKILL.md`
+   sections match one of the six `skill-guidelines` good-classes: triggers,
+   contracts, live mechanism, preconditions/caveats, disambiguation, or
+   pointers. Out-of-class sections emit LOW advisory findings for probabilistic
+   review.
+
+## Syntax detector path
+
+The syntax detector path is still reachable via `--write-spec` / `--no-spec` and
+runs six detectors against the parsed SKILL.md + `scripts/`. Detectors 1 and 2
+are first-class findings (HIGH/MED/LOW severity, shown in the summary table).
+Detectors 3 and 6 are passive info-level hints and never flip the exit code.
+Detectors 4 and 5 are first-class structured checks implemented inline in
+`scripts/syntax_audit.py`.
 
 ## Detector 1: redundant steps
 
@@ -58,6 +82,17 @@ This catches cases where extraction already happened but didn't go far enough.
 
 This detector produces info-level findings only (never blocks the spec). It's a
 hint, not a verdict.
+
+## Detector 4: frontmatter pathology (kind=F)
+
+Validates SKILL.md frontmatter shape: required keys, name/path consistency, and
+agent harness sidecar consistency where applicable.
+
+## Detector 5: broken links (kind=L)
+
+Checks Markdown links and skill-root-relative path references. Reference files
+resolve `scripts/` and sibling paths against the owning skill root, not the
+reference file's directory.
 
 ## Detector 6: unbound variables (kind=V)
 

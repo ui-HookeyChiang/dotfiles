@@ -1,0 +1,4 @@
+CI integration suite (wt_id tests only) — 3 failures:
+FAIL: t12 wt_id nested (expected [ns:task-1] rc=0, got [ns] rc=0)
+FAIL: t13 wt_id top-level (expected [solo] rc=0, got [solo:solo] rc=0)
+FAIL: t14 wt_id outside (expected [] rc=1, got [:etc] rc=0)

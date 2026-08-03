@@ -1,0 +1,112 @@
+[
+  {
+    "query": "幫我把這個 scan-tier subagent 跑到 cursor 上，用訂閱 quota 而不是 API billing",
+    "should_trigger": true,
+    "rationale": "Explicit scan-tier dispatch to cursor subscription channel"
+  },
+  {
+    "query": "I need to run an execute-tier task headlessly through opencode instead of burning Anthropic API credits",
+    "should_trigger": true,
+    "rationale": "Execute-tier dispatch to subscription CLI (opencode) to avoid API billing"
+  },
+  {
+    "query": "cursor 跑 quota exceeded 了，需要 fallback 到 codex 或 API",
+    "should_trigger": true,
+    "rationale": "CLI quota error requiring fallback down the channel chain"
+  },
+  {
+    "query": "pin a non-Anthropic model (gpt-4o) for this headless run — Agent tool can't do that",
+    "should_trigger": true,
+    "rationale": "Non-Anthropic model pinning, explicitly noting Agent tool limitation"
+  },
+  {
+    "query": "model-eval 的 cli-adapter backend 需要切換成 codex，幫我 dispatch 過去",
+    "should_trigger": true,
+    "rationale": "Model-eval backend switch — explicitly in-scope per skill description"
+  },
+  {
+    "query": "codex CLI hit rate-limit, fall back through the channel chain to Anthropic API",
+    "should_trigger": true,
+    "rationale": "Rate-limit error triggering fallback chain — core skill responsibility"
+  },
+  {
+    "query": "route this scan task through the cursor adapter so it rides subscription quota",
+    "should_trigger": true,
+    "rationale": "Routing scan-tier work to cursor subscription channel"
+  },
+  {
+    "query": "我想透過 opencode 的訂閱跑這個 execute-tier 任務，需要 normalized adapter",
+    "should_trigger": true,
+    "rationale": "Execute-tier task routed via opencode through normalized adapter"
+  },
+  {
+    "query": "dispatch a gemini-pro run headlessly — the Agent tool only supports Anthropic models",
+    "should_trigger": true,
+    "rationale": "Headless non-Anthropic model run, Agent tool constraint explicitly cited"
+  },
+  {
+    "query": "opencode quota 滿了，自動 fallback 到 Anthropic API 繼續跑",
+    "should_trigger": true,
+    "rationale": "Subscription quota exhaustion triggering API fallback"
+  },
+  {
+    "query": "哪個 tier 應該用 sonnet 還是 haiku？幫我決定 model binding",
+    "should_trigger": false,
+    "rationale": "Near-miss: choosing tier-to-model bindings — explicitly NOT in scope"
+  },
+  {
+    "query": "我要做 model benchmark — 跑 10 prompts 看 sonnet vs opus 誰比較準",
+    "should_trigger": false,
+    "rationale": "Near-miss: model benchmarking is model-eval not dispatch routing"
+  },
+  {
+    "query": "這個架構決策要用 decide-tier agent 來判斷，幫我 dispatch 一個",
+    "should_trigger": false,
+    "rationale": "Near-miss: decide-tier work — explicitly NOT for this skill"
+  },
+  {
+    "query": "Anthropic API billing 這個月超標了，怎麼降低 token cost？",
+    "should_trigger": false,
+    "rationale": "Near-miss: API billing cost question, not channel routing or quota fallback"
+  },
+  {
+    "query": "cursor IDE 的 composer 功能怎麼用？可以幫我設定嗎",
+    "should_trigger": false,
+    "rationale": "Near-miss: cursor IDE usage question, not CLI dispatch routing"
+  },
+  {
+    "query": "我想做 load balancing — 把 API calls 分散到多個 endpoint",
+    "should_trigger": false,
+    "rationale": "Near-miss: load balancing — explicitly NOT in scope per description"
+  },
+  {
+    "query": "spin up a general Agent tool subagent to handle this refactoring task",
+    "should_trigger": false,
+    "rationale": "Near-miss: general Agent tool dispatch, not subscription CLI routing"
+  },
+  {
+    "query": "run model-eval round 7 — benchmark gpt-4o vs claude on the L2 tier harness",
+    "should_trigger": false,
+    "rationale": "Near-miss: running a benchmark eval round, not switching cli-adapter backend"
+  },
+  {
+    "query": "幫我決定 scan-tier 要綁定哪個 model，根據最新的 eval round 結果",
+    "should_trigger": false,
+    "rationale": "Near-miss: deciding tier bindings from eval results — explicitly NOT this skill"
+  },
+  {
+    "query": "我需要一個 decide-tier 判斷：這個 API 設計該用 REST 還是 GraphQL",
+    "should_trigger": false,
+    "rationale": "Near-miss: decide-tier judgment work — out of scope regardless of routing"
+  },
+  {
+    "query": "cursor 訂閱快到期了，我該續費嗎？值不值得？",
+    "should_trigger": false,
+    "rationale": "Cursor subscription renewal question — unrelated to dispatch routing"
+  },
+  {
+    "query": "set up codex CLI credentials for the first time on this machine",
+    "should_trigger": false,
+    "rationale": "CLI setup/credential config, not dispatching a run through CLI channels"
+  }
+]

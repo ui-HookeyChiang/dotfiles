@@ -194,13 +194,13 @@ LLMFn = Callable[[Segment, list[str]], dict]
 
 def _default_llm_dispatch(segment: Segment, file_lines: list[str]) -> dict:
     """Placeholder dispatch — real wiring lands in a later task.
-    Callers must inject ``llm_fn=`` or use ``no_llm=True``."""
+    Callers must inject ``llm_dispatch=`` or use ``no_llm=True``."""
     raise NotImplementedError(
-        "g8: real LLM dispatch not wired. Pass llm_fn= or use no_llm=True."
+        "g8: real LLM dispatch not wired. Pass llm_dispatch= or use no_llm=True."
     )
 
-def _llm_classify(segment: Segment, file_lines: list[str], llm_fn: LLMFn) -> dict:
-    v = llm_fn(segment, file_lines)
+def _llm_classify(segment: Segment, file_lines: list[str], llm_dispatch: LLMFn) -> dict:
+    v = llm_dispatch(segment, file_lines)
     cls = v.get("classification", "actionable")
     if cls not in ("actionable", "reference", "rationale"):
         cls = "actionable"
@@ -317,10 +317,10 @@ def _build_inline_changelog_finding(idx: int, file_path: str,
     }
 
 
-def _llm_recall(file_lines: list[str], llm_fn: LLMFn) -> list[Segment]:
+def _llm_recall(file_lines: list[str], llm_dispatch: LLMFn) -> list[Segment]:
     """§6 case-3: LLM owns recall for inline_changelog.
 
-    Sends a recall probe (Segment with kind="recall_probe") to llm_fn so it
+    Sends a recall probe (Segment with kind="recall_probe") to llm_dispatch so it
     can scan the whole file body and propose inline-changelog candidate lines.
     Returns a list of Segment objects (kind="inline_changelog") for any line
     ranges the LLM surfaces.  If the LLM does not return a
@@ -333,7 +333,7 @@ def _llm_recall(file_lines: list[str], llm_fn: LLMFn) -> list[Segment]:
     probe = Segment(start=0, end=0, kind="recall_probe", movable_lines=0,
                     snippet="")
     try:
-        result = llm_fn(probe, file_lines)
+        result = llm_dispatch(probe, file_lines)
     except Exception:
         return []
     if result.get("classification") != "recall_proposals":
@@ -354,7 +354,7 @@ def _llm_recall(file_lines: list[str], llm_fn: LLMFn) -> list[Segment]:
 
 
 def _process_inline_changelog(seg: Segment, path: str, text: list[str],
-                              no_llm: bool, llm_fn: LLMFn | None,
+                              no_llm: bool, llm_dispatch: LLMFn | None,
                               next_id: int,
                               counter: _OutOfBoundsCounter) -> dict | None:
     """Sidecar path — orthogonal to _severity / _fuse.
@@ -374,7 +374,7 @@ def _process_inline_changelog(seg: Segment, path: str, text: list[str],
         # surfaces the N/A advisory for the file when it sees skipped segments.
         return None
 
-    verdict = _llm_classify(seg, text, llm_fn)  # type: ignore[arg-type]
+    verdict = _llm_classify(seg, text, llm_dispatch)  # type: ignore[arg-type]
     if verdict["classification"] == "actionable":
         return None  # contract-relevant; keep it
     f = _build_inline_changelog_finding(next_id, path, text, seg,
@@ -383,10 +383,10 @@ def _process_inline_changelog(seg: Segment, path: str, text: list[str],
 
 
 def _process_segment(seg: Segment, path: str, text: list[str],
-                     no_llm: bool, llm_fn: LLMFn | None,
+                     no_llm: bool, llm_dispatch: LLMFn | None,
                      next_id: int, counter: _OutOfBoundsCounter) -> dict | None:
     if seg.kind == "inline_changelog":
-        return _process_inline_changelog(seg, path, text, no_llm, llm_fn,
+        return _process_inline_changelog(seg, path, text, no_llm, llm_dispatch,
                                          next_id, counter)
     if no_llm:
         sev = _severity(seg.movable_lines)
@@ -396,7 +396,7 @@ def _process_segment(seg: Segment, path: str, text: list[str],
                            confidence="high", llm_verdict=None)
         return f if _validate_evidence(f, text, counter) else None
 
-    verdict = _llm_classify(seg, text, llm_fn)  # type: ignore[arg-type]
+    verdict = _llm_classify(seg, text, llm_dispatch)  # type: ignore[arg-type]
     action, conf = _fuse(True, verdict["classification"], seg.movable_lines)
     if action == "drop":
         return None
@@ -417,7 +417,7 @@ def _build_inline_changelog_na(path: str, candidate_count: int) -> dict:
     per file so the caller knows the axis ran but returned no actionable verdict.
 
     This advisory is NOT a finding: it carries ``"not_applicable": True`` and
-    ``"severity": "NOT_APPLICABLE"``.  audit.py filters it out before exit-code
+    ``"severity": "NOT_APPLICABLE"``.  semantic_audit.py filters it out before exit-code
     accounting so it does not inflate the finding count or trigger EXIT_FLAGGED.
     """
     return {
@@ -442,7 +442,7 @@ def _build_inline_changelog_na(path: str, candidate_count: int) -> dict:
 
 
 def detect(paths: Iterable[str], *, no_llm: bool = False,
-           llm_fn: LLMFn | None = None, **_kwargs) -> list[dict]:
+           llm_dispatch: LLMFn | None = None, **_kwargs) -> list[dict]:
     """Run G8 detection.
 
     Args:
@@ -452,7 +452,7 @@ def detect(paths: Iterable[str], *, no_llm: bool = False,
             (§6 case-3: open concept — no regex whitelist covers the full open
             set; presenting regex hits as findings is fail-silent).  The regex
             still runs to count candidates (INFO only, not a verdict).
-        llm_fn: callable used for both inline_changelog recall (recall_probe) and
+        llm_dispatch: callable used for both inline_changelog recall (recall_probe) and
             per-segment classification.  When an LLM is available it OWNS recall
             for inline_changelog (§6 case-3): detect() sends a recall_probe first
             so the LLM can scan the whole body; the regex fallback is only active
@@ -461,11 +461,11 @@ def detect(paths: Iterable[str], *, no_llm: bool = False,
 
     Returns: findings list per ``references/finding-schema.md``.  Under --no-llm,
         includes at most one NOT_APPLICABLE advisory dict (``not_applicable: True``)
-        per file for the inline_changelog axis; these are filtered by audit.py
+        per file for the inline_changelog axis; these are filtered by semantic_audit.py
         before exit-code accounting.
     """
-    if llm_fn is None and not no_llm:
-        llm_fn = _default_llm_dispatch
+    if llm_dispatch is None and not no_llm:
+        llm_dispatch = _default_llm_dispatch
     findings: list[dict] = []
     counter = _OutOfBoundsCounter()
     next_id = 1
@@ -486,7 +486,7 @@ def detect(paths: Iterable[str], *, no_llm: bool = False,
             if seg.kind == "inline_changelog":
                 inline_segs.append(seg)
                 continue
-            f = _process_segment(seg, path, text, no_llm, llm_fn, next_id, counter)
+            f = _process_segment(seg, path, text, no_llm, llm_dispatch, next_id, counter)
             if f is not None:
                 emitted.append(f)
                 move_ranges.append((seg.start, seg.end))
@@ -497,8 +497,8 @@ def detect(paths: Iterable[str], *, no_llm: bool = False,
         # proposes candidates (recall_probe); we merge with the regex hits,
         # deduplicating by (start, end) so a line the regex also caught is not
         # double-reported.  Under --no-llm the regex is the only (lossy) source.
-        if not no_llm and llm_fn is not None:
-            llm_recalled = _llm_recall(text, llm_fn)
+        if not no_llm and llm_dispatch is not None:
+            llm_recalled = _llm_recall(text, llm_dispatch)
             seen_ranges = {(s.start, s.end) for s in inline_segs}
             for seg in llm_recalled:
                 if (seg.start, seg.end) not in seen_ranges:
@@ -521,7 +521,7 @@ def detect(paths: Iterable[str], *, no_llm: bool = False,
             for seg in inline_segs:
                 if any(a <= seg.start and seg.end <= b for a, b in move_ranges):
                     continue  # covered by an emitted move finding
-                f = _process_segment(seg, path, text, no_llm, llm_fn, next_id, counter)
+                f = _process_segment(seg, path, text, no_llm, llm_dispatch, next_id, counter)
                 if f is not None:
                     emitted.append(f)
                     next_id += 1

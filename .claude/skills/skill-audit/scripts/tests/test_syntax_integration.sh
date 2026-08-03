@@ -10,8 +10,7 @@
 #   2. Cross-skill dogfood: run syntax_audit.sh against the neighbour
 #      skill-audit/SKILL.md (cross-skill dispatch coverage).
 #   3. Emit Smoke evidence onto the PR1 resident contract
-#      (docs/dogfoods/skill-audit/run-NNN/smoke/) via the SHARED helper
-#      _shared/lib/sh/sandwich-trace.sh. The audit exit code is CAPTURED into
+#      (docs/dogfoods/skill-audit/run-NNN/smoke/). The audit exit code is CAPTURED into
 #      smoke/<cmd>.exit; a non-zero audit exit is NOT an auto-fail (spec
 #      Open Q6) — only a genuine tool error (exit 1) fails the integration test.
 #
@@ -32,8 +31,32 @@ SELF_SKILL="${SKILL_ROOT}/SKILL.md"
 NEIGHBOUR_SKILL="${REPO_ROOT}/skill-audit/SKILL.md"
 DOGFOODS_ROOT="${REPO_ROOT}/docs/dogfoods"
 
-# Shared Smoke-evidence emitter (run-id/dir logic lives ONLY here).
-source "${REPO_ROOT}/_shared/lib/sh/sandwich-trace.sh"
+# Local smoke-evidence helpers.
+dogfood_next_run_dir() {
+  local skill="$1" root="$2" n=1
+  local base="${root}/${skill}"
+  mkdir -p "$base"
+  while [ -e "${base}/run-$(printf '%03d' "$n")" ]; do
+    n=$((n + 1))
+  done
+  local run_dir="${base}/run-$(printf '%03d' "$n")"
+  mkdir -p "${run_dir}/smoke"
+  printf '%s\n' "$run_dir"
+}
+
+dogfood_emit_smoke() {
+  local run_dir="$1" cmd="$2" rc="$3" combined="$4"
+  mkdir -p "${run_dir}/smoke"
+  cp "$combined" "${run_dir}/smoke/${cmd}.log"
+  printf '%s\n' "$rc" > "${run_dir}/smoke/${cmd}.exit"
+}
+
+dogfood_emit_trace() {
+  local gate="$1" spec_hash="$2" depth="$3" run="$4" verdict="$5" log="$6"
+  mkdir -p "$(dirname "$log")"
+  printf 'gate=e2e-pass:%s spec=%s depth=%s run=%s verdict=%s\n' \
+    "$gate" "$spec_hash" "$depth" "$run" "$verdict" >>"$log" 2>/dev/null || true
+}
 
 PASS=0
 FAIL=0

@@ -141,28 +141,28 @@ def test_detect_no_llm_mode_rule_only(tmp_path: Path) -> None:
 def test_detect_mock_reference_emits_finding(tmp_path: Path) -> None:
     body = "\n".join(["# H", "```python", *["x = 1"] * 28, "```"])
     p = _make_skill(tmp_path, body)
-    findings = g8.detect([str(p)], llm_fn=_mock_llm_reference)
+    findings = g8.detect([str(p)], llm_dispatch=_mock_llm_reference)
     assert len(findings) == 1
     assert findings[0]["confidence"] == "high"     # fusion rule 2
 
 def test_detect_mock_actionable_drops_finding(tmp_path: Path) -> None:
     body = "\n".join(["# H", "```python", *["x = 1"] * 28, "```"])
     p = _make_skill(tmp_path, body)
-    findings = g8.detect([str(p)], llm_fn=_mock_llm_actionable)
+    findings = g8.detect([str(p)], llm_dispatch=_mock_llm_actionable)
     assert findings == []                          # fusion rule 1
 
 def test_detect_below_low_threshold_dropped(tmp_path: Path) -> None:
     # only 5 bullets, movable=5 < LOW threshold (10)
     body = "\n".join(["# H", "- a", "- b", "- c", "- d", "- e"])
     p = _make_skill(tmp_path, body)
-    findings = g8.detect([str(p)], llm_fn=_mock_llm_reference)
+    findings = g8.detect([str(p)], llm_dispatch=_mock_llm_reference)
     assert findings == []                          # fusion rule 4
 
 def test_detect_default_llm_raises_without_no_llm(tmp_path: Path) -> None:
     body = "\n".join(["```python", *["x = 1"] * 28, "```"])
     p = _make_skill(tmp_path, body)
     with pytest.raises(NotImplementedError):
-        g8.detect([str(p)])  # no llm_fn, no no_llm -> default dispatch raises
+        g8.detect([str(p)])  # no llm_dispatch, no no_llm -> default dispatch raises
 
 def _mock_llm_lying(seg: g8.Segment, lines: list[str]) -> dict:
     # claims an out-of-bounds quote — detector should drop the finding
@@ -183,12 +183,16 @@ def test_three_consecutive_oob_raises_systemexit(tmp_path: Path) -> None:
     with pytest.raises(SystemExit):
         g8._validate_evidence(bad, ["only one line"], counter)
 
-def test_dogfood_stacking_dev_skillmd_emits_findings() -> None:
-    repo_root = Path(__file__).resolve().parents[3]
-    target = repo_root / "flow-dev" / "SKILL.md"
-    if not target.exists():
-        pytest.skip("flow-dev/SKILL.md not present in this worktree")
-    findings = g8.detect([str(target)], llm_fn=_mock_llm_reference)
+def test_dogfood_synthetic_skillmd_emits_findings(tmp_path: Path) -> None:
+    target = _make_skill(
+        tmp_path,
+        "\n".join([
+            "# Synthetic",
+            "## Background",
+            *["This line is intentionally reference material."] * 25,
+        ]),
+    )
+    findings = g8.detect([str(target)], llm_dispatch=_mock_llm_reference)
     assert len(findings) >= 1
     for f in findings:
         assert f["axis"] == "G8"

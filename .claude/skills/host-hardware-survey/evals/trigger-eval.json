@@ -1,0 +1,90 @@
+[
+  {
+    "query": "I have a new AMD64 storage server at 10.59.1.194 (ui/ui) — collect its CPU, memory, PCIe lane and NVMe layout before I benchmark it",
+    "should_trigger": true
+  },
+  {
+    "query": "SSH into this box and tell me how many memory channels are populated and at what speed",
+    "should_trigger": true
+  },
+  {
+    "query": "Show me the PCIe link speed and width for every NVMe drive on this host, and whether they're direct-attached or behind a switch",
+    "should_trigger": true
+  },
+  {
+    "query": "Survey this server's hardware layout and save it to a file so I can compare it against another machine",
+    "should_trigger": true
+  },
+  {
+    "query": "What CPU, how much RAM, and how many NVMe does the machine at 192.168.1.50 have? How is it all wired?",
+    "should_trigger": true
+  },
+  {
+    "query": "Fingerprint the hardware of this Gigabyte EPYC box — sockets, NUMA nodes, DIMM population, NIC speeds",
+    "should_trigger": true
+  },
+  {
+    "query": "Are any of the NVMe drives on this host down-training below their rated PCIe generation?",
+    "should_trigger": true
+  },
+  {
+    "query": "Dump lscpu, dmidecode memory, and lspci topology from the remote host so I know the PCIe layout before storage testing",
+    "should_trigger": true
+  },
+  {
+    "query": "This ENAS at root@192.168.50.95 is arm64 and has no dmidecode — pull its model, SoC, serial number and RAM size from the device tree",
+    "should_trigger": true
+  },
+  {
+    "query": "The Ubiquiti device has no SMBIOS. How do I get its hardware identity and memory info over SSH?",
+    "should_trigger": true
+  },
+  {
+    "query": "I just want to understand the hardware layout of this unfamiliar lab server — inventory its CPU, memory, PCIe and disks",
+    "should_trigger": true
+  },
+  {
+    "query": "Run fio sequential and random benchmarks on the NVMe pool over SMB and chart the throughput",
+    "should_trigger": false
+  },
+  {
+    "query": "Deploy RAID10 across these 24 NVMe drives and create a ZFS pool for testing",
+    "should_trigger": false
+  },
+  {
+    "query": "Analyze this device support archive support-1234.tar.zst and find why it rebooted",
+    "should_trigger": false
+  },
+  {
+    "query": "Add the new UNAS at 192.168.1.89 to my SSH config and device registry",
+    "should_trigger": false
+  },
+  {
+    "query": "The UDM Pro WAN port isn't getting a DHCP address — diagnose the network",
+    "should_trigger": false
+  },
+  {
+    "query": "Build the debbox firmware image for UNAS on rtd1619 and deploy it",
+    "should_trigger": false
+  },
+  {
+    "query": "Reserve and lock a test device, then verify its iperf3 throughput before I start",
+    "should_trigger": false
+  },
+  {
+    "query": "Recover the bricked ENAS over UART and re-flash the firmware via U-Boot",
+    "should_trigger": false
+  },
+  {
+    "query": "Flash a new device tree blob to the ENAS and reboot into the updated kernel",
+    "should_trigger": false
+  },
+  {
+    "query": "Configure the Marvell CN10K switch ports and VLANs via the CPSS Lua CLI",
+    "should_trigger": false
+  },
+  {
+    "query": "Update this server's BIOS to the latest version and reboot into it",
+    "should_trigger": false
+  }
+]

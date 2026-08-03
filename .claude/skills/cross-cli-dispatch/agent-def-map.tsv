@@ -1,0 +1,8 @@
+# tier<TAB>agent-def filename — maps native.tsv tiers to docs/agent-definitions/
+# files for check-agent-defs.sh.
+scan	scan.md
+scan-search	scan-search.md
+execute	execute.md
+execute-review	execute-review.md
+execute-deep	execute-deep.md
+decide	decide.md

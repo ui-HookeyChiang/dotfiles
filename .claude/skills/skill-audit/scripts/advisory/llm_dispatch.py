@@ -1,7 +1,7 @@
 """Advisory LLM dispatch — spawn Explore subagent, parse YAML response.
 
 The actual subagent spawn is delegated to a callable supplied by the caller.
-audit.py wires the real `Agent` tool call; tests inject a stub function.
+syntax_audit.py wires the real `Agent` tool call; tests inject a stub function.
 This separation keeps the module pure-Python + testable without a live LLM.
 """
 from __future__ import annotations
@@ -47,11 +47,11 @@ def dispatch_llm_audit(
 
     `spawn(prompt: str) -> str` is the subagent contract. It returns the
     raw response text (expected to be YAML). Any exception from `spawn`
-    is treated as a spawn failure. The real implementation in audit.py
+    is treated as a spawn failure. The real implementation in syntax_audit.py
     wires the Agent tool call; tests inject a deterministic stub.
 
     Timeout enforcement is the caller's responsibility. This function
-    never returns LLMStatus.TIMEOUT — audit.py wraps the call with
+    never returns LLMStatus.TIMEOUT — syntax_audit.py wraps the call with
     timing logic and rewrites the status if needed.
     """
     if template_path is None:

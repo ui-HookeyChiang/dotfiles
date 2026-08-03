@@ -2,8 +2,8 @@
 # dispatch-trigger-eval-agent.sh — Phase 5 ADVISORY trigger-eval preparer.
 #
 # Sibling of dispatch-dogfood-agent.sh / dispatch-e2e-baseline-agent.sh. It wires
-# skill-writer's authored trigger corpus (evals/trigger-eval.json) onto upstream
-# skill-creator's run_eval.py — the DYNAMIC leg the flow is missing: run_eval
+# skill-writer's authored trigger corpus (evals/trigger-eval.json) onto the local
+# trigger_eval/run_eval.py — the DYNAMIC leg the flow is missing: run_eval
 # spawns real `claude -p` per query and measures whether the description ACTUALLY
 # causes the skill to trigger. verify-skill (Phase 6) only reads-and-SCORES the
 # description statically; this preparer is the live-model complement.
@@ -16,10 +16,9 @@
 # not execute it, parse its score, or feed anything back.
 #
 # It:
-#   1. Resolves $SC_ROOT via resolve-skill-creator.sh. If the resolver exits
-#      non-zero (no skill-creator install / CI), it emits a TRACED
-#      verdict=skip-no-skill-creator handoff and exits 0 (advisory — never
-#      hard-fails the flow).
+#   1. Validates $TRIGGER_EVAL_DIR = $HERE/trigger_eval exists. If not (shouldn't
+#      happen), emits a TRACED verdict=skip-no-trigger-eval handoff and exits 0
+#      (advisory — never hard-fails the flow).
 #   2. Allocates the next free run-NNN under docs/dogfoods/<skill>/run-NNN/eval/.
 #   3. Writes a BYTE-STABLE prompt file — a pure function of (skill-name, runs)
 #      ONLY: NO run id, date, $RANDOM, or absolute tmp path inside it. It prints
@@ -33,7 +32,7 @@
 #   dispatch-trigger-eval-agent.sh --help
 #
 # Exit codes:
-#   0  success (incl. advisory skip-no-skill-creator / skip-no-corpus)
+#   0  success (incl. advisory skip-no-trigger-eval / skip-no-corpus)
 #   1  bad args
 #   2  skill-path not found OR missing SKILL.md
 #   3  run-id limit exceeded (> 999)
@@ -46,7 +45,7 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-RESOLVER="$HERE/resolve-skill-creator.sh"
+TRIGGER_EVAL_DIR="$HERE/trigger_eval"
 
 usage() {
   cat <<'USAGE'
@@ -54,11 +53,12 @@ Usage: dispatch-trigger-eval-agent.sh <skill-path> [--runs <N>] [--run <NNN>]
        dispatch-trigger-eval-agent.sh --help
 
 Phase 5 ADVISORY trigger-eval preparer (sibling of dispatch-dogfood-agent.sh).
-Resolves the upstream skill-creator skill root, allocates the next free run-NNN
-under docs/dogfoods/<skill>/run-NNN/eval/, writes a BYTE-STABLE dispatch prompt
-that PRINTS the `cd $SC_ROOT && python3 -m scripts.run_eval ...` invocation, and
-prints it. It does NOT execute run_eval and does NOT spawn the agent (the main
-agent dispatches). ADVISORY — Phase 6 verify-skill stays the binding gate.
+Resolves the local trigger_eval/ scripts directory, allocates the next free
+run-NNN under docs/dogfoods/<skill>/run-NNN/eval/, writes a BYTE-STABLE
+dispatch prompt that PRINTS the `cd $HERE && python3 -m trigger_eval.run_eval
+...` invocation, and prints it. It does NOT execute run_eval and does NOT spawn
+the agent (the main agent dispatches). ADVISORY — Phase 6 verify-skill stays
+the binding gate.
 
 Options:
   <skill-path>     Required positional. Path to the skill directory to evaluate.
@@ -70,7 +70,7 @@ Options:
   --help           Print this help and exit 0.
 
 Exit codes:
-  0  success (incl. advisory skip-no-skill-creator / skip-no-corpus)
+  0  success (incl. advisory skip-no-trigger-eval / skip-no-corpus)
   1  bad args
   2  skill-path not found / missing SKILL.md
   3  run-id limit exceeded (> 999)
@@ -162,7 +162,7 @@ if ! [[ "$SKILL_NAME" =~ ^[A-Za-z0-9_-]+$ ]]; then
 fi
 
 # --- corpus presence (advisory: a not-yet-authored corpus -> traced skip) ---
-# Mirrors the skip-no-skill-creator path exactly: trigger-eval is advisory, so a
+# Mirrors the skip-no-trigger-eval path exactly: trigger-eval is advisory, so a
 # missing corpus is a GRACEFUL skip (exit 0), never a hard exit 2. exit 2 stays
 # reserved for caller errors (skill-path-not-a-dir, missing SKILL.md) above.
 if [[ ! -f "$EVAL_SET_ABS" ]]; then
@@ -199,28 +199,24 @@ fi
 
 DOGFOOD_DIR="$REPO_ROOT/docs/dogfoods/${SKILL_NAME}"
 
-# --- resolve $SC_ROOT (advisory: a non-zero resolver -> traced skip) ---
-SC_ROOT=""
-if SC_ROOT="$(bash "$RESOLVER" 2>/dev/null)"; then
-  : # resolved
-else
+# --- validate local trigger_eval dir (advisory: missing -> traced skip) ---
+if [[ ! -d "$TRIGGER_EVAL_DIR" ]]; then
   # ADVISORY skip — do NOT hard-fail the preparer. Emit a traced handoff so the
-  # main agent can write verdict=skip-no-skill-creator (a traced skip, never a
+  # main agent can write verdict=skip-no-trigger-eval (a traced skip, never a
   # silent all-False).
   cat <<SKIP
 
-dispatch-trigger-eval-agent: skill-creator not resolvable — ADVISORY SKIP
+dispatch-trigger-eval-agent: trigger_eval dir not found — ADVISORY SKIP
 
   skill:  $SKILL_NAME
-  reason: resolve-skill-creator.sh exited non-zero (no skill-creator install,
-          or running in CI without the plugin).
+  reason: '$TRIGGER_EVAL_DIR' not found.
 
 This is ADVISORY and non-blocking: Phase 6 verify-skill remains the binding gate.
 Record a TRACED skip (never a silent all-False) in .git/flow-dev-sandwich.log:
 
 ----- machine-readable handoff (eval in the main agent to fill the trace) -----
 TRIGGER_EVAL_TARGET=$SKILL_NAME
-TRIGGER_EVAL_VERDICT=skip-no-skill-creator
+TRIGGER_EVAL_VERDICT=skip-no-trigger-eval
 TRIGGER_EVAL_RUN=0
 ----- end handoff -----
 SKIP
@@ -268,9 +264,9 @@ mkdir -p "$RUN_DIR/eval"
 # CRITICAL: this file is a pure function of (SKILL_NAME, RUNS). It must NOT
 # contain the run id, a date, $RANDOM, or any absolute path — anything that
 # varies run-to-run would break byte-stability and make eval reports incomparable.
-# The absolute paths (SC_ROOT, eval-set, skill-path) are environment-dependent, so
-# the prompt references them by stable placeholder; the human-readable handoff
-# block below carries the resolved absolute invocation for this run.
+# The absolute paths (TRIGGER_EVAL_DIR, eval-set, skill-path) are environment-
+# dependent, so the prompt references them by stable placeholder; the human-
+# readable handoff block below carries the resolved absolute invocation for this run.
 PROMPT_FILE="$RUN_DIR/eval/dispatch-prompt.md"
 cat > "$PROMPT_FILE" <<PROMPT
 # Trigger-eval (ADVISORY) — $SKILL_NAME
@@ -278,9 +274,9 @@ cat > "$PROMPT_FILE" <<PROMPT
 You are the trigger-eval agent for the skill '$SKILL_NAME'.
 
 This step is ADVISORY and non-blocking. It runs the skill's authored trigger
-corpus (evals/trigger-eval.json) against a LIVE model via skill-creator's
-run_eval.py, measuring whether the description ACTUALLY causes the skill to
-trigger. Phase 6 verify-skill stays the binding gate; this never blocks merge.
+corpus (evals/trigger-eval.json) against a LIVE model via trigger_eval/run_eval.py,
+measuring whether the description ACTUALLY causes the skill to trigger. Phase 6
+verify-skill stays the binding gate; this never blocks merge.
 
 ANTI-SELF-GRADING INVARIANT: run_eval's output is a measurement only. NEVER wire
 it into a description rewrite — the moment a measure feeds an auto-mutator,
@@ -289,9 +285,10 @@ run_loop (a rejected Non-Goal) is rebuilt. Report the numbers; do not act on the
 ## What to do
 
 1. Run the invocation printed in the preparer's handoff block (a module-style
-   \`cd \$SC_ROOT && python3 -m scripts.run_eval --eval-set <abs> --skill-path <abs>
-   --runs-per-query $RUNS\`). Absolute paths survive the cd; run_eval uses a
-   package-relative import so it MUST run from \$SC_ROOT.
+   \`cd \$SCRIPTS_DIR && python3 -m trigger_eval.run_eval --eval-set <abs>
+   --skill-path <abs> --runs-per-query $RUNS\`). Absolute paths survive the cd;
+   run_eval uses a package-relative import so it MUST run from \$SCRIPTS_DIR
+   (the scripts/ directory containing trigger_eval/).
 2. If \`claude\` CLI auth is dead / unavailable (CI), do NOT report an all-False
    "skill never triggers" regression. Record verdict=skip-no-auth — a TRACED skip.
 
@@ -304,19 +301,19 @@ Do NOT propose description rewrites.
 PROMPT
 
 # --- print dispatch instruction + machine-readable handoff ---
-EVAL_INVOCATION="cd $SC_ROOT && python3 -m scripts.run_eval --eval-set $EVAL_SET_ABS --skill-path $SKILL_PATH_ABS --runs-per-query $RUNS"
+EVAL_INVOCATION="cd $HERE && python3 -m trigger_eval.run_eval --eval-set $EVAL_SET_ABS --skill-path $SKILL_PATH_ABS --runs-per-query $RUNS"
 
 cat <<INSTR
 
 dispatch-trigger-eval-agent: trigger-eval run ready (ADVISORY)
 
-  run dir:         $RUN_DIR
-  run id:          $RUN_ID
-  skill:           $SKILL_NAME
-  SC_ROOT:         $SC_ROOT
-  eval set:        $EVAL_SET_ABS
-  runs-per-query:  $RUNS
-  dispatch prompt: $PROMPT_FILE (byte-stable)
+  run dir:              $RUN_DIR
+  run id:               $RUN_ID
+  skill:                $SKILL_NAME
+  trigger_eval dir:     $TRIGGER_EVAL_DIR
+  eval set:             $EVAL_SET_ABS
+  runs-per-query:       $RUNS
+  dispatch prompt:      $PROMPT_FILE (byte-stable)
 
 Next step — dispatch the trigger-eval agent with the prompt below. This preparer
 does NOT spawn it and does NOT execute run_eval (bash cannot drive \`claude -p\`);
@@ -327,7 +324,7 @@ the main agent dispatches. The exact invocation the agent should run:
 ----- machine-readable handoff (eval in the main agent to fill the trace) -----
 TRIGGER_EVAL_TARGET=$SKILL_NAME
 TRIGGER_EVAL_RUN=$RUN
-TRIGGER_EVAL_SC_ROOT=$SC_ROOT
+TRIGGER_EVAL_SCRIPTS_DIR=$HERE
 TRIGGER_EVAL_INVOCATION=$EVAL_INVOCATION
 ----- end handoff -----
 

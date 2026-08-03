@@ -15,7 +15,7 @@ the entry table; each row links to the full standard.
 | equivalence | classify change as equivalence-preserving or effect | [`equivalence-criteria.md`](equivalence-criteria.md) | modify / improve / rewrite | A3 Equivalence |
 | trigger-eval | trigger-eval.json design (≥ 16 cases, ≥ 50% near-miss, realistic prose) | [`trigger-eval-design.md`](trigger-eval-design.md) | all modes | A1 Trigger |
 | disclosure | main file vs references/ vs scripts/ split rules | [`disclosure-standard.md`](disclosure-standard.md) | all modes | A2 Behavior + prose-guidelines |
-| e2e-baseline | 5-dimension AB measurement for rewrite mode | [`e2e-baseline-standard.md`](e2e-baseline-standard.md) | rewrite mode | A3 Equivalence (tool) |
+| expectation-spec | expectation-spec freeze for rewrite mode | [`expectation-spec-standard.md`](expectation-spec-standard.md) | rewrite mode | A3 Equivalence (tool) |
 
 ## How to apply
 
@@ -33,8 +33,8 @@ For `rewrite` mode (v1 → v2), additionally read:
 
 - [`equivalence-criteria.md`](equivalence-criteria.md) — decide if the change
   is equivalence-preserving or effect mode (auto-detect; user cannot declare).
-- [`e2e-baseline-standard.md`](e2e-baseline-standard.md) — INTENT · E2E baseline A-capture
-  protocol (no `--skip-e2e-baseline` escape hatch).
+- [`expectation-spec-standard.md`](expectation-spec-standard.md) — INTENT · expectation-spec freeze
+  protocol (no `--skip-expectation-spec` escape hatch).
 
 ## Constraints
 

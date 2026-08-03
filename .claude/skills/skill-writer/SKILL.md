@@ -4,7 +4,7 @@ description: Use when creating, modifying, refactoring, or rewriting any skill i
 argument-hint: "[rewrite] <skill-description>"
 test-devices: local
 landing-group: workflow
-standards-applied: [description, contract, behavior, disclosure, adversarial, equivalence, trigger-eval-design, e2e-baseline]
+standards-applied: [description, contract, behavior, disclosure, adversarial, equivalence, trigger-eval-design, expectation-spec]
 standard-override: [disclosure-rule-5, "behavior-rule-4 (orchestrator: one consolidated Important Rules section, each rule tagged to its stage)"]
 ---
 
@@ -49,29 +49,34 @@ User → INTENT → DEV → TEST
 
 **No BUILD stage**: skill has no fan-in artifact; `make check` = DEV green; *using* a skill IS building it (ADR 0004).
 
-SSOT for per-mode behavior:
+SSOT for per-mode behavior. Other sections MUST point here instead of restating
+mode gates.
 
 | Stage / step | create | modify | rewrite |
 |---|---|---|---|
 | **INTENT** · dedup sweep | ✅ | ✅ | ✅ (no exceptions, all modes) |
-| **INTENT** · audit-v1 (condition-gated) | skip (no prior) | run if `scripts/` OR >200 ln; else skip | run (always qualifies) |
-| **INTENT** · E2E baseline A-capture | skip | skip | **MANDATORY** (no `--skip-e2e-baseline`) |
-| **DEV** · standards-gate | ✅ | ✅ | ✅ (+ equivalence + e2e-baseline refs) |
+| **INTENT** · audit-v1 (condition-gated) | skip (no prior) | run if prior exists AND (`scripts/` OR >200 ln); else skip; NEVER darwin | run (always qualifies); NEVER darwin |
+| **INTENT** · expectation-spec freeze | skip | skip | **MANDATORY**: frozen before v2 design; no `--skip-expectation-spec`; auto-PASS forbidden |
+| **DEV** · standards-gate | ✅ | ✅ | ✅ (+ equivalence + expectation-spec refs) |
 | **DEV** · content-placement scan | skip | skip | ✅ (+ pre-authoring assert) |
-| **DEV** · skill-creator | new dir | modify existing | modify existing |
+| **DEV** · author | new dir | modify existing | modify existing |
 | **DEV** · `make check` (lint+test green) | ✅ HARD STOP | ✅ HARD STOP | ✅ HARD STOP |
 | **DEV** · static advisory + eval-write | ✅ | ✅ | ✅ (+ references scan) |
-| **TEST** · LLM-review (verify-skill) | effect | equivalence (OPTIONAL†) | effect |
-| **TEST** · dogfood depth | smoke | smoke (OPTIONAL†) | **behavior** |
-| **TEST** · e2e-AB-compare | skip | skip | ✅ (consumes INTENT baseline) |
+| **TEST** · LLM-review (verify-skill) | MANDATORY effect; 5-voter; never edits/commits/auto-retries; no `--mode` | equivalence (OPTIONAL†); no `--mode` if run | MANDATORY effect; 5-voter; never edits/commits/auto-retries; no `--mode` |
+| **TEST** · dogfood depth | MANDATORY smoke; trace required | smoke (OPTIONAL†) | MANDATORY **behavior**; trace required; `run=0` forbidden |
+| **TEST** · expectation acceptance | skip | skip | MANDATORY fresh agent, against INTENT-frozen spec; distinct from resident dogfood |
 | **TEST** · 5a trigger-eval live | run if desc changed | skip if desc frozen | run if desc changed |
 | **TEST** · 5b skill-flow-execution | optional | optional | optional |
 
 † **modify TEST optional** — skip unless desc changed, user requests, or >30% structural. `make check` green = binding gate.
 
+Audit intents are not a build mode: use *Audit dispatch* above and STOP. TEST
+legs never merge into each other: LLM-review ≠ real-execution, and expectation
+acceptance ≠ resident dogfood.
+
 Verify-skill: APPROVE → done / NEEDS_HUMAN → block / REJECT → back to DEV.
 
-**Mode inference**: `rewrite` = user-declared (E2E baseline runs before v2). `create`/`modify` inferred: `create` when dir absent, `modify` when exists.
+**Mode inference**: `rewrite` = user-declared (expectation-spec frozen before v2). `create`/`modify` inferred: `create` when dir absent, `modify` when exists.
 
 > **GUARD — missing target.** Modify/refactor verb + absent dir = typo, NOT create. STOP with `skill not found: <slug>`. Only `create`/`make`/`add` verbs may infer `create` on absent dir.
 
@@ -87,7 +92,7 @@ Pre-authoring: confirm what to build, assess v1. Three steps (per Mode table).
 
 ### dedup sweep (all modes, no exceptions)
 
-> **GUARD — no description.** Request must carry usable description (DOES + triggers). Bare request → STOP, ask user. Do NOT forward empty description to skill-creator.
+> **GUARD — no description.** Request must carry usable description (DOES + triggers). Bare request → STOP, ask user. Do NOT forward empty description to the author step.
 
 **Deterministic pre-pass** (invoke-cycle graph + lexical overlap; recommends whether Explore needed):
 
@@ -118,23 +123,23 @@ Audits **existing** v1 BEFORE authoring (informs rewrite). DEV advisory later re
 
 **Trigger** (condition-gated, auto-run): prior version exists AND (`scripts/` OR >200 lines). Skips: `skip-no-prior` / `skip-under-threshold` / `skip-audit-flag`.
 
-**Runs** (read-only): `skill-audit` deterministic leg + `prose-guidelines` (no `--apply`). Findings collected verbatim → advisory input for skill-creator.
+**Runs** (read-only): `skill-audit` deterministic leg + `prose-guidelines` (no `--apply`). Findings collected verbatim → advisory input for the author step.
 
 > **NOT darwin** — never in-flow (self-scoring hazard). Standalone post-merge only.
 
 Uses `gate=advisory:<tool>` skip-trace convention. Detail: `references/phase-4-tools.md`.
 
-### E2E baseline A-capture (rewrite only, MANDATORY)
+### Expectation-spec freeze (rewrite only, MANDATORY)
 
-Capture v1 failure baseline BEFORE v2 — the A-side for TEST's e2e-AB comparison. Live 5-dimension measurement, NOT TDD red test, NOT static audit-v1 (orthogonal axes).
+Freeze the expectation spec BEFORE any v2 design work — anti-self-grading. Spec contains: (a) behavior expectations (skill followed on real tasks produces correct artifacts), (b) trigger-accuracy threshold on a held-out set, (c) cost expectations ONLY when the rewrite goal includes slimming, (d) v1's KNOWN FAILURES written as explicit expectations (the failing-test equivalent — positive-only specs lose failure signal).
 
 ```bash
-bash skill-writer/scripts/dispatch-e2e-baseline-agent.sh <skill-path>
+bash skill-writer/scripts/dispatch-expectation-acceptance-agent.sh <skill-path>
 ```
 
-Snapshots v1 into `docs/dogfoods/<skill>-vN/iteration-M/v1-snapshot/`. Spawn Agent Baseline in isolated worktree; **must NOT see v2** (anchoring invalidates). A-side frozen here — TEST consumes by reference. Protocol: `references/e2e-baseline-standard.md`.
+Writes spec to `docs/dogfoods/<skill>-vN/iteration-M/expectation-spec.md`. Spec must be frozen before any v2 authoring begins. Protocol: `references/expectation-spec-standard.md`.
 
-> **INTENT constraints (rewrite)**: no `--skip-e2e-baseline`; auto-PASS forbidden; the user reviews the 5-dim AB report at TEST, not here.
+> **INTENT constraints (rewrite)**: no `--skip-expectation-spec`; auto-PASS forbidden; the user reviews the acceptance report at TEST, not here.
 
 ## Stage 2 — DEV
 
@@ -142,9 +147,9 @@ Author the skill, run all **deterministic** checks. No execution here — that's
 
 ### standards-gate (all modes)
 
-Read `references/standards-gate.md` before skill-creator (8 standards table). Rewrite: also read `references/equivalence-criteria.md` + `references/e2e-baseline-standard.md`.
+Read `references/standards-gate.md` before authoring (8 standards table). Rewrite: also read `references/equivalence-criteria.md` + `references/expectation-spec-standard.md`.
 
-### good-class target (all modes — read before skill-creator)
+### good-class target (all modes — read before authoring)
 
 Apply `skill-guidelines` (REQUIRED). Full good-class statements + audit-axis: `skill-guidelines`.
 
@@ -165,15 +170,15 @@ keep mechanism".
 
 **Scan output.** After the scan agent returns, write the brief to `docs/dogfoods/<skill>/run-NNN/rebalance-brief.md`. Under `--skip-rebalance` the scan is skipped; `create` / `modify` skip entirely.
 
-**Pre-authoring check (rewrite only).** Before invoking skill-creator, verify the scan ran — absent `run-NNN` evidence dir bounces back to this step. `create` / `modify` skip this check.
+**Pre-authoring check (rewrite only).** Before authoring, verify the scan ran — absent `run-NNN` evidence dir bounces back to this step. `create` / `modify` skip this check.
 
-### skill-creator (author)
+### author
 
-Invoke `skill-creator` with: request + INTENT findings + 8 standards + E2E Baseline (rewrite) + content-placement brief (rewrite). Honor HOLD-IN-PLACE guardrail. Modify: tell skill-creator to modify existing, not create new.
+Invoke `skill-creator` with: request + INTENT findings + 8 standards + expectation spec (rewrite) + content-placement brief (rewrite). Honor HOLD-IN-PLACE guardrail. Modify: tell skill-creator to modify existing, not create new.
 
 ### agents/openai.yaml (agent harness sidecar, all modes)
 
-After skill-creator returns, read the SKILL.md frontmatter and generate/update `<skill>/agents/openai.yaml`:
+After authoring, read the SKILL.md frontmatter and generate/update `<skill>/agents/openai.yaml`:
 
 1. **Derive fields** — `display_name`: kebab-case `name` → Title Case. `short_description`: first sentence of `description`, strip leading "Use when"/"Use for"/"Use to", truncate to 80 chars with `…`.
 2. **Invocation policy** — if frontmatter lacks `disable-model-invocation: true`, write `interface` block only; if `disable-model-invocation: true`, append `policy:\n  allow_implicit_invocation: false`.
@@ -210,7 +215,7 @@ Static advisory NEVER edits, commits, or passes `--apply`.
 
 ## Stage 3 — TEST
 
-> **Gating**: `rewrite` → MANDATORY. `create` → MANDATORY (dogfood=smoke). `modify` → OPTIONAL (skip unless desc changed, user requests, or >30% structural).
+> **Gating**: use the **Flow + Mode** table as the only per-mode authority.
 
 Two legs (never merge): **LLM-review** (read/score v2) and **real-execution** (run skill on task).
 
@@ -257,7 +262,7 @@ Preparer allocates `run-NNN`, prints dispatch prompt + `DOGFOOD_TARGET=<skill-na
 
 **Dogfood completion check (before done).** Verify `run-NNN` evidence dir exists after the preparer returns and the Behavior agent (if any) joined. `$DEPTH=behavior` for `rewrite`, `smoke` for `modify`. Missing evidence dir → bounce back.
 
-**e2e-AB-compare (rewrite only).** Run v2 through same 5 dimensions as v1 baseline; present A-vs-B. Consumes INTENT-frozen A-side by reference (never re-captures). **auto-PASS forbidden** — user reviews. Protocol: `references/e2e-baseline-standard.md`.
+**Expectation acceptance (rewrite only).** Fresh agent runs v2 on real tasks and judges each expectation in the INTENT-frozen spec as PASS or FAIL — absolute, not comparative. **auto-PASS forbidden** — user reviews. Protocol: `references/expectation-spec-standard.md`.
 
 **5a trigger-eval live (advisory).** Run corpus against live model to measure actual triggering. Never auto-PASS/block. Skip when description frozen:
 
@@ -267,7 +272,7 @@ git diff "$base" HEAD -- <skill>/SKILL.md | grep -qE '^[-+]description:'
 # exit 0 => description changed => RUN ; exit 1 => frozen => SKIP (verdict=skip-desc-frozen)
 ```
 
-**Anti-self-grading**: output is measurement only, NEVER mutates description (SSOT: `references/trigger-eval-design.md`). Prepare with `bash skill-writer/scripts/dispatch-trigger-eval-agent.sh <skill-path> [--runs <N>]`. Skippable: `skip-no-skill-creator`/`skip-no-corpus`/`skip-no-auth`.
+**Anti-self-grading**: output is measurement only, NEVER mutates description (SSOT: `references/trigger-eval-design.md`). Prepare with `bash skill-writer/scripts/dispatch-trigger-eval-agent.sh <skill-path> [--runs <N>]`. Skippable: `skip-no-trigger-eval`/`skip-no-corpus`/`skip-no-auth`.
 
 **5b skill-flow-execution (optional, advisory).** Run modified skill's full flow on target environment (device or local). Detects `test-devices` frontmatter to choose device-bound vs local agent. SKIP when infra unavailable — advisory, does not hard-block. Procedure: [`references/skill-flow-testing.md`](references/skill-flow-testing.md).
 
@@ -283,23 +288,14 @@ Next: open PR via flow-dev.
 
 ## When to Use
 
-| Scenario | Action |
-|---|---|
-| "Create a skill for X" | Full flow: INTENT(dedup) → DEV(create) → TEST(verify-skill) |
-| "Improve / add feature to skill X" | INTENT(dedup + audit-v1) → DEV(modify) → done (TEST optional) |
-| "Rewrite skill X (v1→v2)" | **INTENT(baseline MANDATORY)** → DEV → TEST(verify-skill effect + e2e-AB) |
-| "Audit / is this script still used / score skill X" | Read-only — route to the *Audit dispatch* table above and STOP (no stages) |
+Use the **Flow + Mode** table as the authority for create / modify / rewrite
+gates. Audit verbs route to *Audit dispatch* and STOP.
 
 ## Important Rules
 
-- **Route first** — audit verb = read-only (dispatch + STOP); build verb enters stages.
-- **Always sweep first** — no exceptions.
-- **audit-v1 advisory + condition-gated** — prior exists AND (scripts/ OR >200 ln); NEVER darwin.
-- **E2E baseline mandatory for rewrite** — no skip; auto-PASS forbidden; A-side frozen at INTENT.
-- **`make check` = hard STOP** — exit 0 before advisory or TEST.
-- **verify-skill mandatory for create/rewrite** — 5-voter; never edits/commits/auto-retries; no `--mode`. Optional for modify.
-- **Dogfood mandatory for create/rewrite** — trace required; rewrite may not skip. Optional for modify.
-- **TEST legs never merge** — LLM-review ≠ real-execution; e2e-AB ≠ dogfood.
+Per-mode gates are intentionally not restated here. Update the **Flow + Mode**
+table first; downstream sections link back to it for routing, hard stops, and
+TEST requirements.
 
 ## See Also
 

@@ -729,7 +729,7 @@ reassembled before integration testing. Run from a leaf worktree
 
 ```bash
 cd ".worktrees/${WORKTREE_NS}/task-PR-1"
-bash ~/.claude/skills/flow-dev/scripts/merge-train.sh \
+bash ~/.claude/skills/_shared/stack/merge-train.sh \
   --feature-prefix "$FEATURE_PREFIX" \
   --worktree-ns "$WORKTREE_NS" \
   --default-branch "$DEFAULT_BRANCH"
@@ -891,13 +891,13 @@ Do **not** base a feature stack on a spec PR whose head branch lives in a lifecy
 >
 > Allowed manual paths:
 > - **Single PR, no safety concerns**: `gh pr merge --squash` is fine.
-> - **Single PR, want CI-watch + merge-state-assertion safety**: `bash ~/.claude/skills/flow-dev/scripts/squash-merge.sh single <branch> <default_branch>`.
+> - **Single PR, want CI-watch + merge-state-assertion safety**: `bash ~/.claude/skills/_shared/stack/squash-merge.sh single <branch> <default_branch>`.
 > - **Stacked PRs with `--merge` (not squash)**: `gh pr merge --merge` directly per PR — original SHAs preserved, no rebase needed.
 
 #### Squash-merge with rebase-before-merge
 
 ```bash
-bash ~/.claude/skills/flow-dev/scripts/squash-merge.sh stack \
+bash ~/.claude/skills/_shared/stack/squash-merge.sh stack \
   "$FEATURE_PREFIX" "$TOTAL_TASKS" "$DEFAULT_BRANCH"
 ```
 
@@ -922,7 +922,7 @@ delete remote/local task branches, remove the Phase 0 lock, and prune:
 
 ```bash
 # post-merge cleanup.
-bash ~/.claude/skills/flow-dev/scripts/post-merge-cleanup.sh stack \
+bash ~/.claude/skills/_shared/stack/post-merge-cleanup.sh stack \
   "$FEATURE_PREFIX" "$TOTAL_TASKS" "$DEFAULT_BRANCH"
 ```
 
