@@ -11,6 +11,7 @@
       "skills": [
         "improve-codebase-architecture",
         "grill-with-docs",
+        "grilling",
         "to-spec",
         "to-tickets",
         "wayfinder",
@@ -25,7 +26,8 @@
         "codebase-design",
         "diagnosing-bugs",
         "prototype",
-        "research"
+        "research",
+        "teach"
       ]
     },
     "alchaincyf/darwin-skill": {
@@ -131,6 +133,16 @@
       "source": "alchaincyf/darwin-skill",
       "skillPath": ".",
       "treeHash": "sha256:be5f368da70f6858e97a9bff0d629739eb4351cea5aa0420daa18d4d70a7bea2"
+    },
+    "grilling": {
+      "source": "mattpocock/skills",
+      "skillPath": "skills/productivity/grilling",
+      "treeHash": "sha256:b4fe640c45f7190fb1c57ec45a00504f9a24c247aa66d158b2b3338c5c2deb38"
+    },
+    "teach": {
+      "source": "mattpocock/skills",
+      "skillPath": "skills/productivity/teach",
+      "treeHash": "sha256:9e2529ff9e9b0481e15bf0d2d02c45ca62732919be691d1ec40b31025d4cb690"
     }
   }
 }
