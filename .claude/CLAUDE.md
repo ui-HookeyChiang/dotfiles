@@ -58,6 +58,7 @@ Keep technical terms, code symbols, command names, file paths, and library
 names in English (don't translate `git rebase`, `SessionManager`, …).
 Files, code, commits, PRs: write in English.
 
+@docs/agents/native-exploration.md
 @docs/agents/terse-output.md
 @docs/agents/memory-discipline.md
 @docs/agents/sandbox-protected-paths.md
