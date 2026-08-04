@@ -209,7 +209,7 @@ check_segment() {
     head_based=true
   fi
 
-  # HEAD-based: check if current branch is behind upstream
+  # HEAD-based: check if current branch is behind upstream; auto-ff if possible
   if $head_based; then
     local upstream
     upstream="$(git rev-parse --abbrev-ref --symbolic-full-name @{upstream} 2>/dev/null || true)"
@@ -217,7 +217,11 @@ check_segment() {
     local behind
     behind="$(git rev-list --count HEAD..@{upstream} 2>/dev/null || echo 0)"
     if (( behind > 0 )); then
-      deny_output "Blocked: HEAD is $behind commit(s) behind upstream ($upstream). Branching from here would miss those commits.
+      if git merge --ff-only @{upstream} >/dev/null 2>&1; then
+        warn_output "Auto fast-forwarded HEAD ($behind commit(s)) to match upstream ($upstream)."
+        return 0
+      fi
+      deny_output "Blocked: HEAD is $behind commit(s) behind upstream ($upstream) and cannot fast-forward (local divergence or dirty worktree).
 
   command: $cmd
   fix: git fetch && git rebase @{upstream}, then branch from origin/<branch> instead."
@@ -264,6 +268,13 @@ check_segment() {
         local ahead behind
         ahead="$(git rev-list --count "refs/remotes/$remote/$base"..refs/heads/"$base" 2>/dev/null || echo "?")"
         behind="$(git rev-list --count "refs/heads/$base".."refs/remotes/$remote/$base" 2>/dev/null || echo "?")"
+        # Purely behind → try fast-forward before denying
+        if [[ "$ahead" == "0" ]]; then
+          if git branch -f "$base" "refs/remotes/$remote/$base" 2>/dev/null; then
+            warn_output "Auto fast-forwarded local \`$base\` ($behind commit(s) behind \`$remote/$base\`)."
+            return 0
+          fi
+        fi
         deny_output "Blocked: local \`$base\` differs from \`$remote/$base\` (ahead $ahead, behind $behind). Use the remote ref to avoid missing upstream commits.
 
   command: $cmd

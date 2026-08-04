@@ -15,11 +15,7 @@
       "git add --all": "deny",
       "git add .": "deny",
       "gh pr edit * --title *": "deny",
-      "gh pr edit --title *": "deny",
-      "grep *": "deny",
-      "egrep *": "deny",
-      "fgrep *": "deny",
-      "find *": "deny"
+      "gh pr edit --title *": "deny"
     }
   },
   "instructions": [
@@ -33,6 +29,14 @@
     "./plugins/skill-dev-hooks.ts"
   ],
   "agent": {
+    "general": {
+      "mode": "subagent",
+      "prompt": "{file:./agents/general.md}"
+    },
+    "explore": {
+      "mode": "subagent",
+      "prompt": "{file:./agents/explore.md}"
+    },
     "decide": {
       "mode": "subagent",
       "prompt": "{file:./agents/decide.md}"
@@ -41,9 +45,21 @@
       "mode": "subagent",
       "prompt": "{file:./agents/execute.md}"
     },
+    "execute-deep": {
+      "mode": "subagent",
+      "prompt": "{file:./agents/execute-deep.md}"
+    },
+    "execute-review": {
+      "mode": "subagent",
+      "prompt": "{file:./agents/execute-review.md}"
+    },
     "scan": {
       "mode": "subagent",
       "prompt": "{file:./agents/scan.md}"
+    },
+    "scan-search": {
+      "mode": "subagent",
+      "prompt": "{file:./agents/scan-search.md}"
     }
   }
 }

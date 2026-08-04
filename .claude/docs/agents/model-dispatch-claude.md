@@ -12,15 +12,23 @@ enforce those pins and where each descriptor lives.
 | `execute` | Goal clear, success verifiable (implement, test, deploy, build) | Haiku 4.5 low | verifier failure → Sonnet 5 low → Opus 4.8 low |
 | `execute` review-shaped | Verdict on a diff/claim | Sonnet 5 low | Haiku only where false-REJECTs tolerable (errs strict, FA=0) |
 | `execute` deep-diagnosis | Root-cause from inline evidence | Sonnet 5 low (Opus 4.6 value pick) | discovery-coupled → search binding |
-| `decide` | Trade-off judgment, no single correct answer | Opus 4.6 low (contexted decomposition) | unknown spec quality → Opus 4.8 low; contract-heavy → Fable 5 low |
+| `decide` | Trade-off judgment, no single correct answer | Opus 4.6 medium (contexted decomposition) | unknown spec quality → Opus 4.8 low; contract-heavy → Fable 5 low |
 | `fable` | One failed run costs more than the price delta | Fable 5 low | — |
 
 Rules: effort stays low — "needs > medium → promote model, not effort"
-(effort-inversion). Never give Haiku math, multi-file long-horizon, or design
-generation. Bindings from local eval rounds 1-7
-(docs/ticket/2026-07-22-model-dispatch-eval-planner-executor.md); Round 7
-tested Opus 5 as an API challenger and did not displace Opus 4.6. 4.6 slots
-stay while API-active — rebind on Anthropic 4.6 EOL notice.
+(effort-inversion). Exception: when low-effort token budget physically
+truncates multi-part structured output (e.g. opus-4.6 deep-v2: low out_tok
+~130 finds 1/2 causes, medium ~800 finds 2/2 — Round 8 evidence), promote
+effort to medium before promoting model. Decide tier promoted to medium:
+Round 8 measured opus-4.6 low at 89% (32/36) vs medium at 100% (30/30) on
+decide fixtures, at comparable cost ($0.15/pass vs $0.14/pass); deep-v2
+showed the same pattern (low 14% vs medium 100%). Never give Haiku math,
+multi-file long-horizon, or design generation. Bindings from local eval
+rounds 1-8 (docs/ticket/2026-07-22-model-dispatch-eval-planner-executor.md);
+Round 7 tested Opus 5 as an API challenger and did not displace Opus 4.6.
+Round 8 validated decide binding (opus-4.6 medium 30/30 100%) and measured
+effort sensitivity on deep-v2. 4.6 slots stay while API-active — rebind on
+Anthropic 4.6 EOL notice.
 model-eval provides evidence for binding decisions; it does not directly apply a row across different model ids, efforts, or dispatch surfaces.
 
 ## Runtime Enforcement
@@ -41,7 +49,7 @@ model-eval provides evidence for binding decisions; it does not directly apply a
 | `execute` | `docs/agent-definitions/execute.md` | `model: claude-haiku-4-5`, `effort: low` |
 | `execute-review` | `docs/agent-definitions/execute-review.md` | `model: claude-sonnet-5`, `effort: low` |
 | `execute-deep` | `docs/agent-definitions/execute-deep.md` | `model: claude-sonnet-5`, `effort: low` |
-| `decide` | `docs/agent-definitions/decide.md` | `model: claude-opus-4-6`, `effort: low` |
+| `decide` | `docs/agent-definitions/decide.md` | `model: claude-opus-4-6`, `effort: medium` |
 
 `cross-cli-dispatch/agent-def-map.tsv` maps these tiers to agent definitions so
 `cross-cli-dispatch/scripts/check-agent-defs.sh` rejects drift from

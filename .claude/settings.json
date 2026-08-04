@@ -28,6 +28,7 @@
       "Bash(gh pr edit --title *)"
     ]
   },
+  "model": "claude-opus-4-6",
   "hooks": {
     "PreToolUse": [
       {
@@ -71,6 +72,39 @@
             "statusMessage": "Enforcing agent worktree isolation"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/guard-agent-worktree.sh",
+            "timeout": 10,
+            "statusMessage": "Enforcing agent worktree isolation"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/block-bare-read.sh",
+            "timeout": 10,
+            "statusMessage": "Checking for bare cat/head/tail"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/block-heredoc-continuation.sh",
+            "timeout": 10,
+            "statusMessage": "Checking heredoc command shape"
+          }
+        ]
       }
     ],
     "SubagentStart": [
@@ -89,7 +123,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.claude/hooks/check-parity-session.sh",
+            "command": "bash ~/.claude/hooks/check-compat-session.sh",
             "timeout": 15,
             "statusMessage": "Checking agent parity"
           }
@@ -125,6 +159,5 @@
   "effortLevel": "medium",
   "skipDangerousModePermissionPrompt": true,
   "skipWorkflowUsageWarning": true,
-  "defaultMode": "bypassPermissions",
-  "model": "claude-opus-4-6"
+  "defaultMode": "bypassPermissions"
 }

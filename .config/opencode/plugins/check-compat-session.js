@@ -1,4 +1,4 @@
-// check-parity-session.js — OpenCode plugin (session.created)
+// check-compat-session.js — OpenCode plugin (session.created)
 // Lightweight parity check at session start. Reports drift.
 
 import { execSync } from "child_process"
@@ -11,7 +11,7 @@ export const CheckParitySession = async () => {
       const home = process.env.HOME || ""
       let hookRepo = ""
       try {
-        hookRepo = dirname(dirname(realpathSync(join(home, ".claude", "hooks", "check-parity-session.sh"))))
+        hookRepo = dirname(dirname(realpathSync(join(home, ".claude", "hooks", "check-compat-session.sh"))))
       } catch {}
       const candidates = [
         join(home, ".claude", "skills", "agent-parity", "scripts", "check-parity.sh"),
