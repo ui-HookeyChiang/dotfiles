@@ -1,1 +1,1 @@
-/Users/hookeychiang/.claude/skill-dev/hooks/opencode/skill-dev-hooks.ts
+../../../../.claude/skill-dev/hooks/opencode/skill-dev-hooks.ts
