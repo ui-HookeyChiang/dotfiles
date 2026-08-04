@@ -122,14 +122,6 @@
           "timeout": 10,
           "shape": "nested"
         },
-        "codex": {
-          "event": "PreToolUse",
-          "matcher": "Bash",
-          "command": "bash $HOME/.claude/hooks/block-bare-read.sh",
-          "statusMessage": "Checking for bare cat/head/tail",
-          "timeout": 10,
-          "shape": "nested"
-        },
         "cursor": {
           "event": "preToolUse",
           "matcher": "Shell",

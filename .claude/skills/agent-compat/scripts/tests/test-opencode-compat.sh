@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Verify OpenCode parity accounting across docs, hooks, and agent definitions.
+# Verify OpenCode compatibility accounting across docs, hooks, and agent definitions.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PARITY_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-REPO_ROOT="$(cd "$PARITY_ROOT/.." && pwd)"
+COMPAT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+REPO_ROOT="$(cd "$COMPAT_ROOT/.." && pwd)"
 TMP_ROOT="$(mktemp -d)"
 trap 'rm -rf "$TMP_ROOT"' EXIT
 
@@ -34,7 +34,7 @@ done
 printf 'Delivery Red Lines
 ' > "$FAKE_HOME/.config/opencode/agents/inject.md"
 ln -s "$REPO_ROOT/hooks/opencode/skill-dev-hooks.ts" "$FAKE_HOME/.config/opencode/plugins/skill-dev-hooks.ts"
-for plugin in block-main-edit check-parity-session guard-stale-base rtk; do
+for plugin in block-main-edit check-compat-session guard-stale-base rtk; do
   printf '// fake plugin
 ' > "$FAKE_HOME/.config/opencode/plugins/$plugin.js"
 done
@@ -64,7 +64,7 @@ printf '%s
       {"hooks":[{"command":"bash ~/.claude/hooks/guard-agent-worktree.sh"}]},
       {"hooks":[{"command":"bash ~/.claude/hooks/block-bare-read.sh"}]}
     ],
-    "SessionStart": [{"hooks":[{"command":"bash ~/.claude/hooks/check-parity-session.sh"}]}],
+    "SessionStart": [{"hooks":[{"command":"bash ~/.claude/hooks/check-compat-session.sh"}]}],
     "SubagentStart": [{"hooks":[{"command":"bash ~/.claude/hooks/subagent-dispatch-inject.sh"}]}]
   }
 }' > "$FAKE_HOME/.claude/settings.json"
@@ -102,7 +102,7 @@ printf '%s
   }
 }' > "$FAKE_HOME/.config/opencode/opencode.json"
 
-OUTPUT="$(HOME="$FAKE_HOME" PATH="$FAKE_BIN:$PATH" "$PARITY_ROOT/scripts/check-parity.sh" --agent opencode --axis agent-definitions)"
+OUTPUT="$(HOME="$FAKE_HOME" PATH="$FAKE_BIN:$PATH" "$COMPAT_ROOT/scripts/check-compat.sh" --agent opencode --axis agent-definitions)"
 if echo "$OUTPUT" | rg -q 'GAP:|DRIFTED|DIVERGED'; then
   echo "FAIL: opencode parity still has unaccepted gaps or drift" >&2
   echo "$OUTPUT" >&2

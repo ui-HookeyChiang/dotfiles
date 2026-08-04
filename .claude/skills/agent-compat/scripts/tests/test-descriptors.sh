@@ -3,11 +3,11 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PARITY_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+COMPAT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 TMP_ROOT="$(mktemp -d)"
 trap 'rm -rf "$TMP_ROOT"' EXIT
 
-REPO_ROOT="$(cd "$PARITY_ROOT/.." && pwd)"
+REPO_ROOT="$(cd "$COMPAT_ROOT/.." && pwd)"
 FAKE_HOME="$TMP_ROOT/home"
 FAKE_BIN="$TMP_ROOT/bin"
 mkdir -p "$FAKE_HOME/.claude" "$FAKE_HOME/.claude/agents" "$FAKE_HOME/.cursor" "$FAKE_HOME/.cursor/agents" "$FAKE_BIN"
@@ -17,7 +17,7 @@ exit 0
 chmod +x "$FAKE_BIN/claude"
 
 printf '%s
-' '{"model":"claude-opus-4-6[1m]","hooks":{"PreToolUse":[{"hooks":[{"command":"bash ~/.claude/hooks/block-main-edit.sh"}]}],"SessionStart":[{"hooks":[{"command":"bash ~/.claude/hooks/check-parity-session.sh"}]}],"SubagentStart":[{"hooks":[{"command":"bash ~/.claude/hooks/subagent-dispatch-inject.sh"}]}]}}' > "$FAKE_HOME/.claude/settings.json"
+' '{"model":"claude-opus-4-6[1m]","hooks":{"PreToolUse":[{"hooks":[{"command":"bash ~/.claude/hooks/block-main-edit.sh"}]}],"SessionStart":[{"hooks":[{"command":"bash ~/.claude/hooks/check-compat-session.sh"}]}],"SubagentStart":[{"hooks":[{"command":"bash ~/.claude/hooks/subagent-dispatch-inject.sh"}]}]}}' > "$FAKE_HOME/.claude/settings.json"
 printf '%s
 ' '{"model":{"displayModelId":"cursor-model"},"hooks":{"preToolUse":[{"command":"bash ~/.claude/hooks/block-main-edit.sh"}]}}' > "$FAKE_HOME/.cursor/cli-config.json"
 printf '%s
@@ -27,7 +27,7 @@ for agent in decide execute execute-deep execute-review scan scan-search; do
   ln -s "$REPO_ROOT/.cursor/agents/$agent.md" "$FAKE_HOME/.cursor/agents/$agent.md"
 done
 
-DETECTED="$(HOME="$FAKE_HOME" PATH="$FAKE_BIN:$PATH" "$PARITY_ROOT/scripts/detect-agents.sh")"
+DETECTED="$(HOME="$FAKE_HOME" PATH="$FAKE_BIN:$PATH" "$COMPAT_ROOT/scripts/detect-agents.sh")"
 if ! echo "$DETECTED" | jq -e '.agents[] | select(.name=="cursor" and .installed==true and (.settings | endswith(".cursor/cli-config.json")))' >/dev/null; then
   echo "FAIL: cursor descriptor detection did not report expected settings path" >&2
   echo "$DETECTED" >&2
@@ -39,7 +39,7 @@ if ! echo "$DETECTED" | jq -e '.agents[] | select(.name=="cursor" and .installed
   exit 1
 fi
 
-AGENT_OUTPUT="$(HOME="$FAKE_HOME" PATH="$FAKE_BIN:$PATH" "$PARITY_ROOT/scripts/check-parity.sh" --axis agent-definitions --agent cursor)"
+AGENT_OUTPUT="$(HOME="$FAKE_HOME" PATH="$FAKE_BIN:$PATH" "$COMPAT_ROOT/scripts/check-compat.sh" --axis agent-definitions --agent cursor)"
 if echo "$AGENT_OUTPUT" | rg -q 'GAP:|DRIFTED|DIVERGED'; then
   echo "FAIL: cursor agent-definition parity should have no unaccepted gaps or drift" >&2
   echo "$AGENT_OUTPUT" >&2
@@ -58,8 +58,8 @@ if ! echo "$AGENT_OUTPUT" | rg -q 'summary: 0 gap\(s\), 0 warning\(s\), 2 accept
   exit 1
 fi
 
-OUTPUT="$(HOME="$FAKE_HOME" PATH="$FAKE_BIN:$PATH" "$PARITY_ROOT/scripts/check-parity.sh" --axis hooks --agent cursor)"
-if ! echo "$OUTPUT" | rg -q 'ACCEPTED: check-parity-session'; then
+OUTPUT="$(HOME="$FAKE_HOME" PATH="$FAKE_BIN:$PATH" "$COMPAT_ROOT/scripts/check-compat.sh" --axis hooks --agent cursor)"
+if ! echo "$OUTPUT" | rg -q 'ACCEPTED: check-compat-session'; then
   echo "FAIL: descriptor accepted gap not reported" >&2
   echo "$OUTPUT" >&2
   exit 1
@@ -70,7 +70,7 @@ if ! echo "$OUTPUT" | rg -q 'summary: 0 gap\(s\), 0 warning\(s\), 2 accepted exc
   exit 1
 fi
 
-JSON_OUTPUT="$(HOME="$FAKE_HOME" PATH="$FAKE_BIN:$PATH" "$PARITY_ROOT/scripts/check-parity.sh" --format json --axis hooks --agent cursor)"
+JSON_OUTPUT="$(HOME="$FAKE_HOME" PATH="$FAKE_BIN:$PATH" "$COMPAT_ROOT/scripts/check-compat.sh" --format json --axis hooks --agent cursor)"
 if ! echo "$JSON_OUTPUT" | jq -e '.counts == {gaps: 0, warnings: 0, accepted: 2} and (.gaps | length == 0) and (.warnings | length == 0) and (.accepted | length == 2)' >/dev/null; then
   echo "FAIL: clean JSON output did not report expected structure/counts" >&2
   echo "$JSON_OUTPUT" >&2
@@ -80,7 +80,7 @@ fi
 printf '%s
 ' '{"hooks":{"preToolUse":[{"command":"bash ~/.claude/hooks/block-main-edit.sh"},{"command":"bash ~/.claude/hooks/extra-local-only.sh"}]}}' > "$FAKE_HOME/.cursor/hooks.json"
 set +e
-DRIFT_JSON="$(HOME="$FAKE_HOME" PATH="$FAKE_BIN:$PATH" "$PARITY_ROOT/scripts/check-parity.sh" --format json --axis hooks --agent cursor)"
+DRIFT_JSON="$(HOME="$FAKE_HOME" PATH="$FAKE_BIN:$PATH" "$COMPAT_ROOT/scripts/check-compat.sh" --format json --axis hooks --agent cursor)"
 DRIFT_STATUS=$?
 set -e
 if [ "$DRIFT_STATUS" -ne 1 ]; then
@@ -93,25 +93,38 @@ if ! echo "$DRIFT_JSON" | jq -e '.counts.gaps == 1 and .counts.warnings == 0 and
   echo "$DRIFT_JSON" >&2
   exit 1
 fi
-HOOK_OUTPUT="$(HOME="$FAKE_HOME" PATH="$FAKE_BIN:$PATH" "$PARITY_ROOT/../hooks/check-parity-session.sh")"
+HOOK_OUTPUT="$(HOME="$FAKE_HOME" PATH="$FAKE_BIN:$PATH" "$COMPAT_ROOT/../hooks/check-compat-session.sh")"
 if ! echo "$HOOK_OUTPUT" | rg -q 'GAP: extra-local-only'; then
   echo "FAIL: session hook banner did not include JSON GAP item" >&2
   echo "$HOOK_OUTPUT" >&2
   exit 1
 fi
-if ! echo "$HOOK_OUTPUT" | rg -q 'ACCEPTED: check-parity-session'; then
+if ! echo "$HOOK_OUTPUT" | rg -q 'ACCEPTED: check-compat-session'; then
   echo "FAIL: session hook banner did not include JSON ACCEPTED item" >&2
   echo "$HOOK_OUTPUT" >&2
   exit 1
 fi
 
 set +e
-HOME="$FAKE_HOME" PATH="$FAKE_BIN:$PATH" "$PARITY_ROOT/scripts/check-parity.sh" --format xml >/dev/null 2>&1
+HOME="$FAKE_HOME" PATH="$FAKE_BIN:$PATH" "$COMPAT_ROOT/scripts/check-compat.sh" --format xml >/dev/null 2>&1
 USAGE_STATUS=$?
 set -e
 if [ "$USAGE_STATUS" -ne 2 ]; then
   echo "FAIL: invalid format exited $USAGE_STATUS, expected 2" >&2
   exit 1
 fi
+
+# Empty-extractor discipline: cursor/codex extract_skills must carry the
+# reason/verified/review-by comment block, not a bare return 0.
+for agent in cursor codex; do
+  extractor="$COMPAT_ROOT/scripts/extractors/$agent.sh"
+  block="$(awk '/^extract_skills\(\)/,/^}/' "$extractor")"
+  for key in 'reason:' 'verified:' 'review-by:'; do
+    if ! printf '%s\n' "$block" | rg -q "# *$key"; then
+      echo "FAIL: $agent extract_skills empty extractor missing '$key' comment" >&2
+      exit 1
+    fi
+  done
+done
 
 echo "PASS: agent parity descriptors drive detection, accepted gaps, and structured output"

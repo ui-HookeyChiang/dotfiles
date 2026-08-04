@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
-# check-parity.sh — runtime parity diff across detected agents.
+# check-compat.sh — runtime compatibility diff across detected agents.
 # Compares each installed agent against claude (reference) — no manifest needed.
 # Reports: GAP (one side has it, other doesn't), DRIFTED (both have it, content differs).
-# Usage: check-parity.sh [--format prose|json] [--axis permissions|model|instructions|hooks|agent-definitions|all] [--agent opencode|codex|cursor]
+# Usage: check-compat.sh [--format prose|json] [--axis permissions|model|instructions|hooks|agent-definitions|all] [--agent opencode|codex|cursor]
 set -euo pipefail
 
 AXIS="all"
 AGENT_FILTER=""
 FORMAT="prose"
+SCOPE="global"
 
 usage() {
-  echo "Usage: check-parity.sh [--format prose|json] [--axis permissions|model|instructions|hooks|agent-definitions|all] [--agent opencode|codex|cursor]" >&2
+  echo "Usage: check-compat.sh [--format prose|json] [--axis permissions|model|instructions|hooks|agent-definitions|skills|all] [--agent opencode|codex|cursor] [--scope global|project]" >&2
 }
 
 while [[ $# -gt 0 ]]; do
@@ -21,6 +22,8 @@ while [[ $# -gt 0 ]]; do
     --agent=*) AGENT_FILTER="${1#--agent=}"; shift ;;
     --format) [ $# -ge 2 ] || { usage; exit 2; }; FORMAT="$2"; shift 2 ;;
     --format=*) FORMAT="${1#--format=}"; shift ;;
+    --scope) [ $# -ge 2 ] || { usage; exit 2; }; SCOPE="$2"; shift 2 ;;
+    --scope=*) SCOPE="${1#--scope=}"; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage; exit 2 ;;
   esac
@@ -32,13 +35,18 @@ case "$FORMAT" in
 esac
 
 case "$AXIS" in
-  all|permissions|model|instructions|hooks|agent-definitions) ;;
-  *) echo "Unknown axis: $AXIS (valid: permissions, model, instructions, hooks, agent-definitions, all)" >&2; exit 2 ;;
+  all|permissions|model|instructions|hooks|agent-definitions|skills) ;;
+  *) echo "Unknown axis: $AXIS (valid: permissions, model, instructions, hooks, agent-definitions, skills, all)" >&2; exit 2 ;;
+esac
+
+case "$SCOPE" in
+  global|project) ;;
+  *) echo "Unknown scope: $SCOPE (valid: global, project)" >&2; exit 2 ;;
 esac
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 EXTRACTORS_DIR="$SCRIPT_DIR/extractors"
-DESCRIPTORS="${AGENT_PARITY_DESCRIPTORS:-$SCRIPT_DIR/../descriptors/agents.json}"
+DESCRIPTORS="${AGENT_COMPAT_DESCRIPTORS:-$SCRIPT_DIR/../descriptors/agents.json}"
 GAPS=0
 WARNINGS=0
 ACCEPTED=0
@@ -98,6 +106,7 @@ load_extractor() {
   export EXTRACTOR_HOOKS_FILE="$(get_agent_hooks "$agent")"
   export EXTRACTOR_PERMISSIONS_FILE="$(get_agent_permissions "$agent")"
   export EXTRACTOR_AGENT_DEFS_DIR="$(get_agent_defs_dir "$agent")"
+  export EXTRACTOR_SKILLS_DIR="$(get_agent_skills_dir "$agent")"
 
   # shellcheck source=/dev/null
   source "$adapter"
@@ -124,8 +133,12 @@ get_agent_defs_dir() {
   echo "$AGENTS_JSON" | jq -r --arg a "$1" '.agents[] | select(.name==$a) | .agent_definitions // ""'
 }
 
+get_agent_skills_dir() {
+  echo "$AGENTS_JSON" | jq -r --arg a "$1" '.agents[] | select(.name==$a) | .skills // ""'
+}
+
 # --- Agent detection ---
-AGENTS_JSON="$(AGENT_PARITY_DESCRIPTORS="$DESCRIPTORS" "$SCRIPT_DIR/detect-agents.sh")"
+AGENTS_JSON="$(AGENT_COMPAT_DESCRIPTORS="$DESCRIPTORS" "$SCRIPT_DIR/detect-agents.sh")"
 INSTALLED=$(echo "$AGENTS_JSON" | jq -r '.agents[] | select(.installed) | .name')
 AGENT_COUNT=$(echo "$INSTALLED" | wc -w)
 
@@ -153,7 +166,7 @@ accepted_gap_reason() {
     '.agents[]
      | select(.name == $agent)
      | .accepted_gaps[$label][$side][]?
-     | select(.item == $item)' "$DESCRIPTORS")
+     | select(.item == $item or .item == "*")' "$DESCRIPTORS" | head -1)
 
   [ -n "$entry" ] || return 1
   reason=$(echo "$entry" | jq -r '.reason')
@@ -384,8 +397,279 @@ check_agent_definitions() {
   echo ""
 }
 
+# --- Skills axis (global) ---
+# extract_skills emits "name<TAB>resolved-real-path" per skill. The Claude-visible
+# set is canonical: other agents must present the same names, each resolving to
+# the same real path. GAP = name missing (fix printed as a ready-to-run ln -s);
+# DRIFTED = broken symlink or resolved target differs.
+check_skills() {
+  echo "skills:"
+  load_extractor "$REFERENCE_AGENT"
+  local ref_skills
+  ref_skills=$(extract_skills | sort || true)
+  for agent in $OTHER_AGENTS; do
+    load_extractor "$agent"
+    local other_skills other_dir
+    other_skills=$(extract_skills | sort || true)
+    other_dir=$(get_agent_skills_dir "$agent")
+    if [ -z "$other_skills" ]; then
+      echo "  vs $agent: (no file-based skills surface)"
+      continue
+    fi
+    echo "  vs $agent:"
+
+    local ref_names other_names both only_ref only_other
+    ref_names=$(printf '%s\n' "$ref_skills" | cut -f1)
+    other_names=$(printf '%s\n' "$other_skills" | cut -f1)
+    both=$(comm -12 <(echo "$ref_names") <(echo "$other_names") 2>/dev/null || true)
+    only_ref=$(comm -23 <(echo "$ref_names") <(echo "$other_names") 2>/dev/null || true)
+    only_other=$(comm -13 <(echo "$ref_names") <(echo "$other_names") 2>/dev/null || true)
+
+    local item ref_path other_path
+    while IFS= read -r item; do
+      [ -z "$item" ] && continue
+      ref_path=$(printf '%s\n' "$ref_skills" | awk -F'\t' -v n="$item" '$1==n {print $2; exit}')
+      other_path=$(printf '%s\n' "$other_skills" | awk -F'\t' -v n="$item" '$1==n {print $2; exit}')
+      if [ -z "$ref_path" ]; then
+        printf "  DRIFTED: %-29s (%s reference entry is a broken symlink — fix %s's copy first)\n" "$item" "$REFERENCE_AGENT" "$REFERENCE_AGENT"
+        record_event "$WARNINGS_FILE" "DRIFTED" "skill" "$item" "$agent" "$REFERENCE_AGENT" "" "$REFERENCE_AGENT reference entry is a broken symlink"
+      elif [ -z "$other_path" ]; then
+        printf "  DRIFTED: %-29s (broken symlink)\n" "$item"
+        printf "    fix: ln -sfn %s %s/%s\n" "$ref_path" "$other_dir" "$item"
+        record_event "$WARNINGS_FILE" "DRIFTED" "skill" "$item" "$agent" "" "" "broken symlink"
+      elif [ "$ref_path" != "$other_path" ]; then
+        printf "  DRIFTED: %-29s (target differs: %s vs %s)\n" "$item" "$ref_path" "$other_path"
+        printf "    fix: ln -sfn %s %s/%s\n" "$ref_path" "$other_dir" "$item"
+        record_event "$WARNINGS_FILE" "DRIFTED" "skill" "$item" "$agent" "" "" "target differs: $ref_path vs $other_path"
+      else
+        printf "  %-40s both\n" "$item"
+      fi
+    done <<< "$both"
+
+    while IFS= read -r item; do
+      [ -z "$item" ] && continue
+      local reason status
+      set +e
+      reason=$(accepted_gap_reason "skill" "$agent" "$REFERENCE_AGENT" "$item")
+      status=$?
+      set -e
+      if [ "$status" -eq 2 ]; then
+        local review_by base_reason
+        base_reason="${reason#PAST-REVIEW|}"; base_reason="${base_reason%%|*}"
+        review_by="${reason##*|}"
+        printf "  PAST-REVIEW: %-25s (accepted exception past review date %s)\n" "$item" "$review_by"
+        record_event "$WARNINGS_FILE" "PAST-REVIEW" "skill" "$item" "$agent" "$REFERENCE_AGENT" "$base_reason" "review_by=$review_by"
+      elif [ "$status" -eq 0 ]; then
+        printf "  ACCEPTED: %-29s %s only (%s)\n" "$item" "$REFERENCE_AGENT" "$reason"
+        record_event "$ACCEPTED_FILE" "ACCEPTED" "skill" "$item" "$agent" "$REFERENCE_AGENT" "$reason"
+      else
+        ref_path=$(printf '%s\n' "$ref_skills" | awk -F'\t' -v n="$item" '$1==n {print $2; exit}')
+        printf "  GAP: %-34s %s only\n" "$item" "$REFERENCE_AGENT"
+        if [ -n "$ref_path" ]; then
+          printf "    fix: ln -s %s %s/%s\n" "$ref_path" "$other_dir" "$item"
+          record_event "$GAPS_FILE" "GAP" "skill" "$item" "$agent" "$REFERENCE_AGENT" "" "fix: ln -s $ref_path $other_dir/$item"
+        else
+          printf "    (no fix suggestion: %s reference entry is a broken symlink)\n" "$REFERENCE_AGENT"
+          record_event "$GAPS_FILE" "GAP" "skill" "$item" "$agent" "$REFERENCE_AGENT" "" "$REFERENCE_AGENT reference entry is a broken symlink"
+        fi
+      fi
+    done <<< "$only_ref"
+
+    while IFS= read -r item; do
+      [ -z "$item" ] && continue
+      local reason status
+      set +e
+      reason=$(accepted_gap_reason "skill" "$agent" "$agent" "$item")
+      status=$?
+      set -e
+      if [ "$status" -eq 2 ]; then
+        local review_by base_reason
+        base_reason="${reason#PAST-REVIEW|}"; base_reason="${base_reason%%|*}"
+        review_by="${reason##*|}"
+        printf "  PAST-REVIEW: %-25s (accepted exception past review date %s)\n" "$item" "$review_by"
+        record_event "$WARNINGS_FILE" "PAST-REVIEW" "skill" "$item" "$agent" "$agent" "$base_reason" "review_by=$review_by"
+      elif [ "$status" -eq 0 ]; then
+        printf "  ACCEPTED: %-29s %s only (%s)\n" "$item" "$agent" "$reason"
+        record_event "$ACCEPTED_FILE" "ACCEPTED" "skill" "$item" "$agent" "$agent" "$reason"
+      else
+        printf "  GAP: %-34s %s only\n" "$item" "$agent"
+        record_event "$GAPS_FILE" "GAP" "skill" "$item" "$agent" "$agent"
+      fi
+    done <<< "$only_other"
+  done
+  echo ""
+}
+
+# --- Project scope ---
+# Runs against $PWD (or AGENT_COMPAT_PROJECT_DIR). Axes: instructions + skills.
+# Per-repo accepted gaps live in <project>/.agent-compat.json:
+#   {"accepted_gaps": {"instructions": [{item, reason, review_by}], "skills": [...]}}
+PROJECT_DIR="${AGENT_COMPAT_PROJECT_DIR:-$PWD}"
+PROJECT_GAPS_FILE="$PROJECT_DIR/.agent-compat.json"
+
+# Project-relative paths come from descriptors project_paths (per agent).
+descriptor_project_path() {
+  local agent="$1" key="$2" fallback="$3"
+  jq -r --arg a "$agent" --arg k "$key" --arg f "$fallback" \
+    '.agents[] | select(.name==$a) | .project_paths[$k] // $f' "$DESCRIPTORS"
+}
+
+project_accepted_reason() {
+  local axis="$1" item="$2" entry reason review_by
+  [ -f "$PROJECT_GAPS_FILE" ] || return 1
+  entry=$(jq -c --arg axis "$axis" --arg item "$item" \
+    '.accepted_gaps[$axis][]? | select(.item == $item or .item == "*")' "$PROJECT_GAPS_FILE" 2>/dev/null | head -1)
+  [ -n "$entry" ] || return 1
+  reason=$(echo "$entry" | jq -r '.reason')
+  review_by=$(echo "$entry" | jq -r '.review_by // empty')
+  if is_past_review "$review_by"; then
+    echo "PAST-REVIEW|$reason|$review_by"
+    return 2
+  fi
+  echo "$reason"
+}
+
+# Emits GAP/ACCEPTED/PAST-REVIEW for a project-scope item; suggestion printed
+# on GAP when non-empty. Returns nothing; updates counters via record_event.
+project_report_gap() {
+  local axis="$1" item="$2" side="$3" suggestion="$4" reason status
+  set +e
+  reason=$(project_accepted_reason "$axis" "$item")
+  status=$?
+  set -e
+  if [ "$status" -eq 2 ]; then
+    local review_by base_reason
+    base_reason="${reason#PAST-REVIEW|}"; base_reason="${base_reason%%|*}"
+    review_by="${reason##*|}"
+    printf "  PAST-REVIEW: %-25s (accepted exception past review date %s)\n" "$item" "$review_by"
+    record_event "$WARNINGS_FILE" "PAST-REVIEW" "$axis" "$item" "project" "$side" "$base_reason" "review_by=$review_by"
+  elif [ "$status" -eq 0 ]; then
+    printf "  ACCEPTED: %-29s %s (%s)\n" "$item" "$side" "$reason"
+    record_event "$ACCEPTED_FILE" "ACCEPTED" "$axis" "$item" "project" "$side" "$reason"
+  else
+    printf "  GAP: %-34s %s\n" "$item" "$side"
+    [ -n "$suggestion" ] && printf "    fix: %s\n" "$suggestion"
+    record_event "$GAPS_FILE" "GAP" "$axis" "$item" "project" "$side" "" "$suggestion"
+  fi
+}
+
+# AGENTS.md is canonical. PASS = AGENTS.md exists AND CLAUDE.md is a symlink to
+# it or begins with @AGENTS.md (Claude-specific sections may follow, never diffed).
+check_project_instructions() {
+  echo "instructions (project):"
+  local agents_md claude_md
+  agents_md="$PROJECT_DIR/$(descriptor_project_path opencode instructions AGENTS.md)"
+  claude_md="$PROJECT_DIR/$(descriptor_project_path claude instructions CLAUDE.md)"
+
+  if [ ! -e "$agents_md" ] && [ ! -e "$claude_md" ]; then
+    echo "  (no project instructions — nothing to check)"
+    echo ""
+    return 0
+  fi
+
+  if [ ! -e "$agents_md" ]; then
+    project_report_gap "instructions" "AGENTS.md" "missing (CLAUDE.md-only repo)" \
+      "ln -s CLAUDE.md $agents_md   # or split: shared content to AGENTS.md, CLAUDE.md reduced to '@AGENTS.md' + Claude-specific remainder"
+    echo ""
+    return 0
+  fi
+
+  if [ ! -e "$claude_md" ]; then
+    project_report_gap "instructions" "CLAUDE.md" "missing (AGENTS.md not imported for claude)" \
+      "ln -s AGENTS.md $claude_md"
+    echo ""
+    return 0
+  fi
+
+  # Either direction of symlink counts: the two names resolving to the same
+  # real file means every agent reads identical content.
+  if [ "$(readlink -f "$claude_md" 2>/dev/null || true)" = "$(readlink -f "$agents_md" 2>/dev/null || true)" ]; then
+    echo "  PASS: CLAUDE.md and AGENTS.md resolve to the same file"
+  elif [ -L "$claude_md" ]; then
+    project_report_gap "instructions" "CLAUDE.md" "symlink does not resolve to AGENTS.md" \
+      "ln -sfn AGENTS.md $claude_md"
+  elif [ "$(head -n 1 "$claude_md" 2>/dev/null)" = "@AGENTS.md" ]; then
+    echo "  PASS: CLAUDE.md imports AGENTS.md (@AGENTS.md first line; Claude-specific remainder allowed)"
+  else
+    project_report_gap "instructions" "CLAUDE.md" "does not import AGENTS.md" \
+      "make '@AGENTS.md' the first line of CLAUDE.md (Claude-specific sections may follow)"
+  fi
+  echo ""
+}
+
+# Every directory under .claude/skills/ must have a same-named entry under
+# .opencode/skill/ resolving to it. Extra .opencode/skill entries are GAPs too.
+check_project_skills() {
+  echo "skills (project):"
+  local claude_rel oc_rel claude_dir oc_dir oc_up
+  claude_rel="$(descriptor_project_path claude skills .claude/skills)"
+  oc_rel="$(descriptor_project_path opencode skills .opencode/skill)"
+  claude_dir="$PROJECT_DIR/$claude_rel"
+  oc_dir="$PROJECT_DIR/$oc_rel"
+  # "../" per component of oc_rel, to build a relative symlink source
+  oc_up="$(printf '%s\n' "$oc_rel" | awk -F/ '{for (i=1; i<=NF; i++) printf "../"}')"
+
+  if [ ! -d "$claude_dir" ] && [ ! -d "$oc_dir" ]; then
+    echo "  (no project skills — nothing to check)"
+    echo ""
+    return 0
+  fi
+
+  local name entry target
+  if [ -d "$claude_dir" ]; then
+    for entry in "$claude_dir"/*; do
+      [ -e "$entry" ] || [ -L "$entry" ] || continue
+      name="$(basename "$entry")"
+      if [ ! -d "$entry" ]; then
+        if [ -L "$entry" ] && [ ! -e "$entry" ]; then
+          printf "  DRIFTED: %-29s (claude project entry is a broken symlink -> %s)\n" "$name" "$(readlink "$entry")"
+          record_event "$WARNINGS_FILE" "DRIFTED" "skills" "$name" "project" "" "" "claude project entry is a broken symlink"
+        fi
+        continue
+      fi
+      if [ ! -e "$oc_dir/$name" ]; then
+        project_report_gap "skills" "$name" "claude only (invisible to opencode)" \
+          "mkdir -p $oc_dir && ln -s ${oc_up}${claude_rel}/$name $oc_dir/$name"
+      else
+        target="$(readlink -f "$oc_dir/$name" 2>/dev/null || true)"
+        if [ "$target" = "$(readlink -f "$claude_dir/$name")" ]; then
+          printf "  %-40s both\n" "$name"
+        else
+          printf "  DRIFTED: %-29s (opencode entry does not resolve to %s/%s)\n" "$name" "$claude_rel" "$name"
+          printf "    fix: ln -sfn %s%s/%s %s/%s\n" "$oc_up" "$claude_rel" "$name" "$oc_dir" "$name"
+          record_event "$WARNINGS_FILE" "DRIFTED" "skills" "$name" "project" "" "" "opencode entry resolves elsewhere"
+        fi
+      fi
+    done
+  fi
+  if [ -d "$oc_dir" ]; then
+    for entry in "$oc_dir"/*/; do
+      [ -e "$entry" ] || continue
+      name="$(basename "$entry")"
+      [ -e "$claude_dir/$name" ] && continue
+      project_report_gap "skills" "$name" "opencode only (invisible to claude)" \
+        "mkdir -p $claude_dir && ln -s $oc_dir/$name $claude_dir/$name"
+    done
+  fi
+  echo ""
+}
+
+run_project_report() {
+  echo "agent-compat (project scope): $PROJECT_DIR"
+  echo ""
+  case "$AXIS" in
+    all)          check_project_instructions; check_project_skills ;;
+    instructions) check_project_instructions ;;
+    skills)       check_project_skills ;;
+    *)
+      echo "axis '$AXIS' is global-only; project scope checks instructions + skills (skipped)"
+      return 0
+      ;;
+  esac
+}
+
 run_report() {
-  echo "agent-parity: $AGENT_COUNT agent(s) detected ($(echo $INSTALLED | tr '\n' ' ' | sed 's/ $//'))"
+  echo "agent-compat: $AGENT_COUNT agent(s) detected ($(echo $INSTALLED | tr '\n' ' ' | sed 's/ $//'))"
   echo ""
 
   if [ "$AGENT_COUNT" -lt 2 ]; then
@@ -410,17 +694,22 @@ run_report() {
   fi
 
   case "$AXIS" in
-    all)               check_permissions; check_model; check_instructions; check_hooks; check_agent_definitions ;;
+    all)               check_permissions; check_model; check_instructions; check_hooks; check_agent_definitions; check_skills ;;
     permissions)       check_permissions ;;
     model)             check_model ;;
     instructions)      check_instructions ;;
     hooks)             check_hooks ;;
     agent-definitions) check_agent_definitions ;;
+    skills)            check_skills ;;
   esac
 }
 
 set +e
-PROSE_OUTPUT="$(run_report)"
+if [ "$SCOPE" = "project" ]; then
+  PROSE_OUTPUT="$(run_project_report)"
+else
+  PROSE_OUTPUT="$(run_report)"
+fi
 RUN_STATUS=$?
 set -e
 

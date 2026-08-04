@@ -5,7 +5,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PARITY_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+COMPAT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 TMP_ROOT="$(mktemp -d)"
 trap 'rm -rf "$TMP_ROOT"' EXIT
 
@@ -32,10 +32,10 @@ FIXTURE_DESCRIPTORS="$TMP_ROOT/agents.json"
 jq --arg dir "$FAKE_HOME/.cursor/agents" '
   (.agents[] | select(.name=="cursor") | .paths.agent_definitions) = $dir
   | (.agents[] | select(.name=="cursor") | .accepted_gaps["agent-definition"]) = {}
-' "$PARITY_ROOT/descriptors/agents.json" > "$FIXTURE_DESCRIPTORS"
+' "$COMPAT_ROOT/descriptors/agents.json" > "$FIXTURE_DESCRIPTORS"
 
 set +e
-OUTPUT="$(HOME="$FAKE_HOME" PATH="$FAKE_BIN:$PATH" AGENT_PARITY_DESCRIPTORS="$FIXTURE_DESCRIPTORS" "$PARITY_ROOT/scripts/check-parity.sh" --axis agent-definitions --agent cursor)"
+OUTPUT="$(HOME="$FAKE_HOME" PATH="$FAKE_BIN:$PATH" AGENT_COMPAT_DESCRIPTORS="$FIXTURE_DESCRIPTORS" "$COMPAT_ROOT/scripts/check-compat.sh" --axis agent-definitions --agent cursor)"
 set -e
 
 echo "$OUTPUT" | grep -q '  scan .*both' || {

@@ -5,7 +5,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-DESCRIPTORS="${AGENT_PARITY_DESCRIPTORS:-$SCRIPT_DIR/../descriptors/agents.json}"
+DESCRIPTORS="${AGENT_COMPAT_DESCRIPTORS:-$SCRIPT_DIR/../descriptors/agents.json}"
 
 resolve_path() {
   local path="$1"
@@ -56,6 +56,7 @@ while IFS= read -r encoded; do
     instructions=$(path_if_present "$(echo "$encoded" | base64 -d | jq -r '.paths.instructions // ""')" file)
     permissions=$(path_if_present "$(echo "$encoded" | base64 -d | jq -r '.paths.permissions // ""')" file)
     agent_definitions=$(path_if_present "$(echo "$encoded" | base64 -d | jq -r '.paths.agent_definitions // ""')" dir)
+    skills=$(path_if_present "$(echo "$encoded" | base64 -d | jq -r '.paths.skills // ""')" dir)
     hooks_path=$(echo "$encoded" | base64 -d | jq -r '.paths.hooks // ""')
     case "$hooks_path" in
       *json) hooks=$(path_if_present "$hooks_path" file) ;;
@@ -68,7 +69,8 @@ while IFS= read -r encoded; do
       --arg hooks "$hooks" \
       --arg permissions "$permissions" \
       --arg agent_definitions "$agent_definitions" \
-      '{name:$name,installed:true,settings:$settings,instructions:$instructions,hooks:$hooks,permissions:$permissions,agent_definitions:$agent_definitions}')
+      --arg skills "$skills" \
+      '{name:$name,installed:true,settings:$settings,instructions:$instructions,hooks:$hooks,permissions:$permissions,agent_definitions:$agent_definitions,skills:$skills}')
   else
     agent=$(jq -n --arg name "$name" '{name:$name,installed:false}')
   fi

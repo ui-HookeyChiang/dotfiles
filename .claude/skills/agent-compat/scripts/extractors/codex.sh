@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
-# Extractor adapter: claude (reference agent)
-# Interface: extract_denies, extract_docs, extract_hooks, extract_agent_defs,
-#            extract_model, extract_resolve_doc_path
+# Extractor adapter: codex
 
 extract_denies() {
-  local settings="$1"
-  [ -n "$settings" ] && [ -f "$settings" ] || return 0
-  jq -r '.permissions.deny[]?' "$settings" 2>/dev/null \
+  local _settings="$1"
+  local permissions="${EXTRACTOR_PERMISSIONS_FILE:-}"
+  [ -n "$permissions" ] && [ -f "$permissions" ] || return 0
+  jq -r '.permissions.deny[]?' "$permissions" 2>/dev/null \
     | sed 's/Bash(//;s/)$//;s/:\*$//;s/ \*$//' | sort -u
 }
 
@@ -19,23 +18,35 @@ extract_docs() {
 }
 
 extract_hooks() {
-  local settings="$1"
-  [ -n "$settings" ] && [ -f "$settings" ] || return 0
-  jq -r '[.hooks[]?[]?.hooks[]?.command // empty] | .[]' "$settings" 2>/dev/null \
-    | sed 's|.*/||;s/\.sh$//;s/^rtk hook claude$/rtk/;s/^bash //' | sort -u
+  local _settings="$1"
+  local hooks_file="${EXTRACTOR_HOOKS_FILE:-}"
+  [ -n "$hooks_file" ] && [ -f "$hooks_file" ] || return 0
+  jq -r '[.hooks[]?[]?.hooks[]?.command // empty] | .[]' "$hooks_file" 2>/dev/null \
+    | sed 's|.*/||;s/\.sh$//;s/^bash //;s/^rtk hook claude$/rtk/' | sort -u
+}
+
+extract_skills() {
+  # reason: Codex has no skills directory or custom-skill loading surface.
+  # verified: 2026-08-03
+  # review-by: 2027-02-03
+  return 0
 }
 
 extract_agent_defs() {
   local _settings="$1"
-  local agents_dir="$HOME/.claude/agents"
-  [ -d "$agents_dir" ] || return 0
+  local agents_dir="${EXTRACTOR_AGENT_DEFS_DIR:-}"
+  [ -n "$agents_dir" ] && [ -d "$agents_dir" ] || return 0
   ls "$agents_dir"/*.md 2>/dev/null | xargs -I{} basename {} | sed 's/\.md$//' | sort -u
 }
 
 extract_model() {
   local settings="$1"
   [ -n "$settings" ] && [ -f "$settings" ] || return 0
-  jq -r '.model // empty' "$settings" 2>/dev/null
+  python3 - "$settings" <<'PY' 2>/dev/null || true
+import sys, tomllib
+with open(sys.argv[1], "rb") as f:
+    print(tomllib.load(f).get("model", ""))
+PY
 }
 
 extract_resolve_doc_path() {

@@ -116,8 +116,8 @@ persists:
 
 - `terminal.integrated.shellIntegration.enabled: false` — prevents Cursor
   terminal shell integration from fighting tmux split scrollback.
-- `cursor.cpp.experimental.agentParity: true` — local experiment marker for
-  enabling/expecting the Cursor agent-parity axis.
+- `cursor.cpp.experimental.agentCompat: true` — local experiment marker for
+  enabling/expecting the Cursor agent-compat axis.
 
 ---
 
@@ -194,7 +194,7 @@ uses a Co-Authored-By trailer convention with no settings-level toggle.
 
 ## detect-agents.sh paths
 
-For ticket 04 (agent-parity cursor axis), the Cursor stanza in
+For ticket 04 (agent-compat cursor axis), the Cursor stanza in
 `detect-agents.sh` should emit:
 
 | Field | Path |

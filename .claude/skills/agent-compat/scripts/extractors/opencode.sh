@@ -48,6 +48,19 @@ extract_model() {
   jq -r '.model // empty' "$settings" 2>/dev/null
 }
 
+extract_skills() {
+  local skills_dir="${EXTRACTOR_SKILLS_DIR:-}"
+  [ -n "$skills_dir" ] && [ -d "$skills_dir" ] || return 0
+  local entry name target
+  for entry in "$skills_dir"/*; do
+    [ -e "$entry" ] || [ -L "$entry" ] || continue
+    name="$(basename "$entry")"
+    target=""
+    [ -e "$entry" ] && target="$(readlink -f "$entry" 2>/dev/null || true)"
+    printf '%s\t%s\n' "$name" "$target"
+  done | sort
+}
+
 extract_resolve_doc_path() {
   local settings="$1" _instructions="$2" doc="$3"
   [ -n "$settings" ] && [ -f "$settings" ] || return 0
