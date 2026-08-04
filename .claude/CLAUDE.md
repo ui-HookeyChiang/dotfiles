@@ -4,6 +4,11 @@
 wins. Invoke the matched skill IMMEDIATELY — do not answer, plan, or discuss
 first. Responding without routing is a bug.
 
+Groundedness (whether input needs m=2 gen fan-out before adver runs) is
+classified once in `flow/SKILL.md` § Grounded/ungrounded decision table —
+this table routes by input shape only and does not restate that
+classification.
+
 | Raw input                   | Route                                    | Then           |
 |-----------------------------|------------------------------------------|----------------|
 | fuzzy intent / feature      | `flow` (Converge = `grill-with-docs`)    | → spec         |
