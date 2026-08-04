@@ -122,18 +122,45 @@ git init -q -b main "$REPO_BEHIND"
   git fetch -q origin
 )
 
+# Auto-ff: HEAD behind upstream → fast-forward and allow with warning
 json_behind="$(jq -n --arg c 'git checkout -b new-branch' --arg cwd "$REPO_BEHIND" '{tool_input:{command:$c},cwd:$cwd}')"
 out_behind="$(printf '%s' "$json_behind" | bash "$HOOK" 2>/dev/null)"
-got_behind="allow"; printf '%s' "$out_behind" | grep -q '"permissionDecision": "deny"' && got_behind="deny"
-if [ "$got_behind" = "deny" ]; then
-  # Verify behind-count is in the message
-  if printf '%s' "$out_behind" | grep -q "behind"; then
-    pass=$((pass+1)); echo "ok   HEAD behind upstream → denied with behind-count"
-  else
-    fail=$((fail+1)); echo "FAIL HEAD behind upstream → denied but no behind-count in message"
-  fi
+got_behind_deny="no"; printf '%s' "$out_behind" | grep -q '"permissionDecision": "deny"' && got_behind_deny="yes"
+got_behind_warn="no"; printf '%s' "$out_behind" | grep -q "Auto fast-forwarded" && got_behind_warn="yes"
+if [ "$got_behind_deny" = "no" ] && [ "$got_behind_warn" = "yes" ]; then
+  pass=$((pass+1)); echo "ok   HEAD behind upstream → auto-ff and allowed with warning"
 else
-  fail=$((fail+1)); echo "FAIL HEAD behind upstream → expected deny, got allow"
+  fail=$((fail+1)); echo "FAIL HEAD behind upstream → expected auto-ff allow (deny=$got_behind_deny warn=$got_behind_warn)"
+fi
+
+# Auto-ff failure: HEAD behind upstream but dirty worktree → deny
+REPO_DIRTY="$TMP/repo-dirty"
+REMOTE_DIRTY="$TMP/remote-dirty.git"
+git init -q --bare -b main "$REMOTE_DIRTY"
+git init -q -b main "$REPO_DIRTY"
+( cd "$REPO_DIRTY"
+  git config user.email t@t; git config user.name t
+  git remote add origin "$REMOTE_DIRTY"
+  echo a > f; git add .; git commit -qm "commit-a"
+  git push -qu origin main
+  git branch --set-upstream-to=origin/main main
+  git clone -q "$REMOTE_DIRTY" "$TMP/clone-dirty"
+  cd "$TMP/clone-dirty"
+  git config user.email t@t; git config user.name t
+  echo b > f; git add .; git commit -qm "commit-b"
+  git push -q origin main
+  cd "$REPO_DIRTY"
+  git fetch -q origin
+  # Diverge locally so ff-only fails
+  echo c > g; git add .; git commit -qm "local-diverge"
+)
+json_dirty="$(jq -n --arg c 'git checkout -b new-branch' --arg cwd "$REPO_DIRTY" '{tool_input:{command:$c},cwd:$cwd}')"
+out_dirty="$(printf '%s' "$json_dirty" | bash "$HOOK" 2>/dev/null)"
+got_dirty="allow"; printf '%s' "$out_dirty" | grep -q '"permissionDecision": "deny"' && got_dirty="deny"
+if [ "$got_dirty" = "deny" ]; then
+  pass=$((pass+1)); echo "ok   HEAD behind + diverged → auto-ff fails → denied"
+else
+  fail=$((fail+1)); echo "FAIL HEAD behind + diverged → expected deny, got allow"
 fi
 
 # --- 3. HEAD-based creation: no upstream → allow ----------------------------
@@ -207,7 +234,7 @@ got_insync="allow"; printf '%s' "$out_insync" | grep -q '"permissionDecision": "
 if [ "$got_insync" = "allow" ]; then pass=$((pass+1)); echo "ok   bare local == remote SHA → allowed"
 else fail=$((fail+1)); echo "FAIL bare local == remote SHA → expected allow, got deny"; fi
 
-# --- 6. Bare local ref behind remote → denied with ahead/behind counts ------
+# --- 6. Bare local ref purely behind remote → auto-ff and allow -------------
 REPO_STALE="$TMP/repo-stale"
 REMOTE_STALE="$TMP/remote-stale.git"
 git init -q --bare -b main "$REMOTE_STALE"
@@ -232,19 +259,47 @@ git init -q -b main "$REPO_STALE"
 )
 json_stale="$(jq -n --arg c 'git checkout -b new feature-z' --arg cwd "$REPO_STALE" '{tool_input:{command:$c},cwd:$cwd}')"
 out_stale="$(printf '%s' "$json_stale" | bash "$HOOK" 2>/dev/null)"
-got_stale="allow"; printf '%s' "$out_stale" | grep -q '"permissionDecision": "deny"' && got_stale="deny"
-if [ "$got_stale" = "deny" ]; then
-  # Verify message has counts and paste-able fix
-  has_fix="no"; printf '%s' "$out_stale" | grep -q "git fetch origin" && has_fix="yes"
-  has_counts="no"
-  ( printf '%s' "$out_stale" | grep -q "behind" || printf '%s' "$out_stale" | grep -q "ahead" ) && has_counts="yes"
-  if [ "$has_fix" = "yes" ] && [ "$has_counts" = "yes" ]; then
-    pass=$((pass+1)); echo "ok   bare local behind remote → denied with counts and fix"
-  else
-    fail=$((fail+1)); echo "FAIL bare local behind remote → denied but missing counts or fix (has_fix=$has_fix has_counts=$has_counts)"
-  fi
+got_stale_deny="no"; printf '%s' "$out_stale" | grep -q '"permissionDecision": "deny"' && got_stale_deny="yes"
+got_stale_ff="no"; printf '%s' "$out_stale" | grep -q "Auto fast-forwarded" && got_stale_ff="yes"
+if [ "$got_stale_deny" = "no" ] && [ "$got_stale_ff" = "yes" ]; then
+  pass=$((pass+1)); echo "ok   bare local behind remote → auto-ff and allowed"
 else
-  fail=$((fail+1)); echo "FAIL bare local behind remote → expected deny, got allow"
+  fail=$((fail+1)); echo "FAIL bare local behind remote → expected auto-ff allow (deny=$got_stale_deny ff=$got_stale_ff)"
+fi
+
+# --- 6b. Bare local ref diverged from remote → still denied ----------------
+REPO_DIVERGED="$TMP/repo-diverged"
+REMOTE_DIVERGED="$TMP/remote-diverged.git"
+git init -q --bare -b main "$REMOTE_DIVERGED"
+git init -q -b main "$REPO_DIVERGED"
+( cd "$REPO_DIVERGED"
+  git config user.email t@t; git config user.name t
+  git remote add origin "$REMOTE_DIVERGED"
+  echo a > f; git add .; git commit -qm "commit-a"
+  git push -q origin main
+  git branch feature-div
+  git push -q origin feature-div
+  # Advance remote
+  git clone -q "$REMOTE_DIVERGED" "$TMP/clone-diverged"
+  cd "$TMP/clone-diverged"
+  git config user.email t@t; git config user.name t
+  git checkout -q feature-div
+  echo b >> f; git add .; git commit -qm "remote-commit"
+  git push -q origin feature-div
+  # Advance local (diverge)
+  cd "$REPO_DIVERGED"
+  git checkout -q feature-div
+  echo c >> g; git add .; git commit -qm "local-commit"
+  git checkout -q main
+  git fetch -q origin
+)
+json_div="$(jq -n --arg c 'git checkout -b new feature-div' --arg cwd "$REPO_DIVERGED" '{tool_input:{command:$c},cwd:$cwd}')"
+out_div="$(printf '%s' "$json_div" | bash "$HOOK" 2>/dev/null)"
+got_div="allow"; printf '%s' "$out_div" | grep -q '"permissionDecision": "deny"' && got_div="deny"
+if [ "$got_div" = "deny" ]; then
+  pass=$((pass+1)); echo "ok   bare local diverged from remote → denied (no auto-ff)"
+else
+  fail=$((fail+1)); echo "FAIL bare local diverged → expected deny, got allow"
 fi
 
 # --- 7. Fetch stamp uses common gitdir (worktrees share stamp) ---------------
