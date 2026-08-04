@@ -140,7 +140,7 @@ fi
 if [ -d "$CODEX_AGENTS_TEMPLATE_DIR" ]; then
   if agent_installed codex; then
     if [ "$APPLY" -eq 1 ]; then
-      if registration_emit_dry_run "  [would install] ~/.codex/agents/{scan,execute,decide}.md"; then
+      if registration_emit_dry_run "  [would install] ~/.codex/agents/{scan,execute,decide,exploration}.md"; then
         :
       else
         mkdir -p "$CODEX_AGENTS_DIR"
@@ -153,7 +153,7 @@ if [ -d "$CODEX_AGENTS_TEMPLATE_DIR" ]; then
           [ ! -f "$target" ] || cp "$target" "${target}.bak"
           cp "$template" "$target"
         done
-        echo "  [installed] ~/.codex/agents/{scan,execute,decide}.md"
+        echo "  [installed] ~/.codex/agents/{scan,execute,decide,exploration}.md"
       fi
     else
       CODEX_AGENT_MISSING=0

@@ -13,7 +13,12 @@
       "paths": {
         "settings": "~/.claude/settings.json",
         "instructions": "~/.claude/CLAUDE.md",
-        "hooks": "~/.claude/hooks"
+        "hooks": "~/.claude/hooks",
+        "skills": "~/.claude/skills"
+      },
+      "project_paths": {
+        "instructions": "CLAUDE.md",
+        "skills": ".claude/skills"
       }
     },
     {
@@ -29,7 +34,8 @@
       "paths": {
         "settings": "~/.config/opencode/opencode.json",
         "instructions": "~/.config/opencode/AGENTS.md",
-        "hooks": "~/.config/opencode/plugins"
+        "hooks": "~/.config/opencode/plugins",
+        "skills": "~/.config/opencode/skills"
       },
       "accepted_gaps": {
         "deny": {
@@ -95,6 +101,10 @@
             }
           ]
         }
+      },
+      "project_paths": {
+        "instructions": "AGENTS.md",
+        "skills": ".opencode/skill"
       }
     },
     {
@@ -124,13 +134,22 @@
         "hook": {
           "claude": [
             {
-              "item": "check-parity-session",
+              "item": "check-compat-session",
               "reason": "Codex supports PreToolUse and SubagentStart, but no confirmed SessionStart hook surface",
               "review_by": "2027-02-03"
             },
             {
               "item": "block-heredoc-continuation",
               "reason": "Codex hooks.json does not yet implement heredoc continuation guard",
+              "review_by": "2027-02-03"
+            }
+          ]
+        },
+        "skill": {
+          "claude": [
+            {
+              "item": "*",
+              "reason": "Codex has no skills directory or custom-skill loading surface",
               "review_by": "2027-02-03"
             }
           ]
@@ -163,7 +182,7 @@
         "hook": {
           "claude": [
             {
-              "item": "check-parity-session",
+              "item": "check-compat-session",
               "reason": "Cursor has no confirmed equivalent registration for this Claude hook",
               "review_by": "2027-02-03"
             },
@@ -196,6 +215,15 @@
             {
               "item": "scan-search",
               "reason": "Cursor-native search tier split (PR #1236); Claude counterpart not defined yet",
+              "review_by": "2027-02-03"
+            }
+          ]
+        },
+        "skill": {
+          "claude": [
+            {
+              "item": "*",
+              "reason": "Cursor custom-skill loading surface is unverified; all claude skills accepted until a skills path is bound",
               "review_by": "2027-02-03"
             }
           ]

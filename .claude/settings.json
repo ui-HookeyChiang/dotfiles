@@ -125,7 +125,7 @@
             "type": "command",
             "command": "bash ~/.claude/hooks/check-compat-session.sh",
             "timeout": 15,
-            "statusMessage": "Checking agent parity"
+            "statusMessage": "Checking agent compat"
           }
         ]
       }

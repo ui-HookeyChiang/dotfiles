@@ -1142,12 +1142,12 @@ install_claude_agents() {
   done
 
   # register-harness.sh's own REPO_ROOT resolution (scripts/lib/../..) expects
-  # agent-parity as a sibling of hooks/ and scripts/; in this snapshot
-  # agent-parity landed under skills/ (it ships its own SKILL.md). Bridge with
+  # agent-compat as a sibling of hooks/ and scripts/; in this snapshot
+  # agent-compat landed under skills/ (it ships its own SKILL.md). Bridge with
   # one absent-only relative symlink instead of patching the snapshot script.
-  if [[ ! -e "$DOTCLAUDE/agent-parity" ]]; then
-    run ln -s "skills/agent-parity" "$DOTCLAUDE/agent-parity"
-    note "linked .claude/agent-parity -> skills/agent-parity (register-harness.sh layout bridge)"
+  if [[ ! -e "$DOTCLAUDE/agent-compat" ]]; then
+    run ln -s "skills/agent-compat" "$DOTCLAUDE/agent-compat"
+    note "linked .claude/agent-compat -> skills/agent-compat (register-harness.sh layout bridge)"
   fi
 
   if [[ -x "$DOTCLAUDE/scripts/register-harness.sh" ]] || [[ -f "$DOTCLAUDE/scripts/register-harness.sh" ]]; then
@@ -1493,12 +1493,12 @@ install_locked_extras() {
   fi
 }
 
-# verify_claude_parity — point 9: post-install agent-parity check via the
-# snapshot's check-parity.sh, and a skills-lock verify pass. Non-zero exit
+# verify_claude_parity — point 9: post-install agent-compat check via the
+# snapshot's check-compat.sh, and a skills-lock verify pass. Non-zero exit
 # prints warnings but never aborts install (matches skill-dev behavior).
 verify_claude_parity() {
   log "verify_claude_parity"
-  local parity_script="$DOTCLAUDE/skills/agent-parity/scripts/check-parity.sh"
+  local parity_script="$DOTCLAUDE/skills/agent-compat/scripts/check-compat.sh"
   if [[ -x "$parity_script" ]] || [[ -f "$parity_script" ]]; then
     local parity_json parity_status
     set +e
@@ -1509,9 +1509,9 @@ verify_claude_parity() {
       local gaps warnings
       gaps="$(printf '%s' "$parity_json" | jq -r '.counts.gaps // 0' 2>/dev/null || echo 0)"
       warnings="$(printf '%s' "$parity_json" | jq -r '.counts.warnings // 0' 2>/dev/null || echo 0)"
-      note "agent-parity: $gaps gap(s), $warnings warning(s)"
+      note "agent-compat: $gaps gap(s), $warnings warning(s)"
     else
-      note "agent-parity check did not run cleanly (exit $parity_status); continuing"
+      note "agent-compat check did not run cleanly (exit $parity_status); continuing"
     fi
   fi
   if [[ -x "$DOTCLAUDE/scripts/skills-lock.sh" ]] || [[ -f "$DOTCLAUDE/scripts/skills-lock.sh" ]]; then

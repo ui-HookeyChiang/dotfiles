@@ -7,13 +7,13 @@ Personal dotfiles — the canonical source for global agent config and skills.
 - `.claude/CLAUDE.md` — GLOBAL instructions (symlinked to `~/.claude/CLAUDE.md` by the installer). Edit here, never in `~/.claude/` directly.
 - `.claude/docs/agents/` — docs `@imported` by the global CLAUDE.md.
 - `.claude/skills/` — canonical live skill source; the installer fans these out to `~/.claude/skills` and `~/.config/opencode/skills`. Skill-authoring rules: `.claude/skills/CLAUDE.md`.
-- No `.opencode/skill/` bridge — these skills reach OpenCode via the global fanout (`~/.config/opencode/skills`); a project bridge would duplicate. Documented as a wildcard accepted gap in `.agent-parity.json`.
+- No `.opencode/skill/` bridge — these skills reach OpenCode via the global fanout (`~/.config/opencode/skills`); a project bridge would duplicate. Documented as a wildcard accepted gap in `.agent-compat.json`.
 
 ## Development
 
 - Never push directly to the default branch — all changes go through PRs.
 - Develop in a linked worktree (`git worktree add .worktrees/<branch> -b <branch> origin/master`).
-- After changing skills or config, run `bash .claude/skills/agent-parity/scripts/check-parity.sh --scope project` — done when 0 gap(s).
+- After changing skills or config, run `bash .claude/skills/agent-compat/scripts/check-compat.sh --scope project` — done when 0 gap(s).
 
 ## Issue tracker
 

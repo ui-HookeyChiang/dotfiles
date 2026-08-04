@@ -37,6 +37,14 @@ extract_model() {
   jq -r '.model.displayModelId // empty' "$settings" 2>/dev/null
 }
 
+extract_skills() {
+  # reason: Cursor custom-skill loading surface is unverified; only built-in
+  #   skills-cursor exists, with no confirmed user-skill directory contract.
+  # verified: 2026-08-03
+  # review-by: 2027-02-03
+  return 0
+}
+
 extract_resolve_doc_path() {
   # reason: Cursor User Rules are settings-only (no file-backed doc surface);
   #   AGENTS.md/CLAUDE.md are read at project root only, not user level.

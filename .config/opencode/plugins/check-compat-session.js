@@ -14,8 +14,8 @@ export const CheckParitySession = async () => {
         hookRepo = dirname(dirname(realpathSync(join(home, ".claude", "hooks", "check-compat-session.sh"))))
       } catch {}
       const candidates = [
-        join(home, ".claude", "skills", "agent-parity", "scripts", "check-parity.sh"),
-        ...(hookRepo ? [join(hookRepo, "agent-parity", "scripts", "check-parity.sh")] : []),
+        join(home, ".claude", "skills", "agent-compat", "scripts", "check-compat.sh"),
+        ...(hookRepo ? [join(hookRepo, "agent-compat", "scripts", "check-compat.sh")] : []),
       ]
 
       let script = null
