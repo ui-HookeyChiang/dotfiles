@@ -1,0 +1,7 @@
+{
+  "accepted_gaps": {
+    "skills": [
+      {"item": "*", "reason": "skills here are the global fanout source; opencode sees them via ~/.config/opencode/skills, a project bridge would duplicate", "review_by": "2027-02-03"}
+    ]
+  }
+}
