@@ -1,8 +1,9 @@
 # sync-to-dotfiles SKILL.md self-description drift
 
-Status: ready-for-agent
+Status: wontfix
 Labels: bug
 Created: 2026-08-03
+Resolved: 2026-08-04 — sync-to-dotfiles dropped entirely; dotfiles is now the canonical skill source (no skill-dev sync), so the skill no longer exists.
 
 ## Problem
 
