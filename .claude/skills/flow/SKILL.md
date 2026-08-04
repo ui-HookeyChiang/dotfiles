@@ -146,7 +146,7 @@ Split spec into independently-grabbable vertical slices.
 Implement each issue as a stacked branch.
 
 - **Gen:** implement + `Skill tdd` (grounded: tests verify)
-- **Adver (reading):** `Skill code-review` n=2 (attack diff)
+- **Adver (reading):** `Skill code-review` n=1 (attack diff)
 - **Adver (execution):** tdd red-replay (scratch checkout)
 - **Gate:** independent Moderator receives code-review findings → gen fixes → commit
 - **Context:** issue body is full context (no HANDOFF.md)
@@ -175,10 +175,9 @@ For skill tasks:
 Sequence: implement → code-review → gen fix.
 
 1. **Gen dispatch:** `implement` + `Skill tdd` produce code on stacked branch
-2. **Adver dispatch:** `Skill code-review` n=2 as independent reviewers (parallel,
-   background — per-task). Falls back to `Skill code-review` alone if
-   `adversarial-review` is unavailable
-3. **Independent Moderator:** fresh-context agent receives both reviewers' findings and
+2. **Adver dispatch:** `Skill code-review` n=1 (background — per-task). Code-review
+   internally runs multiple parallel review agents across dimensions
+3. **Independent Moderator:** fresh-context agent receives reviewer findings and
    produces a disposition table (accept/dismiss + reason per finding)
 4. **HIGH findings must be fixed** — cannot be dismissed; downgrade with evidence
    or fix the code
