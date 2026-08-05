@@ -44,38 +44,33 @@ adver runs.
 | Spec already published to tracker matching task | skip converge |
 | Skill repo (no build artifact — detect via absence of `Makefile`/`Dockerfile`/`package.json` build target) | skip build, deploy, e2e |
 
-## Independent Moderator + gen-fix pattern
+## Moderator dispatch condition
 
-Every stage's adver output goes through an **independent Moderator** (fresh-context
-agent, per adversarial-review §3), then the gen agent receives moderated findings:
-
-1. **Moderator** (fresh agent) — disposition table for each finding: accept/dismiss + reason
-2. **HIGH findings CANNOT be dismissed** — downgrade with evidence or Moderator flags as must-fix
-3. **Gen receives Moderator output** — fixes accepted findings, runs echo-chamber close:
-   - Is consensus independent confirmation or correlated echo?
-   - What are reviewers collectively blind to?
-   - What structural bias does this analysis carry?
-   - Which load-bearing input is owner-only?
-
-The gen agent does NOT moderate its own review findings (D7 experiment: gen-as-Moderator
-rubber-stamps all findings uncritically).
+Moderator synthesis (per adversarial-review §3-5) runs ONLY where a stage's
+adver produces **n≥2 independent raw finding streams** needing synthesis
+(converge AFK m=2, spec adver n=2, dev code-review's internal fan-out).
+Single n=1 adver output or an already-aggregated verdict (verify-skill's
+5-voter APPROVE/REJECT, decompose's n=1 audit) skips the Moderator and goes
+straight to gen-fix / gate — synthesizing an already-synthesized verdict adds
+an agent for no signal. Where Moderator remains: "HIGH findings cannot be
+dismissed" (adversarial-review §3) still holds.
 
 ## Per-stage model×effort bindings
 
-Flagship models only for gen and final gates; adver fan-out rides cheap
-models — quality comes from independent count, not per-agent intelligence
-(adversarial-review experiments). Tier semantics and the escalation ladder:
-`docs/agents/model-dispatch-claude.md` (effort-inversion applies: needs >
-medium → promote model, not effort). Bindings from local eval rounds 1-6
-(`docs/ticket/2026-07-22-model-dispatch-model-effort-bindings.md`).
+Stage roles map to `model-dispatch/native.tsv` tiers — this table carries
+tier names only; concrete model×effort is resolved from native.tsv at runtime.
 
 | Stage | Gen | Adver | Moderator |
 |---|---|---|---|
-| converge / spec | Opus 4.8 high | Sonnet 5 medium × n | Sonnet 5 medium |
-| decompose | Sonnet 5 medium | Sonnet 5 low n=1 | Sonnet 5 low |
-| dev (per task) | Sonnet 5 medium | red-replay/review Sonnet 5 medium | — |
-| dev stuck (after 3-step methodology) | Opus 4.8 | — | — |
-| fan-in / integration | — | Opus 4.8 medium | — |
+| converge / spec | `decide` | `execute-review` × n | `decide` |
+| decompose | `execute-review` | `execute-review` n=1 | `execute-review` |
+| dev (per task) | `execute-review` | red-replay/review `execute-review` | — |
+| dev stuck (after 3-step methodology) | `decide` | — | — |
+| fan-in / integration | — | `decide` | — |
+
+Tier semantics, escalation ladder, and the effort-inversion rule:
+`docs/agents/model-dispatch-claude.md`. Bindings from local eval rounds 1-8
+(`docs/ticket/done/2026-07-22-model-dispatch-model-effort-bindings.md`).
 
 ## Pipeline stages
 
@@ -83,19 +78,19 @@ medium → promote model, not effort). Bindings from local eval rounds 1-6
 
 Scope raw input into a grounded problem statement. Classify the input, dispatch
 the matching tool (`grill-with-docs` is the converger; `research`/`prototype`
-feed it, then grill). The *Grounded?* column is the grounded/ungrounded table
-above keyed to input shape — **make it** → Gen/Adver/Gate mechanics below;
-**arrives** → skip the m=2 fan-out, jump to *Next*.
+feed it, then grill). Look up groundedness for the input shape in the
+*Grounded/ungrounded decision table* above — ungrounded → Gen/Adver/Gate
+mechanics below (m=2 fan-out); grounded → skip the m=2 fan-out, jump to *Next*.
 
-| Raw input shape        | Tool                                 | Grounded? | Next     |
-|------------------------|--------------------------------------|-----------|----------|
-| fuzzy intent / feature | `grill-with-docs`                    | make it   | spec     |
-| missing facts          | `research` → then `grill-with-docs`  | make it   | spec     |
-| unfelt design question | `prototype` → then `grill-with-docs` | make it   | spec     |
-| issue pile (not yours) | `triage`                             | arrives   | decompose |
-| something broken       | `diagnosing-bugs`                    | arrives   | dev (fix) |
-| codebase drift         | `improve-codebase-architecture`      | re-enters | re-grill as idea |
-| Spec already on tracker | —                                    | arrives   | decompose |
+| Raw input shape         | Tool                                  | Next              |
+|--------------------------|----------------------------------------|-------------------|
+| fuzzy intent / feature   | `grill-with-docs`                      | spec              |
+| missing facts            | `research` → then `grill-with-docs`   | spec              |
+| unfelt design question   | `prototype` → then `grill-with-docs`  | spec              |
+| issue pile (not yours)   | `triage`                               | decompose         |
+| something broken         | `diagnosing-bugs`                      | dev (fix)         |
+| codebase drift           | `improve-codebase-architecture`        | re-grill as idea  |
+| Spec already on tracker  | —                                       | decompose         |
 
 Triage ONLY issues you didn't create — `to-tickets` output is already agent-ready.
 
@@ -170,35 +165,20 @@ For skill tasks:
 - **Adver (reading):** `Skill skill-audit` n=1
 - **Adver (execution):** `Skill verify-skill` (5 voters, APPROVE/REJECT)
 
-#### Dev stage details
+flow-dev owns the per-task dev loop mechanics (implement → red-replay +
+code-review → Moderator disposition → fix) as SSOT: `flow-dev/SKILL.md`
+Step 3-5. This stage dispatches flow-dev and gates on its reported verdict —
+no inline loop mechanics here.
 
-Sequence: implement → code-review → gen fix.
+### 5-6. Fan-in / Integration
 
-1. **Gen dispatch:** `implement` + `Skill tdd` produce code on stacked branch
-2. **Adver dispatch:** `Skill code-review` n=1 (background — per-task). Code-review
-   internally runs multiple parallel review agents across dimensions
-3. **Independent Moderator:** fresh-context agent receives reviewer findings and
-   produces a disposition table (accept/dismiss + reason per finding)
-4. **HIGH findings must be fixed** — cannot be dismissed; downgrade with evidence
-   or fix the code
-5. Gen receives Moderator output and commits fixes; adver re-runs on updated diff if findings were HIGH
+Delegates to flow-dev's Feature Integration (`flow-dev/SKILL.md` § Feature
+Integration, procedure in `flow-dev/references/integration-protocol.md`) —
+merge-train assembly, integration tests, red handling (fix in the owning
+task's worktree, re-run, push, rebase downstream — no pipeline abort) are all
+owned there as SSOT.
 
-### 5. Fan-in
-
-Assemble N task branches into integration tree.
-
-- **Mechanism:** `merge-train.sh`
-- **Gate:** all task branches green; merge conflicts resolved
-- **On conflict:** dev agent for owning task resolves; re-run affected tests
-
-### 6. Integration
-
-Cross-task tests before expensive build. Mocks permitted (test doubles for
-external deps). Fail-fast — abort pipeline on red.
-
-- **Mechanism:** full test suite on assembled tree
-- **Gate:** all tests green
-- **On red:** route failure to owning dev task → fix → re-fan-in
+- **Gate:** flow-dev's integration agent reports pass on the assembled tree
 
 ### 7. Build
 
@@ -240,8 +220,5 @@ the pipeline to review → decompose → dev.
 
 ## Domain context injection
 
-All adver dispatches include (per adversarial-review §2 context injection):
-
-1. `CONTEXT.md` — project domain model, vocabulary
-2. Relevant ADRs from `docs/adr/`
-3. Codebase structure summary (top-level layout, module boundaries)
+All adver dispatches inject domain context per adversarial-review §Context
+injection (reviewers only — D9).

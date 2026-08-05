@@ -34,7 +34,7 @@
       "input_kind": "skill-path",
       "description": "Skill with no evals/trigger-eval.json",
       "input_path": "<repo>/skill-without-trigger-eval",
-      "expected": "exit 2 with 'run skill-writer Phase 4 first' hint"
+      "expected": "exit 2 with 'run skill-writer DEV eval-write first' hint"
     },
     {
       "id": "adv-corpus-malformed-json",

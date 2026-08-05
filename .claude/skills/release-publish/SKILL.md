@@ -1,31 +1,31 @@
 ---
-name: release-announce
-description: Publish release notes to multiple channels — github-release (authoritative GitHub Release), github-wiki (GitHub Wiki pages), Confluence wiki hierarchy. Triggers on "announce release", "publish release", "post release note".
+name: release-publish
+description: Publish release notes to multiple channels (triggered by semver-release) — github-release (authoritative GitHub Release), github-wiki (GitHub Wiki pages), Confluence wiki hierarchy. Generates markdown from debian/changelog and distributes to requested channels. Triggers on "announce release", "publish release", "post release note", "release v*".
 argument-hint: "[channels] [version] [--dry-run]"
 test-devices: local
 landing-group: release
 ---
 
-# release-announce
+# release-publish
 
-Publish release notes to channels: **github-release** (GitHub Release via `gh release create`), **github-wiki** (Wiki pages), **confluence** (wiki hierarchy).
+Generate release notes and publish to channels: **github-release** (GitHub Release via `gh release create`), **github-wiki** (Wiki pages), **confluence** (wiki hierarchy).
 
-Runs after `release-note` generates markdown. Distributes to specified channels.
+Generates markdown from debian/changelog, presents for review, then distributes to specified channels.
 
 ## Usage
 
 ```bash
-/release-announce github-release,github-wiki,confluence v0.3.0
-/release-announce confluence
-/release-announce --dry-run github-release
-/release-announce github-wiki v1.0.0
+/release-publish github-release,github-wiki,confluence v0.3.0
+/release-publish confluence
+/release-publish --dry-run github-release
+/release-publish github-wiki v1.0.0
 ```
 
 Natural language also works:
 ```bash
-/release-announce publish the release to confluence and github-release
-/release-announce announce v0.4.0 on all channels
-/release-announce post the release note to the wiki
+/release-publish publish the release to confluence and github-release
+/release-publish announce v0.4.0 on all channels
+/release-publish post the release note to the wiki
 ```
 
 ### Arguments
@@ -40,11 +40,11 @@ Natural language also works:
 
 ## Instructions
 
-Publish release-note markdown to requested channels.
+Generate release notes from debian/changelog, present for review, then publish to requested channels.
 
 ### Step 0: Gather Inputs
 
-1. **Release note markdown** (`$RELEASE_MD`): from `release-note` output, user-provided, or fetched: `RELEASE_MD=$(gh release view vX.Y.Z --json body -q .body)`. Step 1 asserts non-empty.
+1. **Release note markdown** (`$RELEASE_MD`): generated from debian/changelog, user-provided, or fetched: `RELEASE_MD=$(gh release view vX.Y.Z --json body -q .body)`. Step 1 asserts non-empty.
 2. **Version**: parse from argument, or detect from latest git tag:
    ```bash
    VERSION=$(git describe --tags --match 'v*' --abbrev=0)
@@ -84,12 +84,12 @@ Publish release-note markdown to requested channels.
 
 ### Step 1: Validate
 
-Assert release-note markdown present and non-empty — targets are irreversible, empty body must abort before confirm. Empty IS reachable (standalone usage, manual handoff, blank `gh release view` body). Guard up front:
+Assert release markdown present and non-empty — targets are irreversible, empty body must abort before confirm. Empty IS reachable (standalone usage, manual handoff, blank `gh release view` body). Guard up front:
 ```bash
-# $RELEASE_MD = the markdown gathered in Step 0.1 (release-note output, user-provided,
+# $RELEASE_MD = the markdown gathered in Step 0.1 (generated from debian/changelog, user-provided,
 # or `gh release view` body). Empty/whitespace-only → STOP, do not reach publish.
 if [ -z "$(printf '%s' "$RELEASE_MD" | tr -d '[:space:]')" ]; then
-  echo "[ABORT] no release-note markdown — run release-note first, or pass the body." >&2
+  echo "[ABORT] no release markdown — generate from debian/changelog first, or pass the body." >&2
   exit 1
 fi
 ```
@@ -164,7 +164,7 @@ On `--dry-run`, show the plan without executing:
 
 ## Important Notes
 
-- Publishes only — does NOT generate notes. Use `release-note` first.
+- Generates notes AND publishes — folded note generation and announcement (two former skills) into one.
 - Credentials: `~/.config/ubiquiti/jira-credentials` (shared with Jira/Confluence)
 - **Store page IDs** — new version pages (minor/major): record ID. Patch bumps need it (CQL can't find drafts).
 - Confluence: **Storage Format** (XHTML), not markdown. Convert before posting.

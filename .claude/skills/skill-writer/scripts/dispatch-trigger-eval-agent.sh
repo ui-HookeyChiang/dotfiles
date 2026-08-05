@@ -5,10 +5,10 @@
 # skill-writer's authored trigger corpus (evals/trigger-eval.json) onto the local
 # trigger_eval/run_eval.py — the DYNAMIC leg the flow is missing: run_eval
 # spawns real `claude -p` per query and measures whether the description ACTUALLY
-# causes the skill to trigger. verify-skill (Phase 6) only reads-and-SCORES the
+# causes the skill to trigger. verify-skill (TEST stage) only reads-and-SCORES the
 # description statically; this preparer is the live-model complement.
 #
-# It is ADVISORY (non-blocking): Phase 6 verify-skill stays the binding gate.
+# It is ADVISORY (non-blocking): TEST stage verify-skill stays the binding gate.
 #
 # ANTI-SELF-GRADING INVARIANT: run_eval's output is NEVER wired into a description
 # mutator. The moment a measure feeds an auto-rewrite, run_loop (a rejected SSOT
@@ -57,7 +57,7 @@ Resolves the local trigger_eval/ scripts directory, allocates the next free
 run-NNN under docs/dogfoods/<skill>/run-NNN/eval/, writes a BYTE-STABLE
 dispatch prompt that PRINTS the `cd $HERE && python3 -m trigger_eval.run_eval
 ...` invocation, and prints it. It does NOT execute run_eval and does NOT spawn
-the agent (the main agent dispatches). ADVISORY — Phase 6 verify-skill stays
+the agent (the main agent dispatches). ADVISORY — TEST stage verify-skill stays
 the binding gate.
 
 Options:
@@ -173,7 +173,7 @@ dispatch-trigger-eval-agent: no trigger corpus yet — ADVISORY SKIP
   skill:  $SKILL_NAME
   reason: '$EVAL_SET_ABS' not found (corpus not authored yet, Phase 5).
 
-This is ADVISORY and non-blocking: Phase 6 verify-skill remains the binding gate.
+This is ADVISORY and non-blocking: TEST stage verify-skill remains the binding gate.
 Record a TRACED skip (never a silent all-False) in .git/flow-dev-sandwich.log:
 
 ----- machine-readable handoff (eval in the main agent to fill the trace) -----
@@ -211,7 +211,7 @@ dispatch-trigger-eval-agent: trigger_eval dir not found — ADVISORY SKIP
   skill:  $SKILL_NAME
   reason: '$TRIGGER_EVAL_DIR' not found.
 
-This is ADVISORY and non-blocking: Phase 6 verify-skill remains the binding gate.
+This is ADVISORY and non-blocking: TEST stage verify-skill remains the binding gate.
 Record a TRACED skip (never a silent all-False) in .git/flow-dev-sandwich.log:
 
 ----- machine-readable handoff (eval in the main agent to fill the trace) -----
@@ -275,7 +275,7 @@ You are the trigger-eval agent for the skill '$SKILL_NAME'.
 
 This step is ADVISORY and non-blocking. It runs the skill's authored trigger
 corpus (evals/trigger-eval.json) against a LIVE model via trigger_eval/run_eval.py,
-measuring whether the description ACTUALLY causes the skill to trigger. Phase 6
+measuring whether the description ACTUALLY causes the skill to trigger. TEST stage
 verify-skill stays the binding gate; this never blocks merge.
 
 ANTI-SELF-GRADING INVARIANT: run_eval's output is a measurement only. NEVER wire
@@ -340,7 +340,7 @@ $(cat "$PROMPT_FILE")
 ----- End prompt -----
 
 Trigger-eval is an ADVISORY live-model complement to verify-skill, NOT a
-replacement. verify-skill (skill-writer Phase 6) remains the mandatory gate, and
+replacement. verify-skill (skill-writer TEST stage) remains the mandatory gate, and
 run_eval's output is NEVER fed into a description mutator.
 INSTR
 

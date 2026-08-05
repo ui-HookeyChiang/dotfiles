@@ -271,7 +271,7 @@ DOGFOOD_RUN=$RUN
 ----- end handoff -----
 
 The dogfood completion trace the main agent writes (skill-writer/SKILL.md
-Phase 6) MUST carry \`target=\$DOGFOOD_TARGET\` so the boundary assert cross-checks
+TEST stage) MUST carry \`target=\$DOGFOOD_TARGET\` so the boundary assert cross-checks
 docs/dogfoods/\$DOGFOOD_TARGET/run-NNN (the dir created above), NOT skill-writer/.
 
 ----- Behavior dogfood prompt (byte-stable; from $PROMPT_FILE) -----
@@ -281,7 +281,7 @@ $(cat "$PROMPT_FILE")
 ----- End prompt -----
 
 Resident dogfood is an OPTIONAL Behavior-depth complement to verify-skill, NOT a
-replacement. verify-skill (skill-writer Phase 6) remains the mandatory gate.
+replacement. verify-skill (skill-writer TEST stage) remains the mandatory gate.
 INSTR
 
 exit 0

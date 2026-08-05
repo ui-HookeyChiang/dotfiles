@@ -11,9 +11,9 @@ PROMPT="Classify each ticket item below. Canonical statuses: needs-triage, needs
 Output ONLY a JSON object: {\"<item number>\": {\"date\": \"YYYY-MM-DD\"|null, \"status\": \"<canonical>\"}} for all 12 items. No other text.
 
 $(cat "$SKILL/fixtures/scanner/corpus.txt")"
-START=$(date +%s%3N)
+START=$(python3 -c 'import time;print(int(time.time()*1000))')
 (cd "$RUN" && printf '%s' "$PROMPT" | sh "$SKILL/scripts/cli-run.sh" "$MODEL" "$EFFORT" 4 claude.json 2> stderr.log)
-END=$(date +%s%3N)
+END=$(python3 -c 'import time;print(int(time.time()*1000))')
 export MODEL IDX EFFORT LAT=$((END-START)) RUN OUT SKILL
 python3 - << 'PY'
 import json, os, re

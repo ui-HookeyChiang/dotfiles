@@ -26,5 +26,10 @@ rec = {
 }
 if os.environ.get("TIER"):
     rec["tier"] = os.environ["TIER"]
+# Optional executor-v4 fields: hidden guard verdict + whether sources were edited.
+for key, env in (("hidden_ok", "HIDDEN_OK"), ("edited", "EDITED")):
+    v = os.environ.get(env)
+    if v:
+        rec[key] = v == "true"
 with open(out + "/ledger.jsonl", "a") as f:
     f.write(json.dumps(rec) + "\n")

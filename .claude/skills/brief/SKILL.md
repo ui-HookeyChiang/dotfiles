@@ -7,9 +7,9 @@ description: >-
   reviews, and incident postmortems. Use when PRs or a doc are ready and the
   user says "review brief", "幫我寫 review brief", "組 slack review 訊息",
   "design doc review brief", "postmortem brief", "brief 輸出 html", or needs a
-  message to request human review before merge/sign-off. NOT for AI code
-  review (use code-review), NOT for responding to feedback (use
-  receiving-code-review).
+  message to request human review before merge/sign-off. Input contract:
+  producer is flow-dev; successor is flow-merge. NOT for AI code review (use
+  code-review).
 argument-hint: "<PR-number|PR-URL|doc-link|feature-prefix>"
 landing-group: workflow
 ---
@@ -146,14 +146,6 @@ file, inline `<style>`, no external assets. Two `<section>`: TL;DR then
 Origin, same content as above. Write it, then tell the user to upload it as a
 Slack attachment (drag into the channel), NOT paste into the message. Trivial
 code PR: no HTML — the GitHub link unfurl is the reviewer's entry point.
-
-**Data charts in HTML attachments** — when a brief's HTML includes a data
-chart (bar, line, stat tile, comparison table with color coding), invoke the
-`dataviz` skill for the chart's series colors, mark specs, and interaction
-layer. The brief's own ink tokens (body text `#1a1a1a`, headings, `.verdict`
-color) stay as defined here; only the chart interior follows `dataviz`.
-Validate the chart palette against the attachment surface:
-`node validate_palette.js "<series-hexes>" --mode light --surface "#ffffff"`.
 
 **Completion criterion:** verification guard passed; Slack message printed in a
 fenced block; for a design doc / postmortem, the HTML file written and the

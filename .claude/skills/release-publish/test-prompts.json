@@ -9,7 +9,7 @@
     {
       "id": "generate-only-no-channels",
       "prompt": "Cut the release notes for v0.4.0 — just the draft, I'll publish later.",
-      "expected_behaviour": "release-publish triggers; Step 1 Generate + Step 2 Present run; because NO channels were requested, the flow STOPS at the end of Step 2 (generate-only path, the old release-note behavior). Step 3 Confirm and Step 4 Publish never run; the approved markdown is the deliverable. Same stop applies when --no-publish is passed even if channels are named."
+      "expected_behaviour": "release-publish triggers; Step 1 Generate + Step 2 Present run; because NO channels were requested, the flow STOPS at the end of Step 2 (generate-only path, the former note-generation-only behavior). Step 3 Confirm and Step 4 Publish never run; the approved markdown is the deliverable. Same stop applies when --no-publish is passed even if channels are named."
     },
     {
       "id": "dry-run-stops-before-publish",
@@ -19,7 +19,7 @@
     {
       "id": "empty-markdown-abort",
       "prompt": "Publish the latest release to confluence — use the body from the existing GitHub Release.",
-      "expected_behaviour": "release-publish triggers; if the gathered $RELEASE_MD (e.g. from `gh release view ... -q .body`) is empty or whitespace-only, Step 3's guard prints '[ABORT] no release-note markdown' and exits 1 BEFORE any publish — the irreversible Confluence write is never reached. A non-empty body passes the guard and proceeds to the [y/N] confirm."
+      "expected_behaviour": "release-publish triggers; if the gathered $RELEASE_MD (e.g. from `gh release view ... -q .body`) is empty or whitespace-only, Step 1's guard prints '[ABORT] no release markdown' and exits 1 BEFORE any publish — the irreversible Confluence write is never reached. A non-empty body passes the guard and proceeds to the [y/N] confirm."
     },
     {
       "id": "deprecated-alias-warns",

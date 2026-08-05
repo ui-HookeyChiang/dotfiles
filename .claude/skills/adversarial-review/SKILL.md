@@ -8,8 +8,8 @@ description: >-
   Use when a judgment is high-stakes, irreversible, or you suspect you are
   fooling yourself and a single pass would miss what it cannot see — "stress
   test this", "what am I missing", "review this decision/plan/claim",
-  "premortem", "is this argument sound", "epistemic audit", "幫我審這個決定",
-  "我會死在哪". The mechanism that empirically adds quality is
+  "is this argument sound". For persona-based council reviews ("premortem" / "epistemic audit" via persona fan-out), route to the personal thinking-council or investment-research-council instead.
+  The mechanism that empirically adds quality is
   INDEPENDENT-CONTEXT FAN-OUT plus synthesis, NOT persona role-play and NOT a
   single agent listing lenses to itself (both measured to add ~nothing). NOT
   for routine questions one answer handles, NOT for code edits (use

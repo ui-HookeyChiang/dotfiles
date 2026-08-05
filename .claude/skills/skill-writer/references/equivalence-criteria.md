@@ -31,7 +31,7 @@ GOOD (clearly equivalence-preserving):
 
 ```
 - prose-guidelines paragraph compression on the main file (DEV static advisory `--no-llm` advisory)
-- Move 9-exit-code table from main to references/phase-6-gate.md,
+- Move 9-exit-code table from main to references/test-llm-review-gate.md,
   keep 3-class summary in main
 - Add scripts/check-verify-skill.sh wrapper (no logic change)
 ```

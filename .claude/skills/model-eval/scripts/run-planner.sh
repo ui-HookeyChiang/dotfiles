@@ -27,9 +27,9 @@ Objective: $(head -3 "$CTX")
 If a required fact cannot be established from the repository, list it under unresolved_questions instead of inventing it."
   WORKDIR="$REPO"
 fi
-START=$(date +%s%3N)
+START=$(python3 -c 'import time;print(int(time.time()*1000))')
 (cd "$WORKDIR" && printf '%s' "$PROMPT" | sh "$SKILL/scripts/cli-run.sh" "$MODEL" "$EFFORT" 20 "$RUN/claude.json" 2> "$RUN/stderr.log")
-END=$(date +%s%3N)
+END=$(python3 -c 'import time;print(int(time.time()*1000))')
 python3 - "$RUN" << 'PY'
 import json, sys
 run = sys.argv[1]

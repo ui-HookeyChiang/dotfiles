@@ -1,6 +1,6 @@
 ---
 name: verify-skill
-description: Use to verify a skill's behavior before merge — effect mode for new skills, equivalence mode for refactors. Runs 5 isolated voters and aggregates to APPROVE / APPROVE_WITH_NOTES / NEEDS_HUMAN / REJECT, with corpus-freeze anti-self-grading so authorial pressure cannot game the result. The mandatory skill-writer Phase 6 quality gate; also runs standalone for a pre-PR sanity check on a skill change.
+description: Use to verify a skill's behavior before merge — effect mode for new skills, equivalence mode for refactors. Runs 5 isolated voters and aggregates to APPROVE / APPROVE_WITH_NOTES / NEEDS_HUMAN / REJECT, with corpus-freeze anti-self-grading so authorial pressure cannot game the result. Mandatory skill-writer TEST-stage quality gate for create and rewrite; optional for modify. Also runs standalone for pre-PR sanity check on a skill change.
 argument-hint: "<skill-path> [--mode effect|equivalence] [--rerun-voter A<n> --reuse-run <run-id>]"
 landing-group: workflow
 ---
@@ -11,7 +11,7 @@ landing-group: workflow
 
 ## When to use
 
-- skill-writer Phase 6 (mandatory, auto-invoked)
+- skill-writer TEST stage (mandatory for create/rewrite, optional for modify, auto-invoked)
 - Standalone pre-merge verification
 - Pre-PR sanity check on behavior-preserving refactors
 
@@ -20,6 +20,8 @@ landing-group: workflow
 - Self-grading (exit 3)
 - Bare clone / foreign-repo symlink (exit 4)
 - Performance/cost regression (correctness-focused; future A6)
+- Want a holistic audit → `skill-audit`
+- Want a numeric quality score → `darwin-skill`
 
 ## Flow
 
@@ -72,7 +74,7 @@ Full table: `references/aggregation-rules.md`. Headline:
 # Standalone
 Skill verify-skill <skill-path>
 
-# Auto-pipeline (from skill-writer Phase 6)
+# Auto-pipeline (from skill-writer TEST stage)
 VERIFY_SKILL_INVOKED_BY=skill-writer Skill verify-skill <skill-path>
 
 # Single-voter re-run after manual fix

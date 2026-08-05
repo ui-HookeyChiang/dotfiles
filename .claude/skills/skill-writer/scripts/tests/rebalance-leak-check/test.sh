@@ -5,7 +5,7 @@
 # HONEST FRAMING (anti-self-grading, per spec criterion 2):
 #   The production leak check is a DOCUMENTED ADVISORY step — there is NO
 #   runtime script in the rewrite flow that runs this. The real, BINDING grader
-#   is verify-skill Phase 6 (A2/A4 voters re-grading the v2 disclosure surface).
+#   is verify-skill TEST stage (A2/A4 voters re-grading the v2 disclosure surface).
 #   The `leak_check()` below is a small grep-based helper authored IN this test;
 #   it pins the *contract shape* the documented detector is specified to have:
 #       planted-leak -> flagged, clean -> pass, override -> widened (relocation

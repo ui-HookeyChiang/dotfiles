@@ -29,7 +29,7 @@ lines, agents skim past the critical "never auto-commit" constraint.
 
 GOOD: v2 TEST · verify-skill section ~ 30 lines (gate decision + exit code 3-class summary +
 `> constraints` block) with a link to
-[`phase-6-gate.md`](phase-6-gate.md) for the 9-exit-code table, env-var
+[`test-llm-review-gate.md`](test-llm-review-gate.md) for the 9-exit-code table, env-var
 fallback details, and "why this gate exists" evidence trail.
 
 ## Anti-patterns
