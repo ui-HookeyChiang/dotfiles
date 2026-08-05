@@ -1,6 +1,6 @@
 ---
 name: skill-writer
-description: Use when creating, modifying, refactoring, or rewriting any skill in this repo. Use even for small SKILL.md edits, single-file skill changes, or "just adding a section" — never invoke skill-creator directly. Use for v1→v2 rewrites. To AUDIT a skill (bloat, duplication, dead code, rubric score), route to skill-audit or darwin-skill — do not use skill-writer.
+description: Use when creating, modifying, refactoring, or rewriting any skill in this repo. Use even for small SKILL.md edits, single-file skill changes, or "just adding a section" — never invoke skill-creator directly. Use for v1→v2 rewrites. For AUDITS (bloat, duplication, dead code), route to skill-audit; for rubric scoring (0-100 rubric), route to darwin-skill — do not use skill-writer.
 argument-hint: "[rewrite] <skill-description>"
 test-devices: local
 landing-group: workflow
@@ -127,7 +127,7 @@ Audits **existing** v1 BEFORE authoring (informs rewrite). DEV advisory later re
 
 > **NOT darwin** — never in-flow (self-scoring hazard). Standalone post-merge only.
 
-Uses `gate=advisory:<tool>` skip-trace convention. Detail: `references/phase-4-tools.md`.
+Uses `gate=advisory:<tool>` skip-trace convention. Detail: `references/dev-static-advisory-tools.md`.
 
 ### Expectation-spec freeze (rewrite only, MANDATORY)
 
@@ -198,7 +198,7 @@ Blocking gate. `make check` = `make lint` + `make test` (skill's `scripts/tests/
 
 ### static advisory + eval-write (advisory, all modes)
 
-All advisory / non-blocking — read v2 statically. Binding gate = TEST. Detail: `references/phase-4-tools.md`.
+All advisory / non-blocking — read v2 statically. Binding gate = TEST. Detail: `references/dev-static-advisory-tools.md`.
 
 | # | Tool | Trigger |
 |---|---|---|
@@ -238,7 +238,7 @@ Launch 1 agent (subagent_type: general-purpose):
   verdict.json + the rendered 5-ballot summary verbatim.
 ```
 
-Task unavailable → prefix with `VERIFY_SKILL_INVOKED_BY=skill-writer` (detail: `references/phase-6-gate.md`).
+Task unavailable → prefix with `VERIFY_SKILL_INVOKED_BY=skill-writer` (detail: `references/test-llm-review-gate.md`).
 
 | Outcome | Action |
 |---|---|
@@ -246,7 +246,7 @@ Task unavailable → prefix with `VERIFY_SKILL_INVOKED_BY=skill-writer` (detail:
 | NEEDS_HUMAN | BLOCK soft — print 5 ballots; user resolves |
 | REJECT | BLOCK hard — print 5 ballots; back to DEV |
 
-Full exit-code table: `references/phase-6-gate.md`. Constraints SSOT: §Constraints.
+Full exit-code table: `references/test-llm-review-gate.md`. Constraints SSOT: §Constraints.
 
 ### real-execution leg
 

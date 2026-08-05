@@ -50,7 +50,7 @@ AFTER (imperative + table + constraint block):
 
 | Outcome | Next |
 |---|---|
-| Lint pass | Phase 6 |
+| Lint pass | TEST |
 | Lint fail | fix evals; re-enter Phase 5 |
 
 > Phase 5 constraints:

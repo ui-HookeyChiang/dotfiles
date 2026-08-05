@@ -20,9 +20,9 @@ $(cat "$FIX/symptom.log")
 $SRC
 
 Output ONLY JSON: {\"root_causes\": [{\"function\": \"<name>\", \"defect\": \"<one sentence>\"}], \"$TRAP_FIELD\": true|false}."
-START=$(date +%s%3N)
+START=$(python3 -c 'import time;print(int(time.time()*1000))')
 (cd "$RUN" && printf '%s' "$PROMPT" | sh "$SKILL/scripts/cli-run.sh" "$MODEL" "$EFFORT" 4 claude.json 2> stderr.log)
-END=$(date +%s%3N)
+END=$(python3 -c 'import time;print(int(time.time()*1000))')
 export MODEL IDX EFFORT LAT=$((END-START)) RUN OUT FIX TIER TRAP_FIELD
 python3 - << 'PY'
 import json, os, re

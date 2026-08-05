@@ -104,4 +104,5 @@ the leg was not dispatched — STOP and dispatch.
 
 - A numeric rubric score → `darwin-skill`.
 - Building or editing a skill → `skill-writer`.
+- Audit findings needing fixes → route to `skill-writer` (modify mode).
 - Prose density only → `prose-guidelines`.

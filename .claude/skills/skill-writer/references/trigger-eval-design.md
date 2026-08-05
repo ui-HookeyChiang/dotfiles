@@ -30,7 +30,7 @@ GOOD case (realistic, near-miss):
 ```json
 {
   "id": 7,
-  "prompt": "I just split skill-writer SKILL.md by extracting verify-skill gate details into a references/phase-6-gate.md file; can you check it still triggers correctly?",
+  "prompt": "I just split skill-writer SKILL.md by extracting verify-skill gate details into a references/test-llm-review-gate.md file; can you check it still triggers correctly?",
   "should_trigger": true,
   "rationale": "Refactor that touches description-adjacent surface — covers the 'small edit' rationalization axis."
 }

@@ -1,0 +1,62 @@
+[
+  {
+    "id": "c1",
+    "title": "Migration strategy: big-bang vs expand-contract",
+    "context": "A team must migrate a database column from VARCHAR to UUID. The column is used by 14 services, 3 of which are owned by external teams with independent release cycles. The column has a unique index. Current traffic: 800 writes/sec. SLA: 99.95% uptime. The team proposes a big-bang migration during a 2-hour maintenance window on Sunday at 3 AM (historically lowest traffic: 12 writes/sec).",
+    "question": "Should the team use the big-bang migration or an expand-contract (dual-write) migration? Respond with ONLY a JSON object: {\"choice\": \"big-bang\" or \"expand-contract\", \"reasoning\": \"<one paragraph>\", \"risks_of_chosen\": [\"<risk1>\", ...], \"risks_of_rejected\": [\"<risk1>\", ...]}",
+    "correct_choice": "expand-contract",
+    "accept_reasoning": ["external", "independent", "coordinat", "release cycle", "rollback"],
+    "trap": "big-bang",
+    "trap_surface": "The low-traffic maintenance window makes big-bang seem safe, but the 3 external teams with independent release cycles cannot be forced into a synchronized cutover."
+  },
+  {
+    "id": "c2",
+    "title": "Caching layer: Redis vs in-process LRU",
+    "context": "A read-heavy API (95% reads, 5% writes) serves product catalog data. Current p99 latency is 180ms from PostgreSQL. The team wants to add caching. Deployment: 4 stateless app pods behind a load balancer. Catalog has 12,000 products. Average product record: 2.3 KB. Products update ~50 times/day total. Cache TTL requirement: stale data acceptable up to 60 seconds. The team is evaluating Redis (shared cache, single invalidation point) vs in-process LRU (no network hop, per-pod).",
+    "question": "Which caching strategy should the team use? Respond with ONLY a JSON object: {\"choice\": \"redis\" or \"in-process-lru\", \"reasoning\": \"<one paragraph>\", \"risks_of_chosen\": [\"<risk1>\", ...], \"risks_of_rejected\": [\"<risk1>\", ...]}",
+    "correct_choice": "in-process-lru",
+    "accept_reasoning": ["memory", "small", "network", "TTL", "operational"],
+    "trap": "redis",
+    "trap_surface": "Redis is the default industry answer for caching, but the dataset is tiny (12K x 2.3KB = ~28MB), stale-for-60s is acceptable, writes are rare (~50/day), and in-process LRU eliminates the network hop and Redis operational burden."
+  },
+  {
+    "id": "c3",
+    "title": "Monorepo vs polyrepo for 3 microservices",
+    "context": "A startup (6 engineers) runs 3 microservices: auth, billing, and notifications. Auth and billing share a protobuf schema for user events. Billing imports a Go module from auth for token validation. Notifications is a standalone Python service that consumes events via Kafka. Currently all 3 are in separate repos. The team is considering a monorepo. CI takes 4 minutes per service. Deployments are independent (separate k8s namespaces). The protobuf schema change last month broke billing for 2 days because auth updated the schema without bumping billing's dependency.",
+    "question": "Should the team consolidate into a monorepo or stay polyrepo? Respond with ONLY a JSON object: {\"choice\": \"monorepo\" or \"polyrepo\", \"reasoning\": \"<one paragraph>\", \"risks_of_chosen\": [\"<risk1>\", ...], \"risks_of_rejected\": [\"<risk1>\", ...]}",
+    "correct_choice": "monorepo",
+    "accept_reasoning": ["schema", "protobuf", "broke", "small team", "atomic", "dependen"],
+    "trap": "polyrepo",
+    "trap_surface": "Polyrepo seems clean (independent deploys, separate CI), but the protobuf coupling between auth and billing already caused a 2-day outage. With 6 engineers, the monorepo coordination cost is negligible and atomic schema changes prevent the exact class of break they experienced."
+  },
+  {
+    "id": "c4",
+    "title": "Error handling: retry vs circuit-breaker for payment provider",
+    "context": "An e-commerce checkout calls a third-party payment API. The payment API has documented behavior: returns HTTP 500 on transient errors (retry safe, idempotency key honored), HTTP 422 on permanent validation errors (do not retry), and HTTP 429 with Retry-After header on rate limiting. Current implementation: retry all 5xx errors 3 times with exponential backoff. Last month, the payment provider had a 45-minute regional outage returning 500s. During that window, the retry logic amplified load 3x (original + 3 retries per request), queue depth hit 12,000, and the checkout service OOMed. The team proposes adding a circuit breaker.",
+    "question": "Should the team add a circuit breaker, or is the current retry-with-backoff sufficient (with fixes)? Respond with ONLY a JSON object: {\"choice\": \"add-circuit-breaker\" or \"fix-retry-only\", \"reasoning\": \"<one paragraph>\", \"risks_of_chosen\": [\"<risk1>\", ...], \"risks_of_rejected\": [\"<risk1>\", ...]}",
+    "correct_choice": "add-circuit-breaker",
+    "accept_reasoning": ["amplif", "cascad", "OOM", "queue", "45 min", "fail fast"],
+    "trap": "fix-retry-only",
+    "trap_surface": "Fixing retry mitigates but doesn't solve: a 45-minute outage with even 1 retry still doubles load. A circuit breaker fails fast during sustained outages, preventing queue buildup and OOM."
+  },
+  {
+    "id": "c5",
+    "title": "Feature flag rollout: percentage vs user-segment",
+    "context": "A social platform (2M DAU) is rolling out a new feed algorithm. A/B testing showed +8% engagement but -3% in the 'creators' segment (users who post >5 times/week, ~40K users, responsible for 60% of content). The product team wants to ship to 100% with a kill switch. Engineering proposes a gradual percentage rollout (10% -> 50% -> 100% over 2 weeks). The creators segment has a dedicated support channel in Slack where complaints surface within hours.",
+    "question": "Should the rollout use percentage-based (random 10/50/100%) or segment-based (non-creators first, then creators with monitoring)? Respond with ONLY a JSON object: {\"choice\": \"percentage\" or \"segment\", \"reasoning\": \"<one paragraph>\", \"risks_of_chosen\": [\"<risk1>\", ...], \"risks_of_rejected\": [\"<risk1>\", ...]}",
+    "correct_choice": "segment",
+    "accept_reasoning": ["creator", "60%", "content", "disproportionate", "regression", "supply"],
+    "trap": "percentage",
+    "trap_surface": "Percentage rollout is blind to the known creator regression. Creators produce 60% of content — degrading their experience risks a supply-side collapse that percentage metrics won't catch until it's systemic."
+  },
+  {
+    "id": "c6",
+    "title": "Testing strategy: integration vs contract tests for API boundary",
+    "context": "Service A (Go) calls Service B (Python) via REST. Both are owned by the same team. Service B is being rewritten from Flask to FastAPI. The team has 45 integration tests that spin up both services in Docker and test end-to-end. These tests take 8 minutes to run, are flaky (3-5% failure rate from container startup races), and break the CI pipeline ~twice/week. A senior engineer proposes replacing them with contract tests (Pact) that verify the API schema independently in each service's unit test suite, running in <30 seconds with zero flake.",
+    "question": "Should the team replace the integration tests with contract tests, or keep both? Respond with ONLY a JSON object: {\"choice\": \"replace-with-contract\" or \"keep-both\", \"reasoning\": \"<one paragraph>\", \"risks_of_chosen\": [\"<risk1>\", ...], \"risks_of_rejected\": [\"<risk1>\", ...]}",
+    "correct_choice": "replace-with-contract",
+    "accept_reasoning": ["same team", "rewrite", "flak", "8 min", "contract", "boundar"],
+    "trap": "keep-both",
+    "trap_surface": "keep-both sounds safe ('defense in depth') but the integration tests cost 8 min + 3-5% flake + ~2 CI breaks/week. Contract tests verify the same invariant faster and deterministically during the rewrite."
+  }
+]

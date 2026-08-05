@@ -3,7 +3,7 @@
   {"query": "run verify-skill on prose-guidelines", "should_trigger": true, "rationale": "explicit skill name — always routes"},
   {"query": "I added a brand-new skill, run the 5-voter effect-mode verification on it", "should_trigger": true, "rationale": "effect mode for new skills + '5 isolated voters' — both survive in NEW description"},
   {"query": "check that my skill behaves correctly with all 5 voters", "should_trigger": true, "rationale": "5 isolated voters + verify skill behavior"},
-  {"query": "skill-writer Phase 6 quality gate", "should_trigger": true, "rationale": "mandatory skill-writer Phase 6 quality gate — survives verbatim"},
+  {"query": "skill-writer TEST-stage quality gate", "should_trigger": true, "rationale": "mandatory skill-writer TEST-stage quality gate — survives verbatim"},
   {"query": "do a standalone pre-PR sanity check on this skill change", "should_trigger": true, "rationale": "standalone pre-PR sanity check — survives verbatim in NEW description"},
   {"query": "did my SKILL.md change break anything before merge", "should_trigger": true, "rationale": "regression/before-merge intent → verify a skill's behavior before merge"},
   {"query": "verify the behavior of a skill before merge with anti-self-grading so I can't game it", "should_trigger": true, "rationale": "verify behavior before merge + corpus-freeze anti-self-grading — all survive"},

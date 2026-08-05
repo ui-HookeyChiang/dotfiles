@@ -15,9 +15,9 @@ PROMPT="Answer the following questions about the repository at your current dire
 $QS
 
 Output ONLY a JSON object: {\"q1\": \"<answer>\", ... \"q7\": \"<answer>\"}. Answers should be short and include the key identifier(s) (script/file/value names)."
-START=$(date +%s%3N)
+START=$(python3 -c 'import time;print(int(time.time()*1000))')
 (cd "$REPO" && printf '%s' "$PROMPT" | sh "$SKILL/scripts/cli-run.sh" "$MODEL" "$EFFORT" 20 "$RUN/claude.json" 2> "$RUN/stderr.log")
-END=$(date +%s%3N)
+END=$(python3 -c 'import time;print(int(time.time()*1000))')
 export MODEL IDX EFFORT LAT=$((END-START)) RUN OUT SKILL
 python3 - << 'PY'
 import json, os, re

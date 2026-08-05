@@ -1,6 +1,10 @@
 ---
 name: semver-release
-description: Bump semantic version (fix/patch/minor/major), update debian/changelog via gbp dch, create annotated git tag
+description: >-
+  Bump semantic version (fix/patch/minor/major), update debian/changelog via
+  gbp dch, create annotated git tag. Input contract: upstream is flow-merge;
+  preconditions are clean tree and all changes merged to main. Publishes
+  release notes to release-publish. When your task is release notes, announcements, or publishing (not bumping a version), route to release-publish instead.
 argument-hint: "<fix|patch|minor|major|init> [profile]"
 test-devices: local
 landing-group: release

@@ -1,6 +1,6 @@
 ---
 name: model-eval
-description: Benchmark Claude models per dispatch tier (scanner/executor/planner) with pinned --model/--effort per run, deterministic scoring, and a one-JSON-line-per-run ledger. Use when the user asks to eval/benchmark models against each other, measure cost-per-pass or pass rate per model, test a dispatch-table binding (which model for scan/execute/plan), compare tokenizer inflation across models, or rerun the model-dispatch eval. NOT for skill evals (use skill-creator evals) and NOT for picking a model from published benchmarks alone (use research).
+description: Benchmark Claude models per dispatch tier with pinned --model/--effort per run, deterministic scoring, and a one-JSON-line-per-run ledger. Use when the user asks to eval/benchmark models, measure cost-per-pass or pass rate per model, test a dispatch-table binding, compare tokenizer inflation, rerun the model-dispatch eval, or update tier bindings after eval evidence. NOT for skill trigger evals (use verify-skill) and NOT for picking a model from published benchmarks alone (use research).
 disable-model-invocation: true
 argument-hint: <tier: scanner|executor|planner|tokenizer> [models…]
 standards-applied: [description, contract, behavior, trigger-eval, disclosure]
@@ -30,12 +30,13 @@ one JSON line to a ledger. Baseline results 2026-07-22/23:
 | Tier | Runner | Scoring | Pass criterion |
 |---|---|---|---|
 | scanner | `scripts/run-scanner.sh <model> <idx> [effort]` | ground-truth field accuracy (machine) | accuracy in ledger |
-| executor | `scripts/run-executor.sh <model> <idx> [v1\|v2\|v3] [effort]` | test suite green + forbidden-file sha (machine) | `pass` in ledger |
+| executor | `scripts/run-executor.sh <model> <idx> [v1\|v2\|v3\|v4a\|v4b\|v4c] [effort]` | test suite green + forbidden-file sha; v4 adds hidden guard verify + stale-ticket + false-done bait (machine) | `pass` in ledger; v4b also `hidden_ok`, all `edited` |
 | planner | `scripts/run-planner.sh <model> <idx> <context_file> [effort] [contexted\|no-context] [repo_dir]` | 8-item checklist (agent-scored) | ≥6/8, see `references/planner-checklist.md` |
 | tokenizer | `scripts/run-tokenizer.sh <model> <zh\|en> <idx>` | out_tok on verbatim repeat = tokenizer size | comparative only |
 | review | `scripts/run-review.sh <model> <idx> [effort] [blurb:on\|off]` | 6 diffs vs contract; accept-verdicts vs truth (machine) | `accuracy`, `false_accept` (the AFK-critical miss), blurb delta = persuasion cost |
 | search | `scripts/run-search.sh <model> <idx> [effort] [repo_dir]` | multi-hop repo facts + 1 abstain probe (machine, substring) | `accuracy`, `abstain_ok`, `num_turns` |
 | deep | `scripts/run-deep.sh <model> <idx> [effort]` | root-cause diagnosis, fixing forbidden (machine, keyword) | `causes_hit`, `wrongly_blames_wt_id`, `pass` |
+| decide | `scripts/run-decide.sh <model> <idx> [effort]` | 6 architectural trade-off cases; correct choice + reasoning keywords (machine) | `correct`, `chose_trap`, `reasoning_hits`, `pass` |
 
 Executor difficulty knobs and fixture-authoring rules (seeded bugs + golden +
 marker assert): `references/fixture-design.md`.
@@ -118,9 +119,29 @@ Rows written before 2026-07-27 have no effort/tier/backend and are NOT
 migrated; `aggregate.py` defaults them at read time, so they aggregate as
 effort/tier-unknown cells and print without the `effort=`/`tier=` decoration.
 
+## Updating tier bindings
+
+After an eval round produces binding-relevant evidence, update the dispatch
+table. This is a checklist, not a judgment call — the eval data decides.
+
+1. **Confirm evidence is archived**: `scripts/archive-round.sh <slug>` must
+   have run; the evidence file must exist in `model-eval/evidence/`.
+2. **Read the aggregate**: `python3 scripts/aggregate.py <ledger>` — identify
+   the winning (model, effort) per tier by pass rate, then cost/pass as
+   tiebreaker.
+3. **Update `model-dispatch/native.tsv`**: change the tier row's model/effort.
+4. **Update `docs/agents/model-dispatch-claude.md`**: sync the dispatch table,
+   round references, and any rule annotations (e.g. effort-inversion exceptions).
+5. **Run validators**:
+   - `model-dispatch/scripts/validate-runtime-pins.py`
+   - `cross-cli-dispatch/scripts/check-agent-defs.sh`
+6. **Deploy to dotfiles**: `cp docs/agents/model-dispatch-claude.md ~/dotfiles/.claude/docs/agents/model-dispatch-claude.md`
+7. **Update downstream skills** that reference tiers: `flow/SKILL.md` should
+   use tier names only (not hardcoded model×effort); verify with
+   `grep -rn 'Opus\|Sonnet\|Haiku' flow/ --include='*.md'`.
+8. **PR**: commit evidence + binding changes together; squash merge.
+
 ## Not this skill
 
-- Deciding which model to bind in the dispatch docs → that judgment stays
-  with the user/ticket; this skill only produces the evidence.
-- Published-benchmark research → `research` / `deep-research`.
-- Skill trigger evals → `skill-creator` eval tooling.
+- Published-benchmark research → `research`.
+- Skill trigger evals → `verify-skill`.

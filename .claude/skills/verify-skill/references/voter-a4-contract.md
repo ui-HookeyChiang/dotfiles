@@ -21,7 +21,7 @@ the skill; only read its tree.
    (under `references/`, `scripts/`, `evals/`) actually exists on disk.
 3. **Scripts referenced exist**: every `bash`/`Skill`/file-path invocation
    in `SKILL.md` resolves to an existing file under the skill or in PATH.
-4. **Makefile freeze (Phase 4b, per R3-M1)**: `git diff $TRUST_ROOT HEAD --
+4. **Makefile freeze (DEVb, per R3-M1)**: `git diff $TRUST_ROOT HEAD --
    <skill-path>/Makefile` (if Makefile exists) — flag CONTRACT_BROKEN if
    `make check` targets weakened (deleted assertions, dropped glob entries).
 5. **Corpus rename detection**: `git diff $TRUST_ROOT HEAD

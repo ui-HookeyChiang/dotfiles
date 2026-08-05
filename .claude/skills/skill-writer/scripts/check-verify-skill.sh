@@ -1,5 +1,5 @@
 #!/bin/bash
-# check-verify-skill.sh — verify verify-skill is installed before Phase 6 runs.
+# check-verify-skill.sh — verify verify-skill is installed before TEST stage runs.
 # Contract: exit 0 if found, exit 2 with a remediation hint otherwise.
 set -euo pipefail
 

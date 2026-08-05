@@ -10,7 +10,7 @@ VERSION="v0.3.0"  # from Step 0
 # Write release note to a tempfile, then create the GitHub Release from it.
 RELEASE_FILE=$(mktemp --suffix=.md)
 cat > "$RELEASE_FILE" << 'RELEASE_EOF'
-# content from release-note output
+# content from release markdown ($RELEASE_MD)
 RELEASE_EOF
 
 gh release create "$VERSION" \

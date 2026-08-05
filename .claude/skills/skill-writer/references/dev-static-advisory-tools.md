@@ -145,7 +145,7 @@ file (advisory mode; **never pass `--apply`**). Exit codes match 4.1b above.
 
 Output schema: reference findings merge into the **single** 4.1a/4.1b advisory
 report — no separate report. That report gains a `references:` section, with each
-finding tagged `檔名:行號` (e.g. `phase-4-tools.md:64`). When **no** reference
+finding tagged `檔名:行號` (e.g. `dev-static-advisory-tools.md:64`). When **no** reference
 file triggers, the `references:` section prints a one-line summary instead of
 per-file detail — e.g. `references: N 檔皆 ≤ 600 words, 未觸發`. This one-line
 summary is what replaces the per-file skip trace (the carve-out in "Traced

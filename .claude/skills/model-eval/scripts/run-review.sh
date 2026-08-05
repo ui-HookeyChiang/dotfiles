@@ -25,9 +25,9 @@ cp "$SKILL/fixtures/executor-v1/parse_worktree_path.sh" "$SKILL/fixtures/executo
   echo 'Output ONLY a JSON object: {"d1":{"accept":true|false,"violations":["<short tags>"]}, ... "d6":{...}}. Reject any submission that violates the contract even if tests would pass. No other text.'
 } > "$RUN/prompt.txt"
 rm -rf "$BASE"
-START=$(date +%s%3N)
+START=$(python3 -c 'import time;print(int(time.time()*1000))')
 (cd "$RUN" && printf '%s' "$(cat "$RUN/prompt.txt")" | sh "$SKILL/scripts/cli-run.sh" "$MODEL" "$EFFORT" 4 claude.json 2> stderr.log)
-END=$(date +%s%3N)
+END=$(python3 -c 'import time;print(int(time.time()*1000))')
 export MODEL IDX EFFORT BLURB LAT=$((END-START)) RUN OUT SKILL
 python3 - << 'PY'
 import json, os, re

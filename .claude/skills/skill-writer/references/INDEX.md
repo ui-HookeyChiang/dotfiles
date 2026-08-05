@@ -20,9 +20,9 @@ to ensure every skill (new or rewritten) conforms.
 | `disclosure-standard.md` | main file vs references/ vs scripts/ split | cross-voter (A2 + prose-guidelines) |
 | `expectation-spec-standard.md` | rewrite mode expectation-spec freeze + absolute acceptance | A3 Equivalence (tool) |
 | `e2e-baseline-standard.md` | retired — see expectation-spec-standard.md | (retired) |
-| `phase-4-tools.md` | DEV static advisory + TEST LLM-review audit tool invocation details | (stage-specific) |
+| `dev-static-advisory-tools.md` | DEV static advisory + TEST LLM-review audit tool invocation details | (stage-specific) |
 | `content-placement-scan.md` | Rewrite-mode whole-skill content-placement brief (MIGRATE / SLIM / HOLD-IN-PLACE) + orchestrator override | (stage-specific) |
-| `phase-6-gate.md` | TEST · verify-skill 5-voter exit code + ballot SOP + why-gate evidence | (stage-specific) |
+| `test-llm-review-gate.md` | TEST · verify-skill 5-voter exit code + ballot SOP + why-gate evidence | (stage-specific) |
 | `explore-agent-template.md` | INTENT dedup Explore agent prompt template for semantic overlap confirmation | (stage-specific) |
 | `skill-flow-testing.md` | TEST · 5b skill-flow-execution: run skill flow on device/local | (stage-specific) |
 
@@ -53,7 +53,7 @@ before merging any change.
 - `equivalence-criteria` → `expectation-spec-standard` (expectation acceptance is the measurement tool)
 - `adversarial-scenarios` → `behavior-standard` (scenarios test constraint blocks)
 - `disclosure-standard` ← all skills (governs main-vs-references-vs-scripts split)
-- `phase-4-tools` and `phase-6-gate` are skill-writer-internal stage docs; do not own any voter
+- `dev-static-advisory-tools` and `test-llm-review-gate` are skill-writer-internal stage docs; do not own any voter
 - `skill-flow-testing` is skill-writer-internal stage doc (TEST · 5b); does not own any voter
 
 ## How skill-writer reads this

@@ -9,7 +9,7 @@ applies — skill-creator is the sole writer.
 ## The brief: three lists
 
 - **MIGRATE** — over-inline *derivation / detail* in SKILL.md, each with a
-  target reference file (e.g. `TEST verify-skill exit-code table → phase-6-gate.md`).
+  target reference file (e.g. `TEST verify-skill exit-code table → test-llm-review-gate.md`).
   Derivation only, never critical-path (see HOLD-IN-PLACE).
 - **SLIM** — `references/*.md` over 600 words (`wc -w`), each with a compress
   target (~300 words, per `disclosure-standard.md` L43).

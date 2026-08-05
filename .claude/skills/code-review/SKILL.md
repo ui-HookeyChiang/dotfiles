@@ -1,6 +1,12 @@
 ---
 name: code-review
-description: Comprehensive pull request review using specialized agents. Use when reviewing PRs, performing code review, or when the user mentions "review PR", "code review", or "/review-pr".
+description: >-
+  Comprehensive pull request review using specialized agents. Use when
+  reviewing PRs, performing code review, or when the user mentions "review PR",
+  "code review", or "/review-pr". Input contract: mode auto-detected (GitHub
+  mode posts inline comments; local mode returns findings to flow-dev). NOT for
+  audit/design review (use skill-audit), NOT for skill verification before
+  merge (use verify-skill).
 argument-hint: "<PR-number> [focus: security|performance|...]"
 landing-group: workflow
 ---

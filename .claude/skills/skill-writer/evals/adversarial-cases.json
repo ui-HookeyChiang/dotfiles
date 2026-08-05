@@ -6,14 +6,14 @@
       "input_kind": "user-query",
       "description": "Create a skill that overlaps an existing one",
       "input_content": "create a skill that compresses prose paragraphs",
-      "expected": "Phase 1 dedup sweep flags prose-guidelines as DUPLICATE; recommend improving prose-guidelines instead"
+      "expected": "INTENT dedup sweep flags prose-guidelines as DUPLICATE; recommend improving prose-guidelines instead"
     },
     {
       "id": "adv-sw-refactor-target-missing",
       "input_kind": "user-query",
       "description": "Modify a skill that does not exist",
       "input_content": "improve skill non-existent-skill",
-      "expected": "Phase 2 errors with 'skill not found'; no Phase 6 invocation"
+      "expected": "DEV errors with 'skill not found'; no TEST invocation"
     },
     {
       "id": "adv-sw-circular-reference",
@@ -27,14 +27,14 @@
       "input_kind": "user-query",
       "description": "Request asks one skill to do 3 unrelated things",
       "input_content": "create a skill that deploys firmware, reviews PRs, and audits prose",
-      "expected": "Phase 1 sweep recommends 3 separate skills; OR Phase 6 verify-skill A4 flags CONTRACT_BROKEN (description fails scope-consistency)"
+      "expected": "INTENT sweep recommends 3 separate skills; OR TEST verify-skill A4 flags CONTRACT_BROKEN (description fails scope-consistency)"
     },
     {
       "id": "adv-sw-name-collision",
       "input_kind": "user-query",
       "description": "New skill name matches existing skill (case-insensitive)",
       "input_content": "create skill PROSE-CONCISE",
-      "expected": "Phase 1 sweep flags name collision before Phase 2 starts"
+      "expected": "INTENT sweep flags name collision before DEV starts"
     },
     {
       "id": "adv-sw-no-description",

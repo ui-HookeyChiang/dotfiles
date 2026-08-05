@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Aggregate ledger.jsonl into per-capability-cell summary. Usage: aggregate.py <ledger.jsonl>
 
-Capability cell key is (tier, q, model, lang, effort) — deliberately WITHOUT
-backend, so evidence for an identical model id transfers across channels.
+Capability cell key is (tier, q, model, lang, effort, case) — deliberately
+WITHOUT backend, so evidence for an identical model id transfers across
+channels. The `case` dimension (empty for most tiers) separates decide
+sub-cases so they aggregate independently instead of clobbering each other.
 Missing effort/tier default to "" at read time; pre-2026-07-27 rows aggregate
 as effort/tier-unknown cells rather than being migrated.
 """
@@ -11,7 +13,8 @@ from collections import defaultdict
 
 
 def cell(r):
-    return (r.get("tier") or "", r["q"], r["model"], r.get("lang", ""), r.get("effort") or "")
+    return (r.get("tier") or "", r["q"], r["model"], r.get("lang", ""),
+            r.get("effort") or "", r.get("case") or "")
 
 
 recs = [json.loads(l) for l in open(sys.argv[1]) if l.strip()]
@@ -28,9 +31,10 @@ def avg(xs):
 agg = defaultdict(list)
 for r in latest.values():
     agg[cell(r)].append(r)
-for (tier, q, m, lang, effort), rs in sorted(agg.items()):
+for (tier, q, m, lang, effort, case), rs in sorted(agg.items()):
     cost = sum(r.get("cost_usd") or 0 for r in rs)
-    line = f"{q} {m}{' [' + lang + ']' if lang else ''}: n={len(rs)}"
+    label = f"{q}/{case}" if case else q
+    line = f"{label} {m}{' [' + lang + ']' if lang else ''}: n={len(rs)}"
     if effort:
         line += f" effort={effort}"
     if tier:

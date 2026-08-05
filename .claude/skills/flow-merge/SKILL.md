@@ -4,8 +4,9 @@ description: >-
   Cascade-merge a stacked PR series in dependency order and clean up.
   Use when PRs are approved and the user says "merge the stack",
   "squash merge", "merge and cleanup", or when another skill dispatches
-  the merge phase. NOT for creating PRs (flow-dev), NOT for resolving
-  conflicts (resolving-merge-conflicts).
+  the merge phase. Output contract: downstream post-merge events may invoke
+  semver-release for release bumping. NOT for creating PRs (flow-dev), NOT
+  for resolving conflicts (resolving-merge-conflicts).
 argument-hint: "<PR-number|'stack'|branch-prefix>"
 landing-group: workflow
 ---
