@@ -19,6 +19,9 @@ An adopt/reject decision document for codebase-memory-mcp: whether to install it
 
 <!-- one line per closed ticket -->
 
+- [Research: codebase-memory-mcp provenance, license, and network behavior](2026-08-06-cmm-research-provenance.md) — MIT open source (C + vendored tree-sitter), signed releases (SLSA L3/cosign); solo-dominant author, repo ~5.5 months old, 37.6k stars; README claims no telemetry/self-update; installer's `install` subcommand touches 43 agent surfaces incl. hooks; 99.2% claim is a single anecdote — controlled study (arXiv:2603.27277) shows ~10x token cut at 83% vs 92% answer quality; installer checksum check currently fail-open (issue #1134). Findings: docs/research/2026-08-06-codebase-memory-mcp-provenance.md
+- [Research: baseline landscape — LSP tool, ast-grep, and agent grep behavior](2026-08-06-cmm-research-alternatives.md) — Claude Code LSP covers definition/references/one-hop calls (needs per-language server, low unprompted use); ast-grep is per-file syntax-only (no call graph); grep-first beat a graph agent by 23.7 pp on SWE-bench Lite, and forced use > hooks > prompting > descriptions for driving structured-tool adoption; whole-repo call-path/dead-code/architecture queries are the tool's open differentiation surface. Findings: docs/research/2026-08-06-code-search-baselines.md
+
 ## Not yet specified
 
 - Skill-prose rewrite details (which sections of flow/flow-dev/research change, and to what) — hangs on the adopt direction and on measured query ergonomics.
