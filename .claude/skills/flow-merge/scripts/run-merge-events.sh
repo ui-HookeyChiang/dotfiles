@@ -24,8 +24,8 @@ Env:
 EOF
 }
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd -P)"
 
 PHASE=""
 EVENTS_CSV=""
@@ -34,7 +34,7 @@ REGISTRIES=()
 PRIOR_REPORTS=()
 CONFIRM_USER_GATES=0
 CONFIRM_USER_GATES_ONLY=0
-TERMINAL_EVENTS_CSV="${FLOW_MERGE_TERMINAL_EVENTS:-ticket-done}"
+TERMINAL_EVENTS_CSV="${FLOW_MERGE_TERMINAL_EVENTS:-}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -180,7 +180,7 @@ for event in "${REQUESTED[@]}"; do
 done
 
 IFS=',' read -r -a TERMINAL_LIST <<<"$TERMINAL_EVENTS_CSV"
-for event in "${TERMINAL_LIST[@]}"; do
+for event in ${TERMINAL_LIST+"${TERMINAL_LIST[@]}"}; do
   event="${event//[[:space:]]/}"
   [[ -z "$event" ]] && continue
   TERMINAL_EVENTS+=("$event")

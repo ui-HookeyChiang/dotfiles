@@ -23,9 +23,11 @@ Callers inject event names; they do not wrap merge mechanics.
 Hook slots:
 
 - `pre_merge`: runs before each merge operation. Use for gates such as
-  `validate-git-status`, or metadata-only updates such as `pr-metadata-sync`.
+  `validate-git-status` and `verify-ticket-done`, or metadata-only updates such
+  as `pr-metadata-sync`.
 - `post_merge`: runs after the whole stack shows `MERGED`. Use for cleanup,
-  ticket status, release, or domain events.
+  release, or domain events. No post-merge event may mutate repository
+  contents — a post-merge write lands on a merged base with no PR to carry it.
 
 Generic registry: `references/merge-events.tsv`.
 
@@ -49,11 +51,13 @@ Event semantics:
 - Unknown event, wrong phase, failed implementation, or unsatisfied user gate
   records `failed`.
 - Event whose dependency did not `ran` records `skipped-due-to-needs`.
-- In `post_merge`, terminal status events (`ticket-done` by default) are skipped
-  after any earlier post-merge failure.
+- A red `pre_merge` event stops the merge. `verify-ticket-done` red means the
+  ticket was never flipped: the human adds the mark-done commit on the PR branch
+  (see flow-dev Step 3b) and reruns this phase.
 - Independent events continue after a failure.
-- Any `failed` or `skipped-due-to-needs` outcome makes the run red; do not mark
-  tickets done until the report is clean.
+- Any `failed` or `skipped-due-to-needs` outcome makes the run red.
+- `FLOW_MERGE_TERMINAL_EVENTS` names caller post-merge events to skip after an
+  earlier post-merge failure; unset by default.
 
 ## Procedure
 
@@ -62,7 +66,7 @@ Event semantics:
 Before any merge mutation, list and confirm enabled `gate: user` events once:
 
 ```bash
-POST_MERGE_EVENTS="${POST_MERGE_EVENTS:-cleanup,ticket-done}"
+POST_MERGE_EVENTS="${POST_MERGE_EVENTS:-cleanup}"
 bash flow-merge/scripts/run-merge-events.sh \
   --phase post_merge \
   --events "$POST_MERGE_EVENTS" \
@@ -85,12 +89,17 @@ Verify the stack is mergeable:
 - If conflicts exist → invoke `Skill resolving-merge-conflicts`, then
   re-enter this step.
 
-Run configured `pre_merge` events:
+Run configured `pre_merge` events. Pass ticket paths via `FLOW_MERGE_TICKETS`
+(colon-separated) and the optional parent spec/PRD via `FLOW_MERGE_PRD` so
+`verify-ticket-done` has something to check — with neither set it reports `SKIP`,
+which is not a pass:
 
 ```bash
+FLOW_MERGE_TICKETS="${FLOW_MERGE_TICKETS}" \
+FLOW_MERGE_PRD="${FLOW_MERGE_PRD:-}" \
 bash flow-merge/scripts/run-merge-events.sh \
   --phase pre_merge \
-  --events "${PRE_MERGE_EVENTS:-validate-git-status}" \
+  --events "${PRE_MERGE_EVENTS:-validate-git-status,verify-ticket-done}" \
   --report "${TMPDIR:-/tmp}/flow-merge-pre-events.tsv"
 ```
 
@@ -154,7 +163,7 @@ FLOW_MERGE_TOTAL_TASKS="${TOTAL_TASKS}" \
 FLOW_MERGE_DEFAULT_BRANCH="${DEFAULT_BRANCH}" \
 bash flow-merge/scripts/run-merge-events.sh \
   --phase post_merge \
-  --events "${POST_MERGE_EVENTS:-cleanup,ticket-done}" \
+  --events "${POST_MERGE_EVENTS:-cleanup}" \
   --report .flow-merge-post-events.tsv
 ```
 
@@ -162,8 +171,9 @@ Built-in generic events:
 
 - `cleanup`: invokes `_shared/stack/post-merge-cleanup.sh`; idempotent and safe
   to re-run on partial cleanup.
-- `ticket-done`: marks supplied local ticket/spec files done only after its
-  declared dependencies ran.
+- `verify-ticket-done`: pre-merge guard that each supplied ticket already has
+  `Status: done` and sits under `docs/ticket/done/`, and that the optional PRD
+  has `Status: done`. Verify-only — flow-dev owns the flip.
 - `validate-git-status`: validates a clean git worktree before merge mutation.
 - `pr-metadata-sync`: updates PR title/body through the GitHub API before merge
   mutation; it must not edit repository contents.
@@ -175,14 +185,16 @@ Built-in generic events:
 
 ### 4. Status updates
 
-Status updates are merge events, not a prose-only step. Pass ticket paths via
-`FLOW_MERGE_TICKETS` (colon-separated) and the optional parent spec/PRD via
-`FLOW_MERGE_PRD` before running `ticket-done`.
+flow-merge does not write ticket status. flow-dev commits the `Status: done` flip
+plus the `git mv` into `docs/ticket/done/` on the PR branch, so the flip arrives
+with the merge; the `verify-ticket-done` pre-merge event in step 1 is the only
+status check here.
 
 If Jira is configured, inject the domain event from the caller's registry; do
 not add a separate ad hoc post-merge step.
 
-**Completion:** post-merge event report contains only `ran`.
+**Completion:** pre-merge report shows `verify-ticket-done` `ran`, and the
+post-merge event report contains only `ran`.
 
 To retry a fixed post-merge event without re-merging, pass the prior report so
 already successful dependencies count as `ran`:
@@ -202,5 +214,5 @@ Print:
 - PRs merged (number + title)
 - Event report path and per-event outcomes (`ran`, `failed`,
   `skipped-due-to-needs`)
-- Branches cleaned and issues marked done
+- Branches cleaned
 - Warnings (failed events, leftover branches)

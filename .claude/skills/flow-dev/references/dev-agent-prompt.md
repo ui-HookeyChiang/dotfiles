@@ -34,8 +34,17 @@ Launch 1 agent (subagent_type: general-purpose):
   Commit:
   - Stage all changes and commit with conventional commit messages
   - If `git status` shows a pre-staged `.md` under `docs/spec/archive/` or `docs/superpowers/specs/`, include it in your first commit alongside code changes
-  - Do NOT stage or commit the issue file if it was copied into the worktree
+  - Commit the issue file only in the mark-done commit below; otherwise leave it
+    unstaged
   - Do NOT push or create PRs
+
+  Mark the ticket done (only when told this is the LAST task/PR for this ticket):
+  - After the implementation commit, add a SEPARATE commit
+    `docs(ticket): mark <slug> done` that both flips the ticket's `Status:` line
+    to `done` AND `git mv docs/ticket/<slug>.md docs/ticket/done/<slug>.md`
+  - Both halves in that one commit — flow-merge's `verify-ticket-done` pre-merge
+    event fails the merge if the status is unflipped or the file was not moved
+  - If this is NOT the last task for the ticket, leave the ticket untouched
 
   Report: what you changed, test results, and any decisions you made.
   Report delivery: before finishing, send the report through a parent-visible

@@ -11,7 +11,7 @@ reassembled before integration testing. Run from a leaf worktree
 
 ```bash
 cd ".worktrees/${WORKTREE_NS}/task-PR-1"
-bash ~/.claude/skills/_shared/stack/merge-train.sh \
+bash _shared/stack/merge-train.sh \
   --feature-prefix "$FEATURE_PREFIX" \
   --worktree-ns "$WORKTREE_NS" \
   --default-branch "$DEFAULT_BRANCH"

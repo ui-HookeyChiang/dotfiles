@@ -36,7 +36,7 @@ groups in the current layer pass fan-in checks.
 
 ```bash
 cd ".worktrees/${WORKTREE_NS}/task-PR-1"   # any leaf worktree with lock
-bash ~/.claude/skills/_shared/stack/merge-train.sh \
+bash _shared/stack/merge-train.sh \
   --feature-prefix "$FEATURE_PREFIX" \
   --worktree-ns "$WORKTREE_NS" \
   --default-branch "$DEFAULT_BRANCH"
