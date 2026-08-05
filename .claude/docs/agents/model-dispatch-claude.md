@@ -35,7 +35,7 @@ model-eval provides evidence for binding decisions; it does not directly apply a
 
 | Runtime | Enforcement |
 |---------|-------------|
-| Claude Code | Advisory only for model pins. Subagents inherit the main model; `SubagentStart` can inject escalation rules but cannot pin per-agent model. |
+| Claude Code | Enforced through agent-definition frontmatter (`~/.claude/agents/*.md`, `model:` + `effort:`) — observed 2026-08-04: execute ran Haiku 4.5 under a Fable 5 session. `SubagentStart` can additionally inject escalation rules. |
 | OpenCode | Enforced through agent definition frontmatter installed from `docs/agent-definitions/*.md` to `~/.config/opencode/agents/*.md`, then registered in `opencode.json`. |
 | Cursor | Enforced with a routing caveat through project descriptors generated from `docs/agent-definitions/*.md` to `.cursor/agents/*.md`. Cursor descriptors use Cursor model IDs from `cross-cli-dispatch/bindings.tsv`; `effort` is encoded in `model:` bracket parameters. Task routing still depends on subagent description matching or explicit invocation. |
 | Codex | Capability gap placeholder. Keep native bindings as reference until Codex exposes per-agent model pins. |
