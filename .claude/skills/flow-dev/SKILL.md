@@ -18,12 +18,13 @@ main <- task-1/branch <- task-2/branch <- task-3/branch
        (base: main)    (base: task-1)    (base: task-2)
 ```
 
-Each task:
-1. **Dev agent** — implement + self-test in isolated worktree
-2. **PR** — push and create stacked PR
-3. **red-replay** — independent red→green re-run (parallel with code-review)
-4. **code-review** — diff review via `code-review` skill
-5. **Fix** — address feedback, resolve conversations, loop
+Each task (step numbers match the Per-Task Dev Loop headings below):
+- **Step 3 — Dev agent** — implement + self-test in isolated worktree
+- **Step 3b — Mark done** — flip + move the ticket to `done/` (last PR of the stack only)
+- **Step 4 — PR** — push and create stacked PR
+- **Step 5 — red-replay** — independent red→green re-run (parallel with code-review)
+- **Step 5 — code-review** — diff review via `code-review` skill
+- **Fix loop — back to Step 3** — address feedback, resolve conversations
 
 All tasks done → **integration test** on final worktree.
 
@@ -94,6 +95,28 @@ Before implementation, the Dev agent MUST load `coding-guidelines` and apply the
 
 Prompt: **[references/dev-agent-prompt.md](references/dev-agent-prompt.md)**.
 
+### Step 3b: Mark the ticket done (before push)
+
+After the implementation commit and before pushing, add a **standalone** commit
+that closes the ticket, so the flip rides the reviewed PR diff and merging is
+atomic:
+
+```bash
+(cd "$WORKTREE_DIR" \
+  && python3 -c 'import re,sys,pathlib; p=pathlib.Path(sys.argv[1]); p.write_text(re.sub(r"^Status:.*$", "Status: done", p.read_text(), count=1, flags=re.M))' "docs/ticket/${SLUG}.md" \
+  && mkdir -p docs/ticket/done \
+  && git mv "docs/ticket/${SLUG}.md" "docs/ticket/done/${SLUG}.md" \
+  && git commit -am "docs(ticket): mark ${SLUG} done")
+```
+
+Both halves — `Status: done` and the `git mv` into `docs/ticket/done/` — must land
+in that one commit. `docs/agents/triage-labels.md` requires the move; flow-merge's
+`verify-ticket-done` pre-merge event fails the merge if either half is missing.
+
+**One ticket spanning several tasks/PRs flips only in the last PR of the stack.**
+Earlier PRs leave the ticket untouched; a mid-stack flip would claim work the
+stack has not finished.
+
 ### Step 4: Push and create PR
 
 ```bash
@@ -104,11 +127,26 @@ Create PR — body template: **[references/pr-body-template.md](references/pr-bo
 
 `TaskUpdate({ taskId: "<N>", metadata: { pr: "<PR_NUMBER>" } })`
 
-> **Merge contract.** This PR is part of a stack: merge via `Skill flow-merge`, **not** `gh pr merge --delete-branch`.
+> **Merge contract.** This PR is part of a stack: merge via `Skill flow-merge` only. Full HARD GATE (including the `delete_branch_on_merge:true` repo-setting trigger, not just the `--delete-branch` flag): `flow-merge/references/stacked-merge-cascade.md`.
 
 ### Step 5: Independent fan-in checks
 
+**Diff-type gate (runs first).** Classify the task's whole diff, not per-file:
+
+| Diff shape | Fan-in |
+|---|---|
+| Skill-only — every changed path matches `*/SKILL.md`, `*/references/`, `*/evals/` | Skip red-replay + code-review. Equivalent legs: `make check` green + skill-writer TEST verdict (verify-skill). Append `## Review results` to the PR with the skip reason as body: `Fan-in skipped (skill-only diff) — equivalent legs: make check <result>, skill-writer TEST <verdict>`. Mark `completed`. (Same heading crash-recovery checks for the full-fan-in path below — keeps [references/crash-recovery.md](references/crash-recovery.md) detection unchanged.) |
+| Touches `scripts/` or any non-skill code, **including mixed diffs** (skill prose + scripts/code in the same task) | Current fan-in below, unchanged, on the whole task. |
+
+Mixed diffs are classified conservatively as code diffs — whole-task, not path-filtered — even though only part of the diff is code.
+
 Parallel: **red-replay** + **code-review** (neither shares Dev agent state).
+code-review internally runs multiple parallel review agents across
+dimensions (n≥2) — its findings go through an independent Moderator (fresh
+agent, per adversarial-review §3-5): disposition table (accept/dismiss +
+reason per finding), HIGH findings cannot be dismissed (downgrade with
+evidence or fix the code), gen receives Moderator output and commits fixes,
+re-run if findings were HIGH.
 
 Prompts: **[references/red-replay-prompt.md](references/red-replay-prompt.md)**.
 

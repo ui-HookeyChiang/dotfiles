@@ -2,8 +2,8 @@
 # flow-merge cleanup event wrapper.
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd -P)"
 CLEANUP_SCRIPT="$REPO_ROOT/_shared/stack/post-merge-cleanup.sh"
 
 MODE="${FLOW_MERGE_CLEANUP_MODE:-${1:-}}"
