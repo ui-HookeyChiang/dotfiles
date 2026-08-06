@@ -1,5 +1,0 @@
-interface:
-  display_name: "Skill Guidelines"
-  short_description: "Write-time guide for what belongs in a SKILL.md body."
-policy:
-  allow_implicit_invocation: false

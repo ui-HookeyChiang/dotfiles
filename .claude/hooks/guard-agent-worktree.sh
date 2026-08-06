@@ -7,15 +7,26 @@
 # 2. Main session (no agent_id): deny file-tool writes INTO .worktrees/**
 #    (worktree files belong to the task's dev agent). Bash ungated.
 # 3. Session claim: concurrent main sessions in one checkout — first writer
-#    claims; others denied until TTL (30min) expires or ALLOW_SESSION_TAKEOVER=1.
+#    claims; others denied until TTL (30min) expires or ALLOW_SESSION_TAKEOVER=1
+#    (process env, or a leading ALLOW_SESSION_TAKEOVER=1 in the Bash command
+#    string itself — the hook runs before the command executes, so `export
+#    VAR=1; cmd` inside the guarded command can't reach process env in time).
+#    Scoped to the claimed checkout's toplevel only: writes to a registered
+#    worktree or an unrelated repo are exempt.
 # 4. Worktree lifecycle (all sessions):
 #    a) Bash rm -rf on a registered worktree → deny (use git worktree remove).
 #    b) File-tool/git-add writes into orphan worktree dir (under .worktrees/
 #       but not in `git worktree list`) → deny.
+#    c) Bash rm of the .session-claim file itself → deny (no-audit bypass).
 #
 # Escape hatches: ALLOW_MAIN_EDIT=1 (leg 2), ALLOW_SESSION_TAKEOVER=1 (leg 3),
 #                 ALLOW_WORKTREE_LIFECYCLE=1 (leg 4).
 set -uo pipefail
+
+# Source portability helpers for portable_realpath_m
+_SCRIPT_DIR="$(dirname "$(realpath "${BASH_SOURCE[0]}")" 2>/dev/null || echo "$(dirname "$0")")"
+_SHARED_LIB="${_SCRIPT_DIR}/../_shared/lib/sh/portability.sh"
+[ -f "$_SHARED_LIB" ] && source "$_SHARED_LIB" || true
 
 input="$(cat)"
 
@@ -24,6 +35,7 @@ tool_name="$(printf '%s' "$input" | jq -r '.tool_name // empty' 2>/dev/null)"
 
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-}"
 [ -z "$PROJECT_DIR" ] && exit 0
+PROJECT_DIR="$(portable_realpath_m "$PROJECT_DIR" 2>/dev/null || echo "$PROJECT_DIR")"
 
 deny() {
   jq -n --arg r "$1" '{
@@ -45,11 +57,11 @@ is_under() {
 }
 
 # Extract target file paths from apply_patch unified diff input.
-# Returns newline-separated absolute paths (resolved via realpath -m).
+# Returns newline-separated absolute paths (resolved via portable_realpath_m).
 apply_patch_paths() {
   local patch="$1" base_dir="$2"
   printf '%s' "$patch" | grep -E '^\+\+\+ b/' | sed 's|^+++ b/||' | while IFS= read -r rel; do
-    realpath -m "$base_dir/$rel" 2>/dev/null || echo "$base_dir/$rel"
+    portable_realpath_m "$base_dir/$rel" 2>/dev/null || echo "$base_dir/$rel"
   done
 }
 
@@ -57,7 +69,7 @@ apply_patch_paths() {
 if [ "${ALLOW_WORKTREE_LIFECYCLE:-}" != "1" ]; then
   WORKTREE_CONTAINERS=()
   for d in "$PROJECT_DIR/.worktrees" "$PROJECT_DIR/.worktree"; do
-    [ -d "$d" ] && WORKTREE_CONTAINERS+=("$(realpath -m "$d" 2>/dev/null || echo "$d")")
+    [ -d "$d" ] && WORKTREE_CONTAINERS+=("$(portable_realpath_m "$d" 2>/dev/null || echo "$d")")
   done
 
   if [ ${#WORKTREE_CONTAINERS[@]} -gt 0 ]; then
@@ -68,7 +80,14 @@ if [ "${ALLOW_WORKTREE_LIFECYCLE:-}" != "1" ]; then
       if [[ "${cmd:-}" =~ $RM_PATTERN ]]; then
         rm_target="${BASH_REMATCH[1]}"
         rm_target="${rm_target%% *}"
-        rm_resolved="$(realpath -m "$rm_target" 2>/dev/null || echo "$rm_target")"
+        # Resolve target against the guarded command's cwd, not this hook's cwd
+        # (same fix applied to leg 4c in PR #1278).
+        _rm_cwd="$(printf '%s' "$input" | jq -r '.cwd // empty' 2>/dev/null)"
+        case "$_rm_cwd" in /*) ;; *) _rm_cwd="$PROJECT_DIR" ;; esac
+        case "$rm_target" in
+          /*) rm_resolved="$(portable_realpath_m "$rm_target" 2>/dev/null || echo "$rm_target")" ;;
+          *)  rm_resolved="$(portable_realpath_m "$_rm_cwd/$rm_target" 2>/dev/null || echo "$_rm_cwd/$rm_target")" ;;
+        esac
         for container in "${WORKTREE_CONTAINERS[@]}"; do
           if is_under "$rm_resolved" "$container" && [ "$rm_resolved" != "$container" ]; then
             if git -C "$PROJECT_DIR" worktree list --porcelain 2>/dev/null | grep -qF "worktree $rm_resolved"; then
@@ -83,6 +102,33 @@ Escape hatch: ALLOW_WORKTREE_LIFECYCLE=1."
             fi
           fi
         done
+      fi
+
+      # 4c: rm of the session-claim file itself → deny (no-audit bypass of
+      # the claim mechanism otherwise — see ticket 2026-08-05 item 4).
+      CLAIM_FILE_PATH="$(portable_realpath_m "$PROJECT_DIR/.worktrees/.session-claim" 2>/dev/null || echo "$PROJECT_DIR/.worktrees/.session-claim")"
+      # Resolve a relative rm target against the guarded command's OWN cwd
+      # (from the PreToolUse JSON), not this hook process's cwd — a bare
+      # `rm .worktrees/.session-claim` with cwd=PROJECT would otherwise
+      # resolve against wherever the hook happens to run from and pass.
+      _rm_cwd="$(printf '%s' "$input" | jq -r '.cwd // empty' 2>/dev/null)"
+      case "$_rm_cwd" in /*) ;; *) _rm_cwd="$PROJECT_DIR" ;; esac
+      RM_ANY_PATTERN='rm[[:space:]]+(-[[:alnum:]]+[[:space:]]+)*([^;&|]+)'
+      if [[ "${cmd:-}" =~ $RM_ANY_PATTERN ]]; then
+        rm_any_target="${BASH_REMATCH[2]}"
+        rm_any_target="${rm_any_target%% *}"
+        case "$rm_any_target" in
+          /*) rm_any_resolved="$(portable_realpath_m "$rm_any_target" 2>/dev/null || echo "$rm_any_target")" ;;
+          *)  rm_any_resolved="$(portable_realpath_m "$_rm_cwd/$rm_any_target" 2>/dev/null || echo "$_rm_cwd/$rm_any_target")" ;;
+        esac
+        if [ "$rm_any_resolved" = "$CLAIM_FILE_PATH" ]; then
+          deny "Blocked: rm of session-claim file $CLAIM_FILE_PATH.
+
+Deleting this file bypasses the session-claim mechanism with no audit trail.
+Let the claim expire (TTL) or use ALLOW_SESSION_TAKEOVER=1 to take over instead.
+
+Escape hatch: ALLOW_WORKTREE_LIFECYCLE=1."
+        fi
       fi
     fi
 
@@ -109,13 +155,15 @@ Escape hatch: ALLOW_WORKTREE_LIFECYCLE=1."
           fi
           ;;
       esac
-      [ -n "$fp" ] && realpath -m "$fp" 2>/dev/null || echo "$fp"
+      [ -n "$fp" ] && portable_realpath_m "$fp" 2>/dev/null || echo "$fp"
     }
 
     # Check if agent is mapped — if so, skip orphan check (Leg 1 handles it)
     _agent_assigned=""
     if [ -n "$agent_id" ] && [ -f "$PROJECT_DIR/.worktrees/.agent-map/$agent_id" ]; then
       _agent_assigned="$(cat "$PROJECT_DIR/.worktrees/.agent-map/$agent_id" 2>/dev/null)"
+      # Normalize the assigned path for comparison with resolved file targets
+      [ -n "$_agent_assigned" ] && _agent_assigned="$(portable_realpath_m "$_agent_assigned" 2>/dev/null || echo "$_agent_assigned")"
     fi
 
     target_resolved="$(resolve_file_target)"
@@ -160,13 +208,17 @@ fi
 if [ -z "$agent_id" ]; then
   [ "${ALLOW_MAIN_EDIT:-}" = "1" ] && exit 0
 
-  WORKTREES_DIR="$(realpath -m "$PROJECT_DIR/.worktrees" 2>/dev/null || echo "$PROJECT_DIR/.worktrees")"
+  WORKTREES_DIR="$(portable_realpath_m "$PROJECT_DIR/.worktrees" 2>/dev/null || echo "$PROJECT_DIR/.worktrees")"
   [ -d "$PROJECT_DIR/.worktrees" ] || exit 0
 
   session_id="$(printf '%s' "$input" | jq -r '.session_id // empty' 2>/dev/null)"
   CLAIM_FILE="$PROJECT_DIR/.worktrees/.session-claim"
   SESSION_CLAIM_TTL="${SESSION_CLAIM_TTL:-1800}"
-  PROJECT_TOPLEVEL="$(realpath -m "$PROJECT_DIR" 2>/dev/null || echo "$PROJECT_DIR")"
+  # Resolve via `git rev-parse` (same resolution git itself uses for -C/cwd
+  # toplevels below) rather than portable_realpath_m, so both sides of the toplevel
+  # comparison agree even when PROJECT_DIR is reached through a symlink.
+  PROJECT_TOPLEVEL="$(git -C "$PROJECT_DIR" rev-parse --show-toplevel 2>/dev/null)"
+  [ -z "$PROJECT_TOPLEVEL" ] && PROJECT_TOPLEVEL="$(portable_realpath_m "$PROJECT_DIR" 2>/dev/null || echo "$PROJECT_DIR")"
 
   is_write_op=false
   # Directory the write acts on — used to detect the session's own worktree.
@@ -199,19 +251,16 @@ if [ -z "$agent_id" ]; then
       ;;
   esac
 
-  # Own-worktree exemption: if the write targets a registered git worktree
-  # whose toplevel differs from the shared checkout, the session has already
-  # isolated itself (EnterWorktree) — the claim protects the shared checkout
-  # only. Exempt from BOTH the claim deny and the .worktrees/** deny below.
+  # Scope exemption: the claim protects the shared checkout only. Exempt
+  # from BOTH the claim deny and the .worktrees/** deny below when the
+  # write's effective target repo toplevel is NOT the shared checkout —
+  # covers (a) a registered worktree of this project (session already
+  # isolated via EnterWorktree) and (b) an unrelated repo entirely.
   if [ "$is_write_op" = true ] && [ -n "$target_dir" ]; then
     tgt_top="$(git -C "$target_dir" rev-parse --show-toplevel 2>/dev/null)"
     if [ -n "$tgt_top" ]; then
-      tgt_top="$(realpath -m "$tgt_top" 2>/dev/null || echo "$tgt_top")"
-      if [ "$tgt_top" != "$PROJECT_TOPLEVEL" ] \
-         && git -C "$PROJECT_DIR" worktree list --porcelain 2>/dev/null \
-              | grep -qxF "worktree $tgt_top"; then
-        exit 0
-      fi
+      tgt_top="$(portable_realpath_m "$tgt_top" 2>/dev/null || echo "$tgt_top")"
+      [ "$tgt_top" != "$PROJECT_TOPLEVEL" ] && exit 0
     fi
   fi
 
@@ -226,9 +275,21 @@ if [ -z "$agent_id" ]; then
           claim_age=$(( now - claim_mtime ))
         fi
 
+        # Takeover intent: process env (harness-level export) OR a leading
+        # ALLOW_SESSION_TAKEOVER=1 in the guarded command string itself —
+        # the hook runs BEFORE the command executes, so `export
+        # VAR=1; cmd` inside the guarded command never reaches process env
+        # in time (mirrors ALLOW_BARE_READ handling in block-bare-read.sh).
+        takeover_requested=false
+        [ "${ALLOW_SESSION_TAKEOVER:-}" = "1" ] && takeover_requested=true
+        if [ "$tool_name" = "Bash" ] \
+           && [[ "${cmd:-}" =~ ^[[:space:]]*(export[[:space:]]+)?ALLOW_SESSION_TAKEOVER=1([[:space:]]|\;|$) ]]; then
+          takeover_requested=true
+        fi
+
         if [ "$claim_age" -ge "$SESSION_CLAIM_TTL" ]; then
           printf '%s' "$session_id" > "$CLAIM_FILE"
-        elif [ "${ALLOW_SESSION_TAKEOVER:-}" = "1" ]; then
+        elif [ "$takeover_requested" = true ]; then
           printf '%s' "$session_id" > "$CLAIM_FILE"
         else
           ago_min=$(( claim_age / 60 ))
@@ -252,7 +313,7 @@ Use EnterWorktree to get your own worktree, or set ALLOW_SESSION_TAKEOVER=1 to t
         | jq -r '.tool_input.file_path // .tool_input.notebook_path // empty' 2>/dev/null)"
       [ -z "$file_path" ] && exit 0
 
-      resolved="$(realpath -m "$file_path" 2>/dev/null || echo "$file_path")"
+      resolved="$(portable_realpath_m "$file_path" 2>/dev/null || echo "$file_path")"
       if is_under "$resolved" "$WORKTREES_DIR"; then
         deny "Blocked: worktree files belong to the task's dev agent — dispatch a fix loop instead.
 
@@ -286,15 +347,18 @@ MAP_FILE="$PROJECT_DIR/.worktrees/.agent-map/$agent_id"
 
 ASSIGNED="$(cat "$MAP_FILE")"
 [ -z "$ASSIGNED" ] && exit 0
+ASSIGNED="$(portable_realpath_m "$ASSIGNED" 2>/dev/null || echo "$ASSIGNED")"
 
 is_allowed_path() {
   local resolved="$1"
   is_under "$resolved" "$ASSIGNED" && return 0
   if ! is_under "$resolved" "$PROJECT_DIR"; then
     local tmp="${TMPDIR:-/tmp}"
-    tmp="$(realpath -m "$tmp" 2>/dev/null || echo "$tmp")"
+    tmp="$(portable_realpath_m "$tmp" 2>/dev/null || echo "$tmp")"
     is_under "$resolved" "$tmp" && return 0
-    is_under "$resolved" "/tmp" && return 0
+    local sys_tmp
+    sys_tmp="$(portable_realpath_m "/tmp" 2>/dev/null || echo "/tmp")"
+    is_under "$resolved" "$sys_tmp" && return 0
   fi
   return 1
 }
@@ -306,7 +370,7 @@ case "$tool_name" in
       | jq -r '.tool_input.file_path // .tool_input.notebook_path // empty' 2>/dev/null)"
     [ -z "$file_path" ] && exit 0
 
-    resolved="$(realpath -m "$file_path" 2>/dev/null || echo "$file_path")"
+    resolved="$(portable_realpath_m "$file_path" 2>/dev/null || echo "$file_path")"
     if ! is_allowed_path "$resolved"; then
       deny "Blocked: write to $resolved is outside your assigned worktree.
 
@@ -341,7 +405,7 @@ if [ "$tool_name" = "Bash" ]; then
 
   cwd="$(printf '%s' "$input" | jq -r '.cwd // empty' 2>/dev/null)"
   [ -z "$cwd" ] && cwd="${PWD}"
-  resolved_cwd="$(realpath -m "$cwd" 2>/dev/null || echo "$cwd")"
+  resolved_cwd="$(portable_realpath_m "$cwd" 2>/dev/null || echo "$cwd")"
 
   is_under "$resolved_cwd" "$ASSIGNED" && exit 0
 
@@ -350,7 +414,7 @@ if [ "$tool_name" = "Bash" ]; then
     GIT_C_PATTERN='git[[:space:]]+-C[[:space:]]+([^[:space:];&|]+)'
     if [[ "$cmd" =~ $GIT_C_PATTERN ]]; then
       c_path="${BASH_REMATCH[1]}"
-      resolved_c="$(realpath -m "$c_path" 2>/dev/null || echo "$c_path")"
+      resolved_c="$(portable_realpath_m "$c_path" 2>/dev/null || echo "$c_path")"
       is_under "$resolved_c" "$ASSIGNED" && exit 0
     fi
 

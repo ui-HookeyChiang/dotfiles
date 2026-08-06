@@ -1,7 +1,0 @@
-Task contract:
-- Objective: tests in ./run-tests.sh report @FAILS@ failures. Fix the bugs so ALL @TOTAL@ tests pass.
-- allowed_files: ONLY @ALLOWED@ in the current directory.
-- must_preserve: all function names and signatures; the currently-passing tests; all existing behavior not covered by tests.
-- forbidden_changes: run-tests.sh (test file), any new files.
-- acceptance_test: sh ./run-tests.sh prints pass=@TOTAL@ fail=0.
-- Max 2 fix iterations. Work only in the current directory. When done, state PASS or FAIL based on the final test run.

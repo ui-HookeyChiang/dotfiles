@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # SubagentStart hook: inject failure escalation + red lines into subagents,
 # and record agent_id → worktree mapping for guard-agent-worktree.sh.
+
+_SCRIPT_DIR="$(dirname "$(realpath "${BASH_SOURCE[0]}")" 2>/dev/null || echo "$(dirname "$0")")"
+_SHARED_LIB="${_SCRIPT_DIR}/../_shared/lib/sh/portability.sh"
+[ -f "$_SHARED_LIB" ] && source "$_SHARED_LIB" || true
+
 input="$(cat)"
 
 # --- Agent-map: record assigned worktree for isolation guard ---
@@ -19,7 +24,7 @@ if [ -n "$agent_id" ] && [ -n "$prompt" ] && [ -n "$PROJECT_DIR" ]; then
       /*) abs="$candidate" ;;
       *)  abs="$PROJECT_DIR/$candidate" ;;
     esac
-    worktree="$(realpath -m "$abs" 2>/dev/null || echo "$abs")"
+    worktree="$(portable_realpath_m "$abs" 2>/dev/null || echo "$abs")"
   fi
   if [ -n "$worktree" ]; then
     map_dir="$PROJECT_DIR/.worktrees/.agent-map"

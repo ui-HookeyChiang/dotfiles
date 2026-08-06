@@ -1,3 +1,0 @@
-interface:
-  display_name: "Semver Release"
-  short_description: "Bump semantic version (fix/patch/minor/major), update debian/changelog via gb..."

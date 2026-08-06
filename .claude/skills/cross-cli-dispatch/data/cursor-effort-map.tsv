@@ -1,7 +1,0 @@
-# cursor-effort-map.tsv — per-family effort-suffix overrides for cursor backend
-# model_prefix	canonical_effort	cursor_suffix
-# Families not listed use the canonical label as the suffix (identity mapping).
-# To access a family's top-tier variant, either add a map row here or use the
-# pre-suffixed model id with --effort none.
-gpt-5.4	high	xhigh
-gpt-5.5	high	extra-high
