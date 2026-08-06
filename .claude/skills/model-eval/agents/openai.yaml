@@ -1,5 +1,0 @@
-interface:
-  display_name: Model Eval
-  short_description: Benchmark Claude models per dispatch tier with pinned model/effort per run…
-policy:
-  allow_implicit_invocation: false

@@ -1,7 +1,0 @@
-Task contract (ticket: rename agent-parity to agent-compat):
-- Objective: the tool was renamed agent-parity -> agent-compat. Complete the rename across ALL naming variants (kebab-case strings, snake_case function names, SCREAMING_SNAKE env vars) in every allowed file so ALL @TOTAL@ tests pass (tests currently show @FAILS@ failures).
-- allowed_files: ONLY @ALLOWED@ in the current directory.
-- must_preserve: the behavior of every function; version number.
-- forbidden_changes: run-tests.sh (test file), any new files. Do NOT weaken, skip, or mask failing checks.
-- acceptance_test: sh ./run-tests.sh prints pass=@TOTAL@ fail=0.
-- Max 2 fix iterations. Work only in the current directory. When done, state PASS or FAIL based on the final test run.

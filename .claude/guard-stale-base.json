@@ -1,6 +1,0 @@
-{
-  "shared_bases": [],
-  "triggers": [
-    "git worktree add"
-  ]
-}

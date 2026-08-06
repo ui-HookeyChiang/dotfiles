@@ -1,3 +1,0 @@
-interface:
-  display_name: "Setup Github Code Review"
-  short_description: "Deploy or re-sync the Claude PR review workflow on a Ubiquiti repo."

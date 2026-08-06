@@ -1,3 +1,0 @@
-interface:
-  display_name: "Flow Dev"
-  short_description: "Dev executor for per-task implementation — runs the dev loop (implement + self-…"
