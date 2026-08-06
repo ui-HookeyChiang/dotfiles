@@ -1109,18 +1109,18 @@ AGENTS_SKILLS_DIR="${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}"
 CURSOR_RULES_DIR="${CURSOR_RULES_DIR:-$REPO_ROOT/.cursor/rules}"
 
 # SKILLDEV: the skill-dev submodule — canonical source for skills, hooks,
-# scripts, and _shared. DOTCLAUDE (.claude -> skill-dev/home symlink) carries
+# scripts, and _shared. DOTCLAUDE (.claude -> skill-dev/.claude symlink) carries
 # the user-global config: CLAUDE.md, docs/, settings.json, lock manifests.
 SKILLDEV="$REPO_ROOT/skill-dev"
 DOTCLAUDE="$REPO_ROOT/.claude"
 
 # ensure_skill_dev_submodule: everything below sources from the skill-dev
-# submodule (directly, or through the .claude -> skill-dev/home symlink).
+# submodule (directly, or through the .claude -> skill-dev/.claude symlink).
 # On a fresh clone the submodule dir is empty and the whole section would
 # no-op — init it first. Idempotent; requires network only when missing.
 ensure_skill_dev_submodule() {
   [[ -f "$REPO_ROOT/.gitmodules" ]] || return 0
-  [[ -f "$SKILLDEV/home/CLAUDE.md" ]] && return 0
+  [[ -f "$SKILLDEV/.claude/CLAUDE.md" ]] && return 0
   note "initializing skill-dev submodule (skills/hooks/config source)"
   if ! run git -C "$REPO_ROOT" submodule update --init -- skill-dev; then
     note "WARN: skill-dev submodule init failed — agent-harness install will no-op"
