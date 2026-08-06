@@ -1548,13 +1548,13 @@ retire_skills() {
           fi
           ;;
         skill)
-          [[ -L "$HOME/.claude/skills/${name}" ]] && { run rm -f "$HOME/.claude/skills/${name}"; note "retired skill ${name}"; } ;;
+          [[ -L "$HOME/.claude/skills/${name}" ]] && { run rm -f "$HOME/.claude/skills/${name}"; note "retired skill ${name}"; } || true ;;
         agents-dir)
-          [[ -d "$HOME/.agents/skills/${name}" ]] && { run rm -rf "$HOME/.agents/skills/${name}"; note "retired agents-dir ${name}"; } ;;
+          [[ -d "$HOME/.agents/skills/${name}" ]] && { run rm -rf "$HOME/.agents/skills/${name}"; note "retired agents-dir ${name}"; } || true ;;
         opencode)
-          [[ -L "$HOME/.config/opencode/skills/${name}" ]] && { run rm -f "$HOME/.config/opencode/skills/${name}"; note "retired opencode ${name}"; } ;;
+          [[ -L "$HOME/.config/opencode/skills/${name}" ]] && { run rm -f "$HOME/.config/opencode/skills/${name}"; note "retired opencode ${name}"; } || true ;;
         codex)
-          [[ -L "$HOME/.codex/skills/${name}" ]] && { run rm -f "$HOME/.codex/skills/${name}"; note "retired codex ${name}"; } ;;
+          [[ -L "$HOME/.codex/skills/${name}" ]] && { run rm -f "$HOME/.codex/skills/${name}"; note "retired codex ${name}"; } || true ;;
         *) note "retired-skills.txt: unknown kind '$kind' for '$name'" ;;
       esac
     done
