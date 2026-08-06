@@ -1057,19 +1057,22 @@ AGENTS_SKILLS_DIR="${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}"
 # the real checkout).
 CURSOR_RULES_DIR="${CURSOR_RULES_DIR:-$REPO_ROOT/.cursor/rules}"
 
+# SKILLDEV: the skill-dev submodule — canonical source for skills, hooks,
+# scripts, and _shared. DOTCLAUDE (.claude -> skill-dev/home symlink) carries
+# the user-global config: CLAUDE.md, docs/, settings.json, lock manifests.
+SKILLDEV="$REPO_ROOT/skill-dev"
 DOTCLAUDE="$REPO_ROOT/.claude"
 
-# ensure_skill_dev_submodule: the skills under .claude/skills/ are relative
-# symlinks into the .claude/skill-dev submodule. On a fresh clone the
-# submodule dir is empty, every symlink dangles, and the fanout would
-# silently skip all of them — init it first. Idempotent; requires network
-# only when the submodule is missing.
+# ensure_skill_dev_submodule: everything below sources from the skill-dev
+# submodule (directly, or through the .claude -> skill-dev/home symlink).
+# On a fresh clone the submodule dir is empty and the whole section would
+# no-op — init it first. Idempotent; requires network only when missing.
 ensure_skill_dev_submodule() {
   [[ -f "$REPO_ROOT/.gitmodules" ]] || return 0
-  [[ -f "$DOTCLAUDE/skill-dev/CLAUDE.md" ]] && return 0
-  note "initializing .claude/skill-dev submodule (skills source)"
-  if ! run git -C "$REPO_ROOT" submodule update --init -- .claude/skill-dev; then
-    note "WARN: submodule init failed — skill symlinks will dangle and be skipped"
+  [[ -f "$SKILLDEV/home/CLAUDE.md" ]] && return 0
+  note "initializing skill-dev submodule (skills/hooks/config source)"
+  if ! run git -C "$REPO_ROOT" submodule update --init -- skill-dev; then
+    note "WARN: skill-dev submodule init failed — agent-harness install will no-op"
     return 0
   fi
 }
@@ -1112,10 +1115,9 @@ install_claude_agents() {
 
   ensure_skill_dev_submodule
 
-  # 1. Skills symlink fanout: every dir under .claude/skills/ into
-  #    CLAUDE_DIR/skills, plus OpenCode + codex/cursor agentskills fanout.
-  #    Entries are symlinks into the skill-dev submodule; a dangling entry
-  #    (submodule not initialized) is reported, not silently skipped.
+  # 1. Skills symlink fanout: every skill dir (has SKILL.md) at the
+  #    skill-dev submodule root into CLAUDE_DIR/skills, plus OpenCode +
+  #    codex/cursor agentskills fanout.
   local skills_targets=("$CLAUDE_DIR/skills")
   command -v opencode >/dev/null 2>&1 && skills_targets+=("$OPENCODE_DIR/skills")
   { command -v codex >/dev/null 2>&1 || command -v cursor >/dev/null 2>&1; } \
@@ -1124,18 +1126,21 @@ install_claude_agents() {
   local t entry name src dst
   for t in "${skills_targets[@]}"; do
     run mkdir -p "$t"
-    for entry in "$DOTCLAUDE"/skills/*; do
+    for entry in "$SKILLDEV"/*/; do
+      [[ -f "$entry/SKILL.md" ]] || continue
       name="$(basename "$entry")"
-      if [[ -L "$entry" && ! -e "$entry" ]]; then
-        note "WARN: skill '$name' is a dangling symlink (skill-dev submodule missing?) — skipped"
-        continue
-      fi
-      [[ -d "$entry" ]] || continue
       src="$(cd "$entry" && pwd)"
       dst="$t/$name"
       _dc_ensure_symlink "$src" "$dst"
     done
+    # Skill scripts resolve ../../_shared relative to their INSTALLED
+    # symlink location (<target>/skills/<skill>/scripts), so each fanout
+    # target needs a _shared sibling or those helpers silently fail open.
+    _dc_ensure_symlink "$SKILLDEV/_shared" "$t/_shared"
   done
+
+  # 1b. Hooks resolve ../_shared relative to ~/.claude/hooks — same reason.
+  _dc_ensure_symlink "$SKILLDEV/_shared" "$CLAUDE_DIR/_shared"
 
   # 2. Agent definitions -> CLAUDE_DIR/agents + OpenCode agents (raw copy;
   #    OpenCode-specific frontmatter rewriting is handled in
@@ -1155,31 +1160,25 @@ install_claude_agents() {
     done
   fi
 
-  # 3. Hooks: symlink .claude/hooks/*.sh into CLAUDE_DIR/hooks, then invoke
-  #    the snapshot's own registration engine (register-harness.sh) rather
+  # 3. Hooks: symlink skill-dev/hooks/*.sh into CLAUDE_DIR/hooks, then invoke
+  #    the submodule's own registration engine (register-harness.sh) rather
   #    than re-porting registration-engine.sh's merge logic.
   run mkdir -p "$CLAUDE_DIR/hooks"
-  for entry in "$DOTCLAUDE"/hooks/*.sh; do
+  for entry in "$SKILLDEV"/hooks/*.sh; do
     [[ -f "$entry" ]] || continue
     name="$(basename "$entry")"
     [[ "$name" == "register-settings-hooks.sh" ]] && continue
     _dc_ensure_symlink "$entry" "$CLAUDE_DIR/hooks/$name"
   done
 
-  # register-harness.sh's own REPO_ROOT resolution (scripts/lib/../..) expects
-  # agent-compat as a sibling of hooks/ and scripts/; in this snapshot
-  # agent-compat landed under skills/ (it ships its own SKILL.md). Bridge with
-  # one absent-only relative symlink instead of patching the snapshot script.
-  if [[ ! -e "$DOTCLAUDE/agent-compat" ]]; then
-    run ln -s "skills/agent-compat" "$DOTCLAUDE/agent-compat"
-    note "linked .claude/agent-compat -> skills/agent-compat (register-harness.sh layout bridge)"
-  fi
-
-  if [[ -x "$DOTCLAUDE/scripts/register-harness.sh" ]] || [[ -f "$DOTCLAUDE/scripts/register-harness.sh" ]]; then
+  # register-harness.sh runs from the skill-dev submodule, whose real layout
+  # already has agent-compat/ as a sibling of hooks/ and scripts/ — no
+  # layout bridge needed.
+  if [[ -x "$SKILLDEV/scripts/register-harness.sh" ]] || [[ -f "$SKILLDEV/scripts/register-harness.sh" ]]; then
     local rh_args=(--all)
     (( REGISTER_HOOKS )) && rh_args+=(--configure-hooks)
     (( DRY_RUN )) && rh_args+=(--dry-run)
-    HOME="$HOME" bash "$DOTCLAUDE/scripts/register-harness.sh" "${rh_args[@]}" \
+    HOME="$HOME" bash "$SKILLDEV/scripts/register-harness.sh" "${rh_args[@]}" \
       || note "WARN: register-harness.sh reported a problem (continuing)"
   fi
 
@@ -1280,8 +1279,8 @@ register_cursor_agents() {
     note "jq missing; skip Cursor settings merge"
     return 0
   fi
-  local cursor_user_tpl="$DOTCLAUDE/hooks/cursor/user-settings.json"
-  local cursor_cli_tpl="$DOTCLAUDE/hooks/cursor/cli-config.json"
+  local cursor_user_tpl="$SKILLDEV/hooks/cursor/user-settings.json"
+  local cursor_cli_tpl="$SKILLDEV/hooks/cursor/cli-config.json"
   local cursor_user="$HOME/.config/Cursor/User/settings.json"
   local cursor_cli="$CURSOR_DIR/cli-config.json"
 
@@ -1335,7 +1334,7 @@ sync_opencode_config() {
   fi
   run mkdir -p "$OPENCODE_DIR"
 
-  local plugin_src="$DOTCLAUDE/hooks/opencode/skill-dev-hooks.ts"
+  local plugin_src="$SKILLDEV/hooks/opencode/skill-dev-hooks.ts"
   if [[ -f "$plugin_src" ]]; then
     run mkdir -p "$OPENCODE_DIR/plugins"
     _dc_ensure_symlink "$plugin_src" "$OPENCODE_DIR/plugins/skill-dev-hooks.ts"
@@ -1523,7 +1522,7 @@ install_locked_extras() {
 # prints warnings but never aborts install (matches skill-dev behavior).
 verify_claude_parity() {
   log "verify_claude_parity"
-  local parity_script="$DOTCLAUDE/skills/agent-compat/scripts/check-compat.sh"
+  local parity_script="$SKILLDEV/agent-compat/scripts/check-compat.sh"
   if [[ -x "$parity_script" ]] || [[ -f "$parity_script" ]]; then
     local parity_json parity_status
     set +e
@@ -1539,9 +1538,9 @@ verify_claude_parity() {
       note "agent-compat check did not run cleanly (exit $parity_status); continuing"
     fi
   fi
-  if [[ -x "$DOTCLAUDE/scripts/skills-lock.sh" ]] || [[ -f "$DOTCLAUDE/scripts/skills-lock.sh" ]]; then
+  if [[ -x "$SKILLDEV/scripts/skills-lock.sh" ]] || [[ -f "$SKILLDEV/scripts/skills-lock.sh" ]]; then
     SKILLS_LOCK_FILE="$DOTCLAUDE/skills-lock.json" SKILLS_LOCK_SKILLS_ROOT="$AGENTS_SKILLS_DIR" \
-      bash "$DOTCLAUDE/scripts/skills-lock.sh" verify \
+      bash "$SKILLDEV/scripts/skills-lock.sh" verify \
       || note "WARN: skills-lock verify failed (non-fatal)"
   fi
 }
