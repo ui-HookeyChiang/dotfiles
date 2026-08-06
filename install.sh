@@ -1037,10 +1037,12 @@ install_skills() {
 # Claude/OpenCode/Cursor agent-harness parity (from .claude/ snapshot)
 # ---------------------------------------------------------------------------
 # Reproduces skill-dev install.sh's effects for Claude Code, OpenCode, and
-# Cursor from the .claude/ snapshot synced into this repo (see
-# docs/ticket/sync-full-parity-paths.md). Source of truth for every artifact
-# below is $REPO_ROOT/.claude/..., not a skill-dev checkout — none of this
-# requires ~/.claude/skill-dev to exist.
+# Cursor. Skills are relative symlinks into the .claude/skill-dev submodule
+# (single source of truth); hooks remain real copies registered by path.
+# A skill-dev checkout outside this repo is still not required — but the
+# submodule must be initialized before the fanout, or every skill entry is
+# a dangling symlink and the fanout silently installs nothing (guarded in
+# ensure_skill_dev_submodule + a dangling check in the fanout loop).
 #
 # Target-dir overrides (fake-HOME testability; default to real paths):
 CLAUDE_DIR="${CLAUDE_DIR:-$HOME/.claude}"
@@ -1056,6 +1058,21 @@ AGENTS_SKILLS_DIR="${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}"
 CURSOR_RULES_DIR="${CURSOR_RULES_DIR:-$REPO_ROOT/.cursor/rules}"
 
 DOTCLAUDE="$REPO_ROOT/.claude"
+
+# ensure_skill_dev_submodule: the skills under .claude/skills/ are relative
+# symlinks into the .claude/skill-dev submodule. On a fresh clone the
+# submodule dir is empty, every symlink dangles, and the fanout would
+# silently skip all of them — init it first. Idempotent; requires network
+# only when the submodule is missing.
+ensure_skill_dev_submodule() {
+  [[ -f "$REPO_ROOT/.gitmodules" ]] || return 0
+  [[ -f "$DOTCLAUDE/skill-dev/CLAUDE.md" ]] && return 0
+  note "initializing .claude/skill-dev submodule (skills source)"
+  if ! run git -C "$REPO_ROOT" submodule update --init -- .claude/skill-dev; then
+    note "WARN: submodule init failed — skill symlinks will dangle and be skipped"
+    return 0
+  fi
+}
 
 # _dc_ensure_symlink SRC DST: absent-only symlink (never replaces anything);
 # mirrors link_one's foreign-symlink/real-file backup branches so a prior
@@ -1093,8 +1110,12 @@ _dc_ensure_symlink() {
 install_claude_agents() {
   log "install_claude_agents"
 
+  ensure_skill_dev_submodule
+
   # 1. Skills symlink fanout: every dir under .claude/skills/ into
   #    CLAUDE_DIR/skills, plus OpenCode + codex/cursor agentskills fanout.
+  #    Entries are symlinks into the skill-dev submodule; a dangling entry
+  #    (submodule not initialized) is reported, not silently skipped.
   local skills_targets=("$CLAUDE_DIR/skills")
   command -v opencode >/dev/null 2>&1 && skills_targets+=("$OPENCODE_DIR/skills")
   { command -v codex >/dev/null 2>&1 || command -v cursor >/dev/null 2>&1; } \
@@ -1103,9 +1124,13 @@ install_claude_agents() {
   local t entry name src dst
   for t in "${skills_targets[@]}"; do
     run mkdir -p "$t"
-    for entry in "$DOTCLAUDE"/skills/*/; do
-      [[ -d "$entry" ]] || continue
+    for entry in "$DOTCLAUDE"/skills/*; do
       name="$(basename "$entry")"
+      if [[ -L "$entry" && ! -e "$entry" ]]; then
+        note "WARN: skill '$name' is a dangling symlink (skill-dev submodule missing?) — skipped"
+        continue
+      fi
+      [[ -d "$entry" ]] || continue
       src="$(cd "$entry" && pwd)"
       dst="$t/$name"
       _dc_ensure_symlink "$src" "$dst"
