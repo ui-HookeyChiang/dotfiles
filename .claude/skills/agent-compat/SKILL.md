@@ -3,6 +3,7 @@ name: agent-compat
 description: Runtime compatibility diff across Claude Code, OpenCode, Codex, and Cursor. Reports gaps and content drift.
 argument-hint: "[--axis permissions|model|instructions|hooks|agent-definitions|skills|all] [--scope global|project]"
 disable-model-invocation: true
+landing-group: workflow
 ---
 
 # agent-compat

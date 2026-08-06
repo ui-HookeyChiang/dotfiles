@@ -4,7 +4,10 @@
 #     COMMITS=$(git log --reverse --format='%H' ...) ; git cherry-pick $COMMITS
 # silently produced empty cherry-picks under set -euo pipefail with hostile
 # IFS, which then got force-pushed and destroyed the task branch head.
-# This test asserts the new mapfile+array form survives that scenario.
+# This test asserts the array-quoting invariant survives that scenario.
+# Uses a portable while-read loop instead of mapfile for bash-3.2 compat
+# (macOS /bin/bash lacks mapfile). squash-merge.sh itself remains bash-4+
+# (declared at its line 12); this test guards the quoting contract only.
 set -euo pipefail
 
 TMP="$(mktemp -d -t cherry-pick-quoting.XXXXXX)"
@@ -31,7 +34,8 @@ git -C "$TMP" checkout -q main
   cd "$TMP"
   set -euo pipefail
   IFS=$'\n\t'  # hostile IFS as set by Phase 4 hook scripts
-  mapfile -t COMMITS < <(git log --reverse --format='%H' feat/dummy/parent..feat/dummy/task-1)
+  COMMITS=()
+  while IFS= read -r h; do COMMITS+=("$h"); done < <(git log --reverse --format='%H' feat/dummy/parent..feat/dummy/task-1)
   [[ ${#COMMITS[@]} -gt 0 ]] || { echo "ERROR: empty"; exit 1; }
   git checkout -q -B task-1-v2 main
   git cherry-pick "${COMMITS[@]}" >/dev/null

@@ -7,6 +7,9 @@ REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 GUARD="$REPO_ROOT/hooks/guard-agent-worktree.sh"
 DISPATCH="$REPO_ROOT/hooks/subagent-dispatch-inject.sh"
 
+# Source portability helpers
+source "$REPO_ROOT/_shared/lib/sh/portability.sh"
+
 PASS=0
 FAIL=0
 pass() { echo "PASS: $1"; PASS=$((PASS+1)); }
@@ -263,6 +266,80 @@ is_deny "$out" && pass "47: non-holder git -C shared-checkout commit → deny" |
 out="$(CLAUDE_PROJECT_DIR="$CLAIM_REPO" bash "$GUARD" <<< '{"session_id":"sess-other","tool_name":"Bash","tool_input":{"command":"git -C '"$OWN_WT"' -C '"$CLAIM_REPO"' commit -m x"}}' 2>/dev/null)"
 is_deny "$out" && pass "48: double -C uses last (shared checkout) → deny" || fail "48: double -C should resolve to last path (shared) and deny"
 
+# ── Session claim: takeover escape hatch reachable from command string ────
+# ALLOW_SESSION_TAKEOVER=1 documented as a command-line escape hatch, but the
+# guard is a PreToolUse hook — env exported INSIDE the guarded command never
+# reaches the hook's own process env. Must also parse it from the command
+# string (mirrors ALLOW_BARE_READ handling in block-bare-read.sh).
+
+# 60. Command-string prefix `ALLOW_SESSION_TAKEOVER=1 git ...` → takeover
+printf 'sess-holder' > "$CLAIM_REPO/.worktrees/.session-claim"
+touch "$CLAIM_REPO/.worktrees/.session-claim"
+out="$(CLAUDE_PROJECT_DIR="$CLAIM_REPO" bash "$GUARD" <<< '{"session_id":"sess-taker","tool_name":"Bash","tool_input":{"command":"ALLOW_SESSION_TAKEOVER=1 git -C '"$CLAIM_REPO"' commit -m x"}}' 2>/dev/null)"
+is_allow "$out" || fail "60: command-string ALLOW_SESSION_TAKEOVER=1 prefix should allow"
+claimed="$(cat "$CLAIM_REPO/.worktrees/.session-claim")"
+[ "$claimed" = "sess-taker" ] && pass "60: command-string ALLOW_SESSION_TAKEOVER=1 prefix → takeover" || fail "60: claim should be sess-taker, got $claimed"
+
+# 61. `export ALLOW_SESSION_TAKEOVER=1; git ...` compound form → takeover
+printf 'sess-holder' > "$CLAIM_REPO/.worktrees/.session-claim"
+touch "$CLAIM_REPO/.worktrees/.session-claim"
+out="$(CLAUDE_PROJECT_DIR="$CLAIM_REPO" bash "$GUARD" <<< '{"session_id":"sess-taker2","tool_name":"Bash","tool_input":{"command":"export ALLOW_SESSION_TAKEOVER=1; git -C '"$CLAIM_REPO"' commit -m x"}}' 2>/dev/null)"
+is_allow "$out" || fail "61: export ALLOW_SESSION_TAKEOVER=1; compound form should allow"
+claimed="$(cat "$CLAIM_REPO/.worktrees/.session-claim")"
+[ "$claimed" = "sess-taker2" ] && pass "61: export compound form → takeover" || fail "61: claim should be sess-taker2, got $claimed"
+
+# ── Session claim: scope to claimed checkout only ──────────────────────────
+
+# 62. git mutation in an UNRELATED repo → allow despite active claim
+UNRELATED_REPO="$TMP/unrelated-repo"
+git init -q "$UNRELATED_REPO"
+git -C "$UNRELATED_REPO" config user.email t@t; git -C "$UNRELATED_REPO" config user.name t
+echo x > "$UNRELATED_REPO/f"; git -C "$UNRELATED_REPO" add f; git -C "$UNRELATED_REPO" commit -qm seed
+printf 'sess-holder' > "$CLAIM_REPO/.worktrees/.session-claim"
+touch "$CLAIM_REPO/.worktrees/.session-claim"
+out="$(CLAUDE_PROJECT_DIR="$CLAIM_REPO" bash "$GUARD" <<< '{"session_id":"sess-other","tool_name":"Bash","tool_input":{"command":"git -C '"$UNRELATED_REPO"' commit -m x"}}' 2>/dev/null)"
+is_allow "$out" && pass "62: git mutation in unrelated repo → allow" || fail "62: unrelated-repo git mutation should allow despite active claim"
+
+# 63. git commit inside a registered worktree (no -C, cwd = worktree) → allow
+out="$(CLAUDE_PROJECT_DIR="$CLAIM_REPO" bash "$GUARD" <<< '{"session_id":"sess-other","tool_name":"Bash","tool_input":{"command":"git commit -m x"},"cwd":"'"$OWN_WT"'"}' 2>/dev/null)"
+is_allow "$out" && pass "63: git commit via cwd inside registered worktree → allow" || fail "63: git commit with cwd in registered worktree should allow"
+
+# 64. Plain claimed-checkout mutation still denied (no escape hatch) → deny
+out="$(CLAUDE_PROJECT_DIR="$CLAIM_REPO" bash "$GUARD" <<< '{"session_id":"sess-other","tool_name":"Bash","tool_input":{"command":"git -C '"$CLAIM_REPO"' commit -m x"}}' 2>/dev/null)"
+is_deny "$out" && pass "64: plain claimed-checkout mutation → deny" || fail "64: claimed-checkout mutation without escape hatch should still deny"
+
+# ── Leg 4: claim-file deletion audit ───────────────────────────────────────
+
+# 65. bare rm of .worktrees/.session-claim → deny
+CLAIM_FILE_PATH="$CLAIM_REPO/.worktrees/.session-claim"
+printf 'sess-holder' > "$CLAIM_FILE_PATH"
+out="$(CLAUDE_PROJECT_DIR="$CLAIM_REPO" bash "$GUARD" <<< '{"tool_name":"Bash","tool_input":{"command":"rm '"$CLAIM_FILE_PATH"'"},"cwd":"'"$CLAIM_REPO"'"}' 2>/dev/null)"
+is_deny "$out" && pass "65: bare rm of .session-claim → deny" || fail "65: rm of session-claim file should deny"
+
+# 66. ALLOW_WORKTREE_LIFECYCLE=1 bypasses claim-file rm deny
+out="$(ALLOW_WORKTREE_LIFECYCLE=1 CLAUDE_PROJECT_DIR="$CLAIM_REPO" bash "$GUARD" <<< '{"tool_name":"Bash","tool_input":{"command":"rm '"$CLAIM_FILE_PATH"'"},"cwd":"'"$CLAIM_REPO"'"}' 2>/dev/null)"
+is_allow "$out" && pass "66: ALLOW_WORKTREE_LIFECYCLE=1 bypasses claim-file rm deny" || fail "66: escape hatch should bypass claim-file rm deny"
+
+# 67. Relative-path rm `.worktrees/.session-claim` with cwd=PROJECT → deny
+# (PR #1278 review: realpath -m resolved against the HOOK's own cwd, not
+# the guarded command's cwd — this bypassed leg 4c entirely.)
+printf 'sess-holder' > "$CLAIM_FILE_PATH"
+out="$(CLAUDE_PROJECT_DIR="$CLAIM_REPO" bash "$GUARD" <<< '{"tool_name":"Bash","tool_input":{"command":"rm .worktrees/.session-claim"},"cwd":"'"$CLAIM_REPO"'"}' 2>/dev/null)"
+is_deny "$out" && pass "67: relative-path rm .worktrees/.session-claim (cwd=PROJECT) → deny" || fail "67: relative-path rm should deny (bypass regression)"
+
+# 68. Relative-path rm `./.worktrees/.session-claim` with cwd=PROJECT → deny
+printf 'sess-holder' > "$CLAIM_FILE_PATH"
+out="$(CLAUDE_PROJECT_DIR="$CLAIM_REPO" bash "$GUARD" <<< '{"tool_name":"Bash","tool_input":{"command":"rm ./.worktrees/.session-claim"},"cwd":"'"$CLAIM_REPO"'"}' 2>/dev/null)"
+is_deny "$out" && pass "68: relative-path rm ./.worktrees/.session-claim (cwd=PROJECT) → deny" || fail "68: ./-relative rm should deny (bypass regression)"
+
+# 69. ALLOW_SESSION_TAKEOVER=123456 (no boundary after =1) → still denied
+# (PR #1278 review: regex lacked a boundary after `=1`, so any numeric
+# suffix like `=123456` matched as if it were `=1`.)
+printf 'sess-holder' > "$CLAIM_REPO/.worktrees/.session-claim"
+touch "$CLAIM_REPO/.worktrees/.session-claim"
+out="$(CLAUDE_PROJECT_DIR="$CLAIM_REPO" bash "$GUARD" <<< '{"session_id":"sess-other","tool_name":"Bash","tool_input":{"command":"ALLOW_SESSION_TAKEOVER=123456 git -C '"$CLAIM_REPO"' commit -m x"}}' 2>/dev/null)"
+is_deny "$out" && pass "69: ALLOW_SESSION_TAKEOVER=123456 → still deny (no boundary bypass)" || fail "69: =123456 should not satisfy the =1 escape hatch"
+
 # ── Leg 4: Worktree lifecycle guard ────────────────────────────────────────
 
 # Create a project with a real git repo for worktree tests
@@ -278,7 +355,7 @@ run_lifecycle() {
 # 50. rm -rf on registered worktree → deny
 # First register a worktree so it appears in `git worktree list`
 (cd "$LIFECYCLE_PROJECT" && git worktree add .worktrees/ns/real-wt -b test-wt 2>/dev/null) || true
-REAL_WT="$(realpath -m "$LIFECYCLE_PROJECT/.worktrees/ns/real-wt")"
+REAL_WT="$(portable_realpath_m "$LIFECYCLE_PROJECT/.worktrees/ns/real-wt")"
 out="$(run_lifecycle '{"tool_name":"Bash","tool_input":{"command":"rm -rf '"$REAL_WT"'"},"cwd":"'"$LIFECYCLE_PROJECT"'"}')"
 is_deny "$out" && pass "50: rm -rf on registered worktree → deny" || fail "50: should deny rm -rf on registered worktree"
 
@@ -313,6 +390,49 @@ is_allow "$out" && pass "56: ALLOW_WORKTREE_LIFECYCLE=1 bypasses → allow" || f
 (cd "$LIFECYCLE_PROJECT" && git worktree remove .worktrees/ns/real-wt 2>/dev/null) || true
 rmdir "$ORPHAN_DIR" 2>/dev/null || true
 
+# ── Item 1 (leg 4a cwd-relative resolution): relative rm -rf with cwd ──────
+
+# 57. Relative rm -rf .worktrees/ns/task-1 with cwd=PROJECT → deny
+# (Without cwd-relative fix, resolves against hook's cwd, bypassing the guard)
+ITEM1_PROJECT="$TMP/item1-project"
+mkdir -p "$ITEM1_PROJECT"
+(cd "$ITEM1_PROJECT" && git init -q && git commit --allow-empty -m "init" -q) 2>/dev/null
+mkdir -p "$ITEM1_PROJECT/.worktrees/ns/task-1"
+(cd "$ITEM1_PROJECT" && git worktree add .worktrees/ns/task-1 -b task-1-br 2>/dev/null) || true
+run_item1() {
+  CLAUDE_PROJECT_DIR="$ITEM1_PROJECT" bash "$GUARD" <<< "$1" 2>/dev/null
+}
+out="$(run_item1 '{"tool_name":"Bash","tool_input":{"command":"rm -rf .worktrees/ns/task-1"},"cwd":"'"$ITEM1_PROJECT"'"}')"
+is_deny "$out" && pass "57: relative rm -rf .worktrees/ns/task-1 with cwd=PROJECT → deny" || fail "57: relative rm with cwd should deny (cwd-relative fix)"
+
+# ── Item 3 (realpath -m portability): path normalization with ./ ────────────
+
+# 58. rm with ./ prefix matching normalizes on macOS (portable_realpath_m)
+# This test verifies that paths with ./ segments normalize correctly
+# on macOS where realpath -m is unavailable.
+ITEM3_PROJECT="$TMP/item3-project"
+mkdir -p "$ITEM3_PROJECT"
+(cd "$ITEM3_PROJECT" && git init -q && git commit --allow-empty -m "init" -q) 2>/dev/null
+mkdir -p "$ITEM3_PROJECT/.worktrees/ns/task-1"
+(cd "$ITEM3_PROJECT" && git worktree add .worktrees/ns/task-1 -b task-1-br 2>/dev/null) || true
+run_item3() {
+  CLAUDE_PROJECT_DIR="$ITEM3_PROJECT" bash "$GUARD" <<< "$1" 2>/dev/null
+}
+out="$(run_item3 '{"tool_name":"Bash","tool_input":{"command":"rm -rf ./.worktrees/ns/task-1"},"cwd":"'"$ITEM3_PROJECT"'"}')"
+is_deny "$out" && pass "58: rm with ./ prefix → deny (portable_realpath_m normalizes)" || fail "58: ./- prefixed rm should normalize and deny"
+
+# ── Leg 4a/4c: non-absolute cwd falls back to PROJECT_DIR ─────────────────
+
+# 59. rm -rf with non-absolute cwd (leg 4a) → deny (cwd ignored, resolves against PROJECT_DIR)
+out="$(run_item1 '{"tool_name":"Bash","tool_input":{"command":"rm -rf .worktrees/ns/task-1"},"cwd":"foo"}')"
+is_deny "$out" && pass "59: rm -rf with relative cwd → deny (leg 4a falls back to PROJECT_DIR)" || fail "59: relative cwd should fall back to PROJECT_DIR and deny"
+
+# 60b. rm with non-absolute cwd (leg 4c) → deny (cwd ignored, resolves against PROJECT_DIR)
+CLAIM_4C="$ITEM1_PROJECT/.worktrees/.session-claim"
+printf 'sess-holder' > "$CLAIM_4C"
+out="$(CLAUDE_PROJECT_DIR="$ITEM1_PROJECT" bash "$GUARD" <<< '{"tool_name":"Bash","tool_input":{"command":"rm .worktrees/.session-claim"},"cwd":"foo"}' 2>/dev/null)"
+is_deny "$out" && pass "60b: rm claim-file with relative cwd → deny (leg 4c falls back to PROJECT_DIR)" || fail "60b: relative cwd should fall back to PROJECT_DIR and deny claim-file rm"
+
 # ── SubagentStart: agent-map writer ────────────────────────────────────────
 
 DISPATCH_PROJECT="$TMP/dispatch-project"
@@ -323,7 +443,7 @@ dispatch_input='{"agent_id":"agent-abc","subagent_prompt":"Implement in .worktre
 CLAUDE_PROJECT_DIR="$DISPATCH_PROJECT" bash "$DISPATCH" <<< "$dispatch_input" >/dev/null 2>&1
 if [ -f "$DISPATCH_PROJECT/.worktrees/.agent-map/agent-abc" ]; then
   map_val="$(cat "$DISPATCH_PROJECT/.worktrees/.agent-map/agent-abc")"
-  expected="$(realpath -m "$DISPATCH_PROJECT/.worktrees/feat-x/task-1")"
+  expected="$(portable_realpath_m "$DISPATCH_PROJECT/.worktrees/feat-x/task-1")"
   if [ "$map_val" = "$expected" ]; then
     pass "17: dispatch writes agent-map with correct worktree"
   else

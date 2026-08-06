@@ -3,6 +3,7 @@ name: cross-cli-dispatch
 description: Route a dispatch-tier subagent run to subscription CLI channels (cursor / codex / opencode) with the Anthropic API as fallback, or run any model headlessly through one normalized adapter. Use when dispatching scan/execute-tier work that could ride subscription quota instead of API billing, when a run needs a non-Anthropic model pinned (the Agent tool cannot), when a CLI returns a quota/rate-limit error and the run must fall back down the channel chain, or when model-eval needs the cli-adapter backend switch. NOT for choosing which tier a task belongs to (model-dispatch-claude.md + eval tickets own that), NOT for decide-tier work (stays Anthropic), NOT for load balancing.
 argument-hint: <tier: scan|scan-search|execute|execute-review|execute-deep> | run --backend <cli>
 standards-applied: [description, contract, behavior, trigger-eval, disclosure]
+landing-group: workflow
 ---
 
 # Cross-CLI Dispatch

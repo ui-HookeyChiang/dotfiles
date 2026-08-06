@@ -2,7 +2,7 @@
 # Every executor fixture: buggy version fails, golden passes all tests.
 set -eu
 SKILL="$(cd "$(dirname "$0")/../.." && pwd)"
-for tier in v1 v2 v3 v4b v4c; do
+for tier in v1 v2 v3 v4b v4c v5a v5b; do
   F="$SKILL/fixtures/executor-$tier"
   D=$(mktemp -d)
   cp "$F/run-tests.sh" "$D/"

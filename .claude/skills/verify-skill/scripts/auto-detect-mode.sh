@@ -20,12 +20,17 @@ if [[ ! -d "$skill_path" ]]; then
   echo "[STOP] skill path not a directory: $skill_path" >&2; exit 2
 fi
 
+# Source portability helper for portable realpath
+# shellcheck source=../../_shared/lib/sh/portability.sh
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../../_shared/lib/sh/portability.sh"
+
 # ── Self-invocation guard (SC9) ────────────────────────────────────────
 # Compute realpath BEFORE SKILL.md check so self-invocation is detected
 # even when verify-skill itself does not yet ship a SKILL.md (task-1b
 # precedes task-2 where SKILL.md is added).
-skill_real="$(realpath -e "$skill_path")"
-verify_skill_real="$(realpath -e "$(dirname "$0")/..")"
+skill_real="$(portable_realpath "$skill_path")"
+verify_skill_real="$(portable_realpath "$(dirname "$0")/..")"
 if [[ "$skill_real" == "$verify_skill_real" ]]; then
   echo "[STOP] self-invocation: $skill_real == verify-skill installation" >&2
   echo "  remediation: use a separate top-level invocation or independent verifier" >&2

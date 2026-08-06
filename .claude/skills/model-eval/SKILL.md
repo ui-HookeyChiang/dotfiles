@@ -4,6 +4,7 @@ description: Benchmark Claude models per dispatch tier with pinned --model/--eff
 disable-model-invocation: true
 argument-hint: <tier: scanner|executor|planner|tokenizer> [models…]
 standards-applied: [description, contract, behavior, trigger-eval, disclosure]
+landing-group: workflow
 ---
 
 # Model Eval

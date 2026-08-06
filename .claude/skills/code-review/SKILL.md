@@ -57,11 +57,11 @@ Determine applicable reviews, then launch up to 6 parallel (Sonnet or Opus) agen
 
 - **security-auditor** - Find vulnerabilities with concrete exploitation paths (≤2 sentences). Can't confirm reachability → downgrade to MED. Ref: [`security-checklist.md`](references/security-checklist.md).
 - **bug-hunter** - Scan for bugs including silent failures. Focus: error handling anti-patterns, boundary conditions, performance traps.
-- **code-quality-reviewer** - Project guidelines, maintainability, clarity. Ref: [`code-quality-checklist.md`](references/code-quality-checklist.md) + [`solid-checklist.md`](references/solid-checklist.md) + [`fowler-smell-baseline.md`](references/fowler-smell-baseline.md).
+- **code-quality-reviewer** - Project guidelines, maintainability, clarity. Ref: [`fowler-smell-baseline.md`](references/fowler-smell-baseline.md).
 - **pattern-reuse-reviewer** - Verify new code reuses existing types/utilities rather than reinventing. Must READ actual source files. See detailed instructions below. Ref: [`fowler-smell-baseline.md`](references/fowler-smell-baseline.md) (Primitive Obsession, Shotgun Surgery, Duplicated Code).
 - **contracts-reviewer** - Type invariants, API changes, data modeling.
 - **test-coverage-reviewer** - Test coverage quality and completeness.
-- **historical-context-reviewer** - Git blame, history, prior PRs. Flag dead code / deprecated paths via [`deadcode-removal-guideline.md`](../docs/deadcode-removal-guideline.md) P0/P1/P2 framework.
+- **historical-context-reviewer** - Git blame, history, prior PRs. Flag dead code / deprecated paths via [`deadcode-removal-guideline.md`](references/deadcode-removal-guideline.md) P0/P1/P2 framework.
 - **spec-reviewer** - Compare diff against originating issue/PRD requirements. Find: (a) requirements the spec asked for that are missing or partial; (b) behaviour in the diff that wasn't asked for (scope creep); (c) requirements that look implemented but where the implementation looks wrong. Locate the originating spec by: commit message issue refs (#123), branch name match in docs/ticket/ or docs/spec/, or user-supplied path.
 
 Default: run **all** applicable agents.
@@ -222,6 +222,6 @@ Goal: catch bugs and security issues while maintaining velocity. Thorough but pr
 | [`references/senior-engineer-filter.md`](references/senior-engineer-filter.md) | Phase 3 Q1-Q4, GitHub Q5 | 5-question quality filter, auto-drop list, noise budget, dedup API |
 | [`references/security-checklist.md`](references/security-checklist.md) | Phase 2 security-auditor | Input/output safety, authN/Z, JWT, secrets, races, crypto |
 | [`references/fowler-smell-baseline.md`](references/fowler-smell-baseline.md) | Phase 2 code-quality/pattern-reuse reviewers | Fowler refactoring smells — universal baseline |
-| [`../docs/deadcode-removal-guideline.md`](../docs/deadcode-removal-guideline.md) | Phase 2 historical-context-reviewer | P0/P1/P2 dead-code / deprecated-path removal framework |
+| [`references/deadcode-removal-guideline.md`](references/deadcode-removal-guideline.md) | Phase 2 historical-context-reviewer | P0/P1/P2 dead-code / deprecated-path removal framework |
 
 Evals: [`evals/trigger-eval.json`](evals/trigger-eval.json) (trigger boundaries), [`evals/run-fusion-regression.sh`](evals/run-fusion-regression.sh) / [`evals/fusion-regression.md`](evals/fusion-regression.md) (regression harness).
