@@ -17,6 +17,48 @@ trap 'echo "FAILED at line $LINENO" >&2' ERR
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Test seam: set TARGET_HOME to fully isolate every $HOME write (symlinks,
+# ~/.claude, ~/.config, tool invocations). This is the ONLY supported way to
+# test-run the installer — partial overrides (CLAUDE_DIR alone) leave
+# link_one and friends writing into the real home.
+if [[ -n "${TARGET_HOME:-}" ]]; then
+  REAL_HOME="$HOME"
+  export HOME="$TARGET_HOME"
+else
+  REAL_HOME="$HOME"
+fi
+
+ALLOW_FOREIGN_ROOT=0
+
+# Canonical-root guard (runs in main() after arg parsing): a real-HOME
+# install may only run from the canonical checkout. Running from a linked
+# worktree or a scratch clone would repoint every home symlink at a
+# directory that is about to be deleted (2026-08-06 incident: zshrc/nvim
+# broke after a worktree test install). TARGET_HOME (isolated) and
+# --allow-foreign-root both bypass.
+guard_canonical_root() {
+  [[ -n "${TARGET_HOME:-}" ]] && return 0
+  (( ALLOW_FOREIGN_ROOT )) && return 0
+  local canonical="$REAL_HOME/dotfiles"
+  local root_real canon_real common_dir git_dir
+  root_real="$(cd "$REPO_ROOT" && pwd -P)"
+  canon_real="$(cd "$canonical" 2>/dev/null && pwd -P || true)"
+  common_dir="$(git -C "$REPO_ROOT" rev-parse --git-common-dir 2>/dev/null || true)"
+  git_dir="$(git -C "$REPO_ROOT" rev-parse --git-dir 2>/dev/null || true)"
+  if [[ "$common_dir" != "$git_dir" ]]; then
+    err "refusing to install into real HOME from a linked worktree: $REPO_ROOT"
+    err "home symlinks would point at a disposable checkout."
+    err "run from $canonical, or set TARGET_HOME=<dir> for an isolated test,"
+    err "or pass --allow-foreign-root if you really mean it."
+    exit 2
+  fi
+  if [[ -n "$canon_real" && "$root_real" != "$canon_real" ]]; then
+    err "refusing to install into real HOME from non-canonical checkout: $root_real"
+    err "canonical: $canon_real. Use TARGET_HOME=<dir> or --allow-foreign-root."
+    exit 2
+  fi
+}
+
 DRY_RUN=0
 NO_SYMLINK=0
 WITH_NODE=0
@@ -182,6 +224,14 @@ Optional modules:
                   parity/lock verification (advisory, never aborts install).
   --all           Enable all OS-compatible optional modules
 
+Safety / testing:
+  --allow-foreign-root    Override the canonical-root guard (real-HOME install
+                           normally refuses to run from a linked worktree or
+                           non-canonical checkout).
+  TARGET_HOME=<dir>       Env var: fully isolate the run — every \$HOME write
+                           (symlinks, ~/.claude, ~/.config) lands under <dir>.
+                           The only supported way to test the installer.
+
 Optional flags for --with-claude-agents:
   --register-hooks        Merge this repo's Claude/Codex/Cursor hooks into
                            settings.json / hooks.json (idempotent). Without
@@ -224,6 +274,7 @@ parse_flags() {
       --with-secrets) WITH_SECRETS=1 ;;
       --with-nvim)    WITH_NVIM=1 ;;
       --with-claude-agents) WITH_CLAUDE_AGENTS=1 ;;
+      --allow-foreign-root) ALLOW_FOREIGN_ROOT=1 ;;
       --register-hooks)     REGISTER_HOOKS=1 ;;
       --register-cursor)    REGISTER_CURSOR=1 ;;
       --sync-claude-settings) SYNC_CLAUDE_SETTINGS=1 ;;
@@ -1868,10 +1919,13 @@ install_projects() {
 main() {
   parse_flags "$@"
 
+  guard_canonical_root
+
   BACKUP_TS="$(date -u +%Y%m%dT%H%M%SZ)"
 
   log "install.sh start (dry_run=$DRY_RUN no_symlink=$NO_SYMLINK)"
   note "repo root: $REPO_ROOT"
+  [[ -n "${TARGET_HOME:-}" ]] && note "TARGET_HOME override: HOME=$HOME (real: $REAL_HOME)"
 
   detect_os
   sudo_keepalive
