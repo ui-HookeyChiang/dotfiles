@@ -31,7 +31,7 @@ tmp_dir="$(mktemp -d -t install-symlinks-test.XXXXXX)"
 trap 'rm -rf -- "$tmp_dir"' EXIT
 
 # ---------- TAP helpers ------------------------------------------------------
-plan_count=8
+plan_count=9
 echo "1..$plan_count"
 echo "# repo_root=$repo_root"
 echo "# tmp_dir=$tmp_dir"
@@ -437,6 +437,59 @@ test_T8() {
   ok "$desc"
 }
 
+# T9: install.sh's REAL SUBMODULE_OVERRIDES creates the tmux entry-config
+# symlink $HOME/.tmux.conf -> $REPO_ROOT/.config/tmux/.tmux.conf. tmux only
+# auto-loads ~/.tmux.conf or ~/.config/tmux/tmux.conf (no leading dot), so
+# without this link a fresh machine starts with stock config.
+test_T9() {
+  local desc="symlink_submodule_overrides: real array links \$HOME/.tmux.conf to submodule entry config"
+  read -r repo home_dir < <(make_sandbox t9 ".tmux.conf.local")
+  # Simulate the checked-out submodule entry file.
+  mkdir -p "$repo/.config/tmux"
+  : >"$repo/.config/tmux/.tmux.conf"
+
+  # Run with install.sh's own SUBMODULE_OVERRIDES (no array override).
+  local out rc target
+  out="$(bash -c '
+    install_sh="$1"; repo="$2"; home_dir="$3"
+    # shellcheck disable=SC1090
+    . "$install_sh"
+    set +eu
+    trap - ERR
+    log()  { :; }
+    note() { printf "NOTE: %s\n" "$*"; }
+    err()  { printf "ERR: %s\n"  "$*"; }
+    run()  { "$@"; }
+    REPO_ROOT="$repo"
+    HOME="$home_dir"
+    BACKUP_DIR=""
+    BACKUP_TS="testts"
+    DRY_RUN=0
+    NO_SYMLINK=0
+    symlink_submodule_overrides
+    printf "RC=%d\n" $?
+  ' _ "$install_sh" "$repo" "$home_dir" 2>&1)"
+  rc="$(printf '%s\n' "$out" | awk -F= '/^RC=/{print $2; exit}')"
+  if [[ "$rc" != "0" ]]; then
+    nok "$desc" "rc=$rc; out: $out"
+    return
+  fi
+  if [[ ! -L "$home_dir/.tmux.conf" ]]; then
+    nok "$desc" "\$HOME/.tmux.conf symlink not created; out: $out"
+    return
+  fi
+  target="$(readlink "$home_dir/.tmux.conf")"
+  if [[ "$target" != "$repo/.config/tmux/.tmux.conf" ]]; then
+    nok "$desc" "symlink target=$target, expected $repo/.config/tmux/.tmux.conf; out: $out"
+    return
+  fi
+  if [[ ! -e "$home_dir/.tmux.conf" ]]; then
+    nok "$desc" "\$HOME/.tmux.conf dangles; out: $out"
+    return
+  fi
+  ok "$desc"
+}
+
 # ---------- run --------------------------------------------------------------
 test_T1
 test_T2
@@ -446,6 +499,7 @@ test_T5
 test_T6
 test_T7
 test_T8
+test_T9
 
 echo "# passed=$((n - fail)) failed=$fail of $n"
 exit "$fail"

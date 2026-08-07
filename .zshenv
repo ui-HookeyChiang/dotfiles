@@ -20,6 +20,11 @@ export SAVEHIST=120000
 # Build / dev
 export USE_CCACHE=1
 
+# tmux — force oh-my-tmux to load our override. Its .tmux.conf only derives
+# TMUX_CONF_LOCAL="$TMUX_CONF.local" when the variable is unset, so this export
+# wins and points it at the repo file (see install.sh SUBMODULE_OVERRIDES).
+export TMUX_CONF_LOCAL="$HOME/dotfiles/.tmux.conf.local"
+
 # fzf preview using bat (bat available via batcat symlink on Linux; native on macOS)
 export FZF_DEFAULT_OPTS='--preview "bat --style=numbers --color=always {}"'
 

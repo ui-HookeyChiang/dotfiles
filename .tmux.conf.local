@@ -1,6 +1,7 @@
 # ~/.tmux.conf.local — user-owned override for oh-my-tmux.
-# Loaded via TMUX_CONF_LOCAL env var (set in ~/.zshenv).
-# Do NOT edit ~/.config/tmux/.tmux.conf.local (that's the submodule's vanilla template).
+# Loaded via TMUX_CONF_LOCAL env var (exported in ~/.zshenv); install.sh also
+# symlinks ~/.config/tmux/.tmux.conf.local here as a fallback for tmux servers
+# started without that env var. Edit only this repo file.
 
 # -- clipboard ----------------------------------------------------------------
 # Cross-platform clipboard: pbcopy on macOS, xclip on Linux.
