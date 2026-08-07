@@ -13,6 +13,8 @@ An adopt/reject decision document for codebase-memory-mcp: whether to install it
 - Test grounds (user-selected): dotfiles, debbox/debfactory, cpss-app/kernel-class large repo. Company repos gated behind security review.
 - Integration scope (user-selected): skill prose (flow/flow-dev/research etc.) and docs layer (context.md/adr/spec). Explicitly NOT native-exploration hook routing and NOT subagent tier rebinding (see Out of scope).
 - Tool claims to verify: 99.2% token reduction (3.4k vs 412k tokens for 5 structural queries), 158-language tree-sitter + Hybrid LSP for 12 languages, SQLite graph at `~/.cache/codebase-memory-mcp/`, single static binary, 15 MCP tools.
+- Routing heuristic under test (folded into dotfiles benchmark): one-hop queries → native tools (grep/ast-grep/LSP); multi-hop / whole-graph → cmm. Multi-hop = step 2's query parameters depend on step 1's results; benchmark query set stratified `hops: 1/2/3/global`, scored per layer. Cross-service HTTP linking is cmm-unique but least-verified.
+- Benchmark ticket body moved to skill-dev docs/ticket/ (skill-dev PR #21); pointer file remains here.
 - Skills to consult per session: `/grilling`, `/research`, `/adversarial-review` for the final decision.
 
 ## Decisions so far
