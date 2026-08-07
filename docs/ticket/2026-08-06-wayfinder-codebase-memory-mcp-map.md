@@ -10,7 +10,7 @@ An adopt/reject decision document for codebase-memory-mcp: whether to install it
 ## Notes
 
 - Tracker: local markdown under `docs/ticket/`; child tickets are sibling files named `2026-08-06-cmm-*.md`; blocking via `Blocked-by:` body lines (no native blocking).
-- Test grounds (user-selected): dotfiles, debbox/debfactory, cpss-app/kernel-class large repo. Company repos gated behind security review.
+- Test grounds (user-selected, revised 2026-08-08): dotfiles (done) + Linux kernel subsystem (open-source, kernel-class C proxy for cpss/debbox shape). Benchmarking no longer security-gated; security verdict gates company-repo ADOPTION only.
 - Integration scope (user-selected): skill prose (flow/flow-dev/research etc.) and docs layer (context.md/adr/spec). Explicitly NOT native-exploration hook routing and NOT subagent tier rebinding (see Out of scope).
 - Tool claims to verify: 99.2% token reduction (3.4k vs 412k tokens for 5 structural queries), 158-language tree-sitter + Hybrid LSP for 12 languages, SQLite graph at `~/.cache/codebase-memory-mcp/`, single static binary, 15 MCP tools.
 - Routing heuristic under test (folded into dotfiles benchmark): one-hop queries → native tools (grep/ast-grep/LSP); multi-hop / whole-graph → cmm. Multi-hop = step 2's query parameters depend on step 1's results; benchmark query set stratified `hops: 1/2/3/global`, scored per layer. Cross-service HTTP linking is cmm-unique but least-verified.
