@@ -202,8 +202,7 @@ Optional flags for --with-claude-agents:
   --register-hooks        Merge this repo's Claude/Codex/Cursor hooks into
                            settings.json / hooks.json (idempotent). Without
                            it, hooks are only symlinked.
-  --sync-claude-settings   Merge .model and the experimental-agent-teams env
-                           var into ~/.claude/settings.json.
+  --sync-claude-settings   Merge .model into ~/.claude/settings.json.
   --register-cursor        Write .cursor/rules/*.mdc guardrails and merge
                            Cursor user-settings/cli-config templates.
 
@@ -1057,10 +1056,10 @@ install_latex() {
 }
 
 # ---------------------------------------------------------------------------
-# Claude/OpenCode/Cursor agent-harness parity (from .claude/ snapshot)
+# Claude/OpenCode/Cursor agent-harness parity
 # ---------------------------------------------------------------------------
 # Reproduces skill-dev install.sh's effects for Claude Code, OpenCode, and
-# Cursor. Skills are relative symlinks into the .claude/skill-dev submodule
+# Cursor. Skills are relative symlinks into the skill-dev submodule
 # (single source of truth); hooks remain real copies registered by path.
 # A skill-dev checkout outside this repo is still not required — but the
 # submodule must be initialized before the fanout, or every skill entry is
@@ -1079,13 +1078,12 @@ AGENTS_SKILLS_DIR="${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}"
 # the real checkout).
 
 # SKILLDEV: the skill-dev submodule — canonical source for skills, hooks,
-# scripts, and _shared. DOTCLAUDE (.claude -> skill-dev/.claude symlink) carries
-# the user-global config: CLAUDE.md, docs/, settings.json, lock manifests.
+# scripts, _shared, and user-global config (.claude/: CLAUDE.md, docs/,
+# settings.json, lock manifests).
 SKILLDEV="$REPO_ROOT/skill-dev"
-DOTCLAUDE="$REPO_ROOT/.claude"
 
 # ensure_skill_dev_submodule: everything below sources from the skill-dev
-# submodule (directly, or through the .claude -> skill-dev/.claude symlink).
+# submodule.
 # On a fresh clone the submodule dir is empty and the whole section would
 # no-op — init it first. Idempotent; requires network only when missing.
 ensure_skill_dev_submodule() {
