@@ -1,6 +1,6 @@
 # Impl: tmux nesting config — F12 keys-off toggle + double-tap fallback
 
-Status: ready-for-agent
+Status: done
 Labels: wayfinder:impl
 Map: 2026-08-07-wayfinder-tmux-nvim-map.md
 
