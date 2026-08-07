@@ -44,3 +44,8 @@ id_*
 
 # install.sh --with-claude-agents runtime bridge (register-harness.sh layout)
 /.claude/agent-compat
+
+.claude/worktrees/
+.claude/*.lock
+.claude/*.bak
+.flow-dev-lock
