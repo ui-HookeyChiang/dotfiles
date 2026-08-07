@@ -122,29 +122,7 @@ SUBMODULE_OVERRIDES=(
   ".tmux.conf.local:.config/tmux/.tmux.conf.local"
 )
 
-# Whitelisted files inside ~/.claude/ (live at $HOME/.claude/<name>).
-#
-# ~/.claude/ is a mixed directory: it holds repo-managed config (this list)
-# plus Claude Code runtime state (.credentials.json, sessions/, projects/,
-# history.jsonl, skills/, plugins/, commands/, mcp.json, settings.local.json,
-# pua/, statsig/, todos/, ...). We MUST NOT directory-symlink ~/.claude into
-# the repo — that would clobber the runtime state into the backup dir on
-# install. Instead symlink only these files.
-CLAUDE_FILES=(
-  CLAUDE.md
-  settings.json
-  statusline-command.sh
-)
 
-# Whitelisted files inside ~/.config/opencode/ (live at $HOME/.config/opencode/<name>).
-#
-# OpenCode native config. OpenCode already has Claude Code compatibility mode
-# (reads ~/.claude/CLAUDE.md and ~/.claude/skills/ as fallbacks), but native
-# config provides full feature access (instructions field, permissions, etc.).
-# ~/.config/opencode/ may also hold runtime state, so we symlink only managed files.
-OPENCODE_FILES=(
-  AGENTS.md
-)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -678,22 +656,6 @@ symlink_dotfiles() {
   for entry in "${DIRS[@]}"; do
     link_one "$entry"
   done
-  # ~/.claude/ must exist as a real dir (Claude Code runtime writes here);
-  # link_one creates the parent via `mkdir -p` per entry, but make it explicit.
-  if [[ ! -d "$HOME/.claude" ]]; then
-    run mkdir -p "$HOME/.claude"
-  fi
-  for entry in "${CLAUDE_FILES[@]}"; do
-    link_one ".claude/$entry"
-  done
-  # ~/.config/opencode/ — OpenCode native config (parallel to Claude Code).
-  # OpenCode runtime may write here too, so only symlink managed files.
-  if [[ ! -d "$HOME/.config/opencode" ]]; then
-    run mkdir -p "$HOME/.config/opencode"
-  fi
-  for entry in "${OPENCODE_FILES[@]}"; do
-    link_one ".config/opencode/$entry"
-  done
   if [[ -z "$BACKUP_DIR" ]]; then
     note "no conflicts; no backup dir created"
   fi
@@ -1200,50 +1162,6 @@ install_claude_agents() {
     [[ -d "$t" ]] && _dc_ensure_symlink "$SKILLDEV/_shared" "$t/_shared"
   done
   _dc_ensure_symlink "$SKILLDEV/_shared" "$CLAUDE_DIR/_shared"
-}
-
-# sync_claude_settings — point 5: merge .model + experimental-agent-teams env
-# into CLAUDE_DIR/settings.json (jq merge, preserve other keys).
-sync_claude_settings() {
-  log "sync_claude_settings"
-  if ! command -v jq >/dev/null 2>&1; then
-    note "jq missing; skip settings sync"
-    return 0
-  fi
-  local settings="$CLAUDE_DIR/settings.json"
-  if [[ ! -f "$settings" ]]; then
-    note "$settings not found; skip settings sync"
-    return 0
-  fi
-  local real="$settings"
-  [[ -L "$real" ]] && real="$(cd "$(dirname "$real")" && cd "$(dirname "$(readlink "$real")")" && pwd)/$(basename "$(readlink "$real")")"
-
-  local records=(
-    '.model|"claude-opus-4-6[1m]"'
-    '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS|"1"'
-  )
-  local rec key val current desired tmp
-  for rec in "${records[@]}"; do
-    IFS='|' read -r key val <<< "$rec"
-    current="$(jq -r "$key // empty" "$real" 2>/dev/null || true)"
-    desired="$(printf '%s' "$val" | jq -r '.' 2>/dev/null || true)"
-    if [[ "$current" == "$desired" ]]; then
-      note "settings $key already = $desired"
-      continue
-    fi
-    if (( DRY_RUN )); then
-      note "would set settings $key = $desired"
-      continue
-    fi
-    tmp="$(mktemp "${real}.sync.XXXXXX")"
-    if jq --argjson v "$val" "$key = \$v" "$real" > "$tmp" && jq empty "$tmp" >/dev/null 2>&1 && [[ -s "$tmp" ]]; then
-      mv "$tmp" "$real"
-      note "set settings $key = $desired"
-    else
-      rm -f "$tmp"
-      note "WARN: failed to set settings $key"
-    fi
-  done
 }
 
 # verify_claude_parity — point 9: post-install agent-compat check via the
