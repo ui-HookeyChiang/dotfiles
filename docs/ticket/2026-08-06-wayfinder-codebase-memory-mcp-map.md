@@ -26,6 +26,8 @@ An adopt/reject decision document for codebase-memory-mcp: whether to install it
 
 - [dotfiles pilot benchmark](2026-08-06-cmm-benchmark-dotfiles.md) (moved to skill-dev PR #21) — 99.2% token claim refuted at small scale: cmm used the MOST input tokens in every hops layer (1.5x native at hops-1, 3-7x at hops>=2) and returned empty answers on both hops-3 cells (turn-cap exhaustion); native arms 7-7.5/8 correctness vs cmm 5.5/8. Heuristic "multi-hop -> cmm" not supported on small repos. Caveats: n=1/cell, cli-subprocess arm not MCP-native, small repo. Findings: skill-dev docs/research/2026-08-08-cmm-benchmark-dotfiles/findings.md
 
+- [Linux btrfs large-repo benchmark](2026-08-06-cmm-benchmark-large-repos.md) (skill-dev PR #21) — pilot result INVERTS at kernel scale: cmm (MCP-native, 25-turn cap) scored 8/8 with 2.6-4.2x fewer input tokens and ~3x faster wall at hops>=2; hops-1 and global stay native. Token cut ~60-75% at multi-hop, not 99.2%. Heuristic "one-hop -> native; multi-hop -> cmm" SUPPORTED with a repo-size floor; pilot collapse traced to cli-subprocess tax + 15-turn cap. Index cost: 223k nodes / 8.4s / 2.3GB RAM peak / 279MB disk. Findings: skill-dev docs/research/2026-08-08-cmm-benchmark-linux-btrfs/findings.md
+
 ## Not yet specified
 
 - Skill-prose rewrite details (which sections of flow/flow-dev/research change, and to what) — hangs on the adopt direction and on measured query ergonomics.
