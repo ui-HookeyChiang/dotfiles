@@ -109,17 +109,23 @@ DIRS=(
   .config/tmux
 )
 
-# Files inside a submodule directory that we override with our own version.
-# Format: "src_in_dotfiles:dest_in_HOME". The submodule's loader picks up our
-# file at the destination path. Must run AFTER init_submodules (the vanilla
-# template file from the submodule is what gets backed up on first install).
+# Symlinks whose source and destination paths differ (unlike DOTFILES/DIRS,
+# where dst mirrors src). Format: "src_in_dotfiles:dest_in_HOME". Must run
+# AFTER init_submodules (sources/destinations may live inside a submodule's
+# working tree; on first install the submodule's vanilla template is what gets
+# backed up).
 #
-# .tmux.conf.local: oh-my-tmux's main .tmux.conf forces TMUX_CONF_LOCAL=
-# "$TMUX_CONF.local" at startup (where $TMUX_CONF resolves to
-# ~/.config/tmux/.tmux.conf), so tmux always reads ~/.config/tmux/.tmux.conf.local
-# regardless of any external env var. Symlinking our override into that exact
-# path is the only way to make user customizations take effect.
+# .tmux.conf: tmux only auto-loads ~/.tmux.conf or ~/.config/tmux/tmux.conf
+# (no leading dot); oh-my-tmux ships its entry file as .config/tmux/.tmux.conf
+# (dotted), which tmux never finds on its own. Linking it to ~/.tmux.conf is
+# what makes a fresh machine load the repo config at all.
+#
+# .tmux.conf.local: oh-my-tmux's .tmux.conf derives TMUX_CONF_LOCAL=
+# "$TMUX_CONF.local" only when the variable is unset (.zshenv exports it to
+# point at the repo file). This symlink keeps the canonical in-submodule path
+# working as a fallback when tmux is started without that env var.
 SUBMODULE_OVERRIDES=(
+  ".config/tmux/.tmux.conf:.tmux.conf"
   ".tmux.conf.local:.config/tmux/.tmux.conf.local"
 )
 
