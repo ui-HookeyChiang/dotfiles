@@ -571,7 +571,38 @@ init_submodules() {
     note "no .gitmodules; skip"
     return 0
   fi
-  run git -C "$REPO_ROOT" submodule update --init --recursive
+
+  # Drift guard: `git submodule update` detach-resets each submodule to the
+  # recorded gitlink, silently discarding local commits made inside the
+  # submodule. For every INITIALIZED submodule whose HEAD is not reachable
+  # from the recorded pointer, warn and exclude it; update the rest per-path.
+  # Uninitialized submodules always init normally.
+  local update_paths=() path recorded head
+  while IFS= read -r path; do
+    [[ -n "$path" ]] || continue
+    if [[ ! -e "$REPO_ROOT/$path/.git" ]]; then
+      update_paths+=("$path")  # uninitialized: --init handles it
+      continue
+    fi
+    recorded="$(git -C "$REPO_ROOT" rev-parse ":$path" 2>/dev/null)" || {
+      update_paths+=("$path"); continue; }
+    head="$(git -C "$REPO_ROOT/$path" rev-parse HEAD 2>/dev/null)" || {
+      update_paths+=("$path"); continue; }
+    # Recorded commit absent locally (submodule behind, needs fetch): the
+    # ancestry test can't run — let the update fetch and check out normally.
+    if git -C "$REPO_ROOT/$path" cat-file -e "$recorded^{commit}" 2>/dev/null \
+      && ! git -C "$REPO_ROOT/$path" merge-base --is-ancestor "$head" "$recorded" 2>/dev/null; then
+      note "WARNING: submodule $path has local commits: HEAD $head not reachable from recorded $recorded; skipping update (commit or push them, then re-run)"
+      continue
+    fi
+    update_paths+=("$path")
+  done < <(git config -f "$REPO_ROOT/.gitmodules" --get-regexp '^submodule\..*\.path$' | awk '{print $2}')
+
+  if (( ${#update_paths[@]} == 0 )); then
+    note "all submodules skipped by drift guard; nothing to update"
+    return 0
+  fi
+  run git -C "$REPO_ROOT" submodule update --init --recursive -- "${update_paths[@]}"
 }
 
 # ---------------------------------------------------------------------------
