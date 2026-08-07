@@ -1,6 +1,6 @@
 # Impl: install.sh submodule drift guard + nvim pointer bump
 
-Status: ready-for-agent
+Status: done
 Labels: wayfinder:impl
 Map: 2026-08-07-wayfinder-tmux-nvim-map.md
 
