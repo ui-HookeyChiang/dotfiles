@@ -6,7 +6,6 @@ submodule; this repo carries the installer and non-agent dotfiles.
 ## Layout
 
 - `skill-dev/` — private submodule (github.com/ui-HookeyChiang/skill-dev): canonical source for skills, hooks, scripts, `_shared/`, and `.claude/` (user-global config: CLAUDE.md, settings.json, statusline-command.sh, docs/agents/).
-- `.claude` — compat symlink to `skill-dev/.claude` (keeps paths stable). Not a directory; do not add files under it.
 - The installer delegates agent-harness work to `skill-dev/install.sh` (skills fanout, agent definitions, hooks, config-doc symlinks, locked extras, OpenCode/Cursor config). Only `_shared` sibling symlinks remain in `dotfiles/install.sh`.
 
 ## Development
