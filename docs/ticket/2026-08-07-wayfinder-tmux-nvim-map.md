@@ -16,18 +16,25 @@ Domain: dotfiles installer + tmux/nvim submodules. HITL tickets use `grilling` a
 
 <!-- one line per closed ticket: [title](file) — gist -->
 
+- [Research: tmux two-layer nesting options under oh-my-tmux](2026-08-07-research-tmux-nesting-options.md) — options researched; A (F12 keys-off) + C (double-tap send-prefix) picked.
+- [Research: nvim hotkey-loss root cause timeline](2026-08-07-research-nvim-hotkey-loss-root-cause.md) — root cause confirmed: stale pointer + unconditional submodule update.
+- [Grilling: lock tmux local+server config spec](2026-08-07-grill-tmux-config-spec.md) — spec locked: F12 toggle gated on no SSH_CONNECTION, double-tap fallback, OFF indicator; .tmux.conf.local only.
+- [Grilling: lock nvim submodule flow fix](2026-08-07-grill-nvim-submodule-flow.md) — flow locked: generic drift guard + pointer bump to 6dd97f6 + salvage of stale dev branch.
+
 ## Not yet specified
 
-- What install.sh must change (flags? host-role detection? auto-start?) — sharpens after the tmux config spec ticket resolves.
-- Whether nvim submodule should track a branch (dev vs master) and how install.sh should treat dirty/ahead submodules — sharpens after root-cause research resolves.
+(none — both items sharpened into the impl tickets below)
 
 ## Out of scope
 
 - Implementing install.sh / tmux config / nvim submodule fixes — destination is decisions; implementation goes to flow-dev per ticket.
+- Note: implementation tickets are now charted and the map's route is fully clear — destination reached pending the impl handoff to flow-dev.
 
 ## Children
 
-- [Research: tmux two-layer nesting options under oh-my-tmux](2026-08-07-research-tmux-nesting-options.md) — wayfinder:research, AFK, unblocked
-- [Research: nvim hotkey-loss root cause timeline](2026-08-07-research-nvim-hotkey-loss-root-cause.md) — wayfinder:research, AFK, unblocked
-- [Grilling: lock tmux local+server config spec](2026-08-07-grill-tmux-config-spec.md) — wayfinder:grilling, blocked by tmux research
-- [Grilling: lock nvim submodule flow fix](2026-08-07-grill-nvim-submodule-flow.md) — wayfinder:grilling, blocked by nvim research
+- [Research: tmux two-layer nesting options under oh-my-tmux](2026-08-07-research-tmux-nesting-options.md) — wayfinder:research, closed
+- [Research: nvim hotkey-loss root cause timeline](2026-08-07-research-nvim-hotkey-loss-root-cause.md) — wayfinder:research, closed
+- [Grilling: lock tmux local+server config spec](2026-08-07-grill-tmux-config-spec.md) — wayfinder:grilling, closed
+- [Grilling: lock nvim submodule flow fix](2026-08-07-grill-nvim-submodule-flow.md) — wayfinder:grilling, closed
+- [Impl: tmux nesting config — F12 keys-off toggle + double-tap fallback](2026-08-07-impl-tmux-nesting-config.md) — wayfinder:impl, unblocked, ready-for-agent, HITL not required
+- [Impl: install.sh submodule drift guard + nvim pointer bump](2026-08-07-impl-nvim-submodule-guard.md) — wayfinder:impl, unblocked, ready-for-agent, HITL not required
