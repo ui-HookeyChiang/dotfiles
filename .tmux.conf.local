@@ -111,6 +111,11 @@ set -g allow-passthrough on
 # same discriminator as the xclip block above. See
 # docs/research/2026-08-07-tmux-nesting-options.md (branch
 # research/tmux-nesting-options) for the option analysis.
+#
+# Caveat: if-shell evaluates against the tmux SERVER's inherited environment
+# at parse time, not the attaching client's. A server started outside an ssh
+# login shell (systemd, cron, continuum restore) counts as "local"; a local
+# server started from within an ssh session counts as "remote".
 if-shell '[ -z "${SSH_CONNECTION:-}" ]' \
     "bind-key -T root F12 set prefix None \\; set key-table off \\; refresh-client -S ; \
      bind-key -T off F12 set -u prefix \\; set -u key-table \\; refresh-client -S"
