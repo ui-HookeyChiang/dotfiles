@@ -577,8 +577,12 @@ init_submodules() {
   # submodule. For every INITIALIZED submodule whose HEAD is not reachable
   # from the recorded pointer, warn and exclude it; update the rest per-path.
   # Uninitialized submodules always init normally.
-  local update_paths=() path recorded head
-  while IFS= read -r path; do
+  local update_paths=() entry path recorded head
+  # -z output is "<key>\n<value>\0" per record: NUL-safe parsing keeps
+  # submodule paths containing whitespace intact (submodule NAMES may also
+  # contain spaces, so splitting the one-line form on spaces is not enough).
+  while IFS= read -r -d '' entry; do
+    path="${entry#*$'\n'}"
     [[ -n "$path" ]] || continue
     if [[ ! -e "$REPO_ROOT/$path/.git" ]]; then
       update_paths+=("$path")  # uninitialized: --init handles it
@@ -588,20 +592,31 @@ init_submodules() {
       update_paths+=("$path"); continue; }
     head="$(git -C "$REPO_ROOT/$path" rev-parse HEAD 2>/dev/null)" || {
       update_paths+=("$path"); continue; }
-    # Recorded commit absent locally (submodule behind, needs fetch): the
-    # ancestry test can't run — let the update fetch and check out normally.
-    if git -C "$REPO_ROOT/$path" cat-file -e "$recorded^{commit}" 2>/dev/null \
-      && ! git -C "$REPO_ROOT/$path" merge-base --is-ancestor "$head" "$recorded" 2>/dev/null; then
+    # Recorded commit absent locally (submodule behind a fetch): fetch, then
+    # re-check, so the ancestry test below runs on real objects — otherwise a
+    # drifted submodule whose recorded SHA is unfetched would be included and
+    # detach-reset, losing the local commits this guard exists to protect.
+    if ! git -C "$REPO_ROOT/$path" cat-file -e "$recorded^{commit}" 2>/dev/null; then
+      git -C "$REPO_ROOT/$path" fetch --quiet >/dev/null 2>&1 || true
+    fi
+    if ! git -C "$REPO_ROOT/$path" cat-file -e "$recorded^{commit}" 2>/dev/null; then
+      note "WARNING: submodule $path recorded commit $recorded unavailable even after fetch; skipping update (check the submodule remote, then re-run)"
+      continue
+    fi
+    if ! git -C "$REPO_ROOT/$path" merge-base --is-ancestor "$head" "$recorded" 2>/dev/null; then
       note "WARNING: submodule $path has local commits: HEAD $head not reachable from recorded $recorded; skipping update (commit or push them, then re-run)"
       continue
     fi
     update_paths+=("$path")
-  done < <(git config -f "$REPO_ROOT/.gitmodules" --get-regexp '^submodule\..*\.path$' | awk '{print $2}')
+  done < <(git config -f "$REPO_ROOT/.gitmodules" -z --get-regexp '^submodule\..*\.path$')
 
   if (( ${#update_paths[@]} == 0 )); then
     note "all submodules skipped by drift guard; nothing to update"
     return 0
   fi
+  # LIMITATION: --recursive still detach-resets NESTED submodules without a
+  # drift check — the guard above inspects top-level paths only. No nested
+  # submodules exist in this repo today; revisit if one is ever added.
   run git -C "$REPO_ROOT" submodule update --init --recursive -- "${update_paths[@]}"
 }
 

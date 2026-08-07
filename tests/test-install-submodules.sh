@@ -34,10 +34,10 @@ export GIT_CONFIG_VALUE_0=always
 # Hermetic git identity/config.
 export GIT_AUTHOR_NAME=test GIT_AUTHOR_EMAIL=test@test
 export GIT_COMMITTER_NAME=test GIT_COMMITTER_EMAIL=test@test
-export HOME_GITCONFIG_UNUSED=1
+export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
 
 # ---------- TAP helpers ------------------------------------------------------
-plan_count=6
+plan_count=12
 echo "1..$plan_count"
 echo "# repo_root=$repo_root"
 echo "# tmp_dir=$tmp_dir"
@@ -173,6 +173,97 @@ if [[ "$(git -C "$tmp_dir/fresh-clone/mods/subB" rev-parse HEAD 2>/dev/null)" ==
   ok "fresh clone initializes second submodule"
 else
   nok "fresh clone initializes second submodule" "subB not at $b_rec2"
+fi
+
+# T7-T8: submodule path containing whitespace — parsed correctly, updated.
+ws_base="$tmp_dir/ws"
+git_q init -b main "$ws_base/subC"
+echo one >"$ws_base/subC/file"
+git_q -C "$ws_base/subC" add file
+git_q -C "$ws_base/subC" commit -m c1
+echo two >"$ws_base/subC/file"
+git_q -C "$ws_base/subC" commit -am c2
+ws_super="$ws_base/super"
+git_q init -b main "$ws_super"
+git_q -C "$ws_super" commit --allow-empty -m root
+git_q -C "$ws_super" submodule add "$ws_base/subC" "mods/sub dir"
+git_q -C "$ws_super" commit -m "add submodule with space in path"
+c_rec="$(git -C "$ws_super" rev-parse ':mods/sub dir')"
+git_q -C "$ws_super/mods/sub dir" checkout "$c_rec~1"
+out3="$(run_init_submodules "$ws_super")"
+echo "$out3" | sed 's/^/# /'
+
+if [[ "$(git -C "$ws_super/mods/sub dir" rev-parse HEAD)" == "$c_rec" ]]; then
+  ok "whitespace-path submodule updated to recorded SHA"
+else
+  nok "whitespace-path submodule updated to recorded SHA" \
+    "HEAD: expected $c_rec, got $(git -C "$ws_super/mods/sub dir" rev-parse HEAD)"
+fi
+if grep -q '^RC=0$' <<<"$out3"; then
+  ok "exits 0 with whitespace submodule path"
+else
+  nok "exits 0 with whitespace submodule path" "$(grep '^RC=' <<<"$out3")"
+fi
+
+# T9-T12: recorded SHA absent locally (superproject advanced past submodule's
+# fetched objects). subD additionally has local drift commits -> must be
+# skipped (fetch-then-recheck, then ancestry). subE is merely behind -> after
+# fetch the ancestry test passes and it must update to the new recorded SHA.
+ab_base="$tmp_dir/absent"
+for sub in subD subE; do
+  git_q init -b main "$ab_base/$sub"
+  echo one >"$ab_base/$sub/file"
+  git_q -C "$ab_base/$sub" add file
+  git_q -C "$ab_base/$sub" commit -m c1
+  echo two >"$ab_base/$sub/file"
+  git_q -C "$ab_base/$sub" commit -am c2
+done
+ab_super="$ab_base/super"
+git_q init -b main "$ab_super"
+git_q -C "$ab_super" commit --allow-empty -m root
+git_q -C "$ab_super" submodule add "$ab_base/subD" mods/subD
+git_q -C "$ab_super" submodule add "$ab_base/subE" mods/subE
+git_q -C "$ab_super" commit -m "add submodules"
+# Advance both upstreams to c3; the working submodules have not fetched it.
+for sub in subD subE; do
+  echo three >"$ab_base/$sub/file"
+  git_q -C "$ab_base/$sub" commit -am c3
+done
+d3="$(git -C "$ab_base/subD" rev-parse HEAD)"
+e3="$(git -C "$ab_base/subE" rev-parse HEAD)"
+# Record c3 gitlinks in the superproject without touching submodule worktrees.
+git_q -C "$ab_super" update-index --add --cacheinfo "160000,$d3,mods/subD"
+git_q -C "$ab_super" update-index --add --cacheinfo "160000,$e3,mods/subE"
+git_q -C "$ab_super" commit -m "bump gitlinks to c3"
+# Drift subD: local commit on top of c2; recorded c3 is absent locally.
+echo local >"$ab_super/mods/subD/file"
+git_q -C "$ab_super/mods/subD" commit -am local-drift
+d_head="$(git -C "$ab_super/mods/subD" rev-parse HEAD)"
+out4="$(run_init_submodules "$ab_super")"
+echo "$out4" | sed 's/^/# /'
+
+if [[ "$(git -C "$ab_super/mods/subD" rev-parse HEAD)" == "$d_head" ]]; then
+  ok "drifted submodule with absent recorded SHA left untouched"
+else
+  nok "drifted submodule with absent recorded SHA left untouched" \
+    "subD HEAD moved: expected $d_head, got $(git -C "$ab_super/mods/subD" rev-parse HEAD)"
+fi
+if grep -q "mods/subD" <<<"$out4" && grep -q "$d_head" <<<"$out4"; then
+  ok "warning names drifted submodule when recorded SHA was absent"
+else
+  nok "warning names drifted submodule when recorded SHA was absent" \
+    "output missing mods/subD or $d_head"
+fi
+if [[ "$(git -C "$ab_super/mods/subE" rev-parse HEAD)" == "$e3" ]]; then
+  ok "behind submodule with absent recorded SHA updated after fetch"
+else
+  nok "behind submodule with absent recorded SHA updated after fetch" \
+    "subE HEAD: expected $e3, got $(git -C "$ab_super/mods/subE" rev-parse HEAD)"
+fi
+if grep -q '^RC=0$' <<<"$out4"; then
+  ok "exits 0 in absent-recorded scenario"
+else
+  nok "exits 0 in absent-recorded scenario" "$(grep '^RC=' <<<"$out4")"
 fi
 
 # ---------- summary ----------------------------------------------------------
