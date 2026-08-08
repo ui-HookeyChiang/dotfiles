@@ -28,6 +28,8 @@ An adopt/reject decision document for codebase-memory-mcp: whether to install it
 
 - [Linux btrfs large-repo benchmark](2026-08-06-cmm-benchmark-large-repos.md) (skill-dev PR #21) — pilot result INVERTS at kernel scale: cmm (MCP-native, 25-turn cap) scored 8/8 with 2.6-4.2x fewer input tokens and ~3x faster wall at hops>=2; hops-1 and global stay native. Token cut ~60-75% at multi-hop, not 99.2%. Heuristic "one-hop -> native; multi-hop -> cmm" SUPPORTED with a repo-size floor; pilot collapse traced to cli-subprocess tax + 15-turn cap. Index cost: 223k nodes / 8.4s / 2.3GB RAM peak / 279MB disk. Findings: skill-dev docs/research/2026-08-08-cmm-benchmark-linux-btrfs/findings.md
 
+- [Security verdict](2026-08-06-cmm-security-review.md) — PASS-WITH-MITIGATIONS for daily adoption on company repos (user sign-off 2026-08-08). Zero network activity verified empirically; macOS binary is ad-hoc signed (not notarized) so checksum verification is the only integrity gate. Mandatory mitigations: pinned verified release + no `update`; never `install` subcommand (per-project MCP config only, no hooks); cache outside cloud-sync scope + no graph.db.zst in company repos; allowlist cpss-app/debbox/debfactory. Gitignore/secrets-handling verification moved to adopt ticket.
+
 ## Not yet specified
 
 - Skill-prose rewrite details (which sections of flow/flow-dev/research change, and to what) — hangs on the adopt direction and on measured query ergonomics.
