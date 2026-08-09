@@ -30,6 +30,8 @@ An adopt/reject decision document for codebase-memory-mcp: whether to install it
 
 - [Security verdict](2026-08-06-cmm-security-review.md) — PASS-WITH-MITIGATIONS for daily adoption on company repos (user sign-off 2026-08-08). Zero network activity verified empirically; macOS binary is ad-hoc signed (not notarized) so checksum verification is the only integrity gate. Mandatory mitigations: pinned verified release + no `update`; never `install` subcommand (per-project MCP config only, no hooks); cache outside cloud-sync scope + no graph.db.zst in company repos; allowlist cpss-app/debbox/debfactory. Gitignore/secrets-handling verification moved to adopt ticket.
 
+- [grep/lsp/cmm eval — all grounds](skill-dev docs/ticket/2026-08-08-grep-lsp-cmm-eval.md, PR #21) — code-nav-eval skill shipped (verify-skill APPROVE_WITH_NOTES) and run on curl (C+clangd), django (python+pyright), luarocks (lua). Final routing row: hops-1/global -> native everywhere; hops>=2 statically-resolvable languages (C, procedural lua; Go/C# predicted) -> cmm ~2-4x cheaper with equal-or-better correctness; python -> native ALWAYS (cmm graph drops closure/decorator edges, confident false negatives — django q5 answered "no callers" for a twice-called function). Real clangd does not change the verdict. Findings: skill-dev docs/research/2026-08-09-cmm-benchmark-*/
+
 ## Not yet specified
 
 - Skill-prose rewrite details (which sections of flow/flow-dev/research change, and to what) — hangs on the adopt direction and on measured query ergonomics.
