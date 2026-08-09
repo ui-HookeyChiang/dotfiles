@@ -25,7 +25,9 @@ invoked from a worktree.
 ## Known red on master
 
 `tests/test-claude-hooks.sh` fails 5 of 9 assertions: it invokes
-`.claude/hooks/block-main-edit.sh`, which commit dbe50de deleted when the
-`.claude` intermediate symlink was dropped. The suite is declared here because
-it exists and runs; fixing or retiring it is separate work. CI has the same
-gap in its `bash -n` and `shellcheck` steps, which still name that path.
+`.claude/hooks/block-main-edit.sh`, a path that stopped resolving when commit
+dbe50de dropped the `.claude` compat symlink. The hook still exists at
+`skill-dev/hooks/block-main-edit.sh`; only the test's path is stale. CI has
+the same gap in its `bash -n` and `shellcheck` steps. The suite is declared
+here because it exists and runs; repointing it is
+`docs/ticket/2026-08-09-test-claude-hooks-missing-hook.md`.
