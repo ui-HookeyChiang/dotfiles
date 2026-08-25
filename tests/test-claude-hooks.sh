@@ -24,6 +24,11 @@ script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd -- "$script_dir/.." && pwd)"
 BLOCK="$repo_root/.claude/hooks/block-main-edit.sh"
 
+if [ ! -x "$BLOCK" ]; then
+  echo "1..0 # SKIP .claude/hooks/block-main-edit.sh is not installed"
+  exit 0
+fi
+
 echo "TAP version 13"
 N=0; FAILS=0
 pass(){ N=$((N+1)); echo "ok $N - $1"; }
