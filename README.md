@@ -16,6 +16,31 @@ cd dotfiles
 exec $SHELL                           # reload
 ```
 
+### Windows (PowerShell)
+
+Windows bootstrap is intentionally separate from `install.sh`, which manages
+Linux/macOS shells and symlinks. From a regular, non-admin PowerShell:
+
+```powershell
+Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+& .\windows\bootstrap.ps1 -ApplyClaudePermissions
+```
+
+It installs user-local Scoop tools, authenticates GitHub over SSH, clones the
+five personal repositories, installs the Node/Python dependencies, and runs the
+Windows-safe skill installer phase. RTK is downloaded from its pinned official
+Windows release; use `-SkipRtk` to defer that step. `agent-cli` is a thin
+Windows launcher for the installed `cross-cli-dispatch` adapter, for example:
+
+```powershell
+agent-cli run --backend codex --model gpt-5.3-codex --effort low --prompt "review this"
+```
+
+`-ApplyClaudePermissions` copies
+`skill-dev`'s allow-all-with-explicit-deny policy. Docker Desktop is still
+required before starting `stock-target-finder` as a Windows service; fill each
+project's `.env` before starting any service.
+
 `./install.sh --help` lists every flag. The script is idempotent — re-run it safely.
 
 ## What install.sh does
