@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ui-hookeychiang.invalid/dotfiles/native-bootstrap-report-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "report_kind", "command", "execution_provenance", "check_contract_ready", "overall", "exit_code", "errors"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "report_kind": {"enum": ["full", "fatal"]},
+    "command": {"enum": ["setup", "check", "unknown"]},
+    "execution_provenance": {"enum": ["windows-native", "unverified"]},
+    "check_contract_ready": {"type": "boolean"},
+    "projects_dir": {"type": ["string", "null"]},
+    "offline": {"type": ["boolean", "null"]},
+    "overall": {"enum": ["ready", "warning", "action_required", "failed"]},
+    "exit_code": {"enum": [0, 2, 10, 20, 30]},
+    "authorizations": {"type": "array", "maxItems": 0},
+    "plans": {"type": "array", "items": {"$ref": "#/$defs/plan"}},
+    "results": {"type": "array", "items": {"$ref": "#/$defs/result"}},
+    "mutations": {"type": "array", "items": {"$ref": "#/$defs/mutation"}},
+    "diagnostics": {"type": "array", "items": {"$ref": "#/$defs/diagnostic"}},
+    "errors": {"type": "array", "items": {"$ref": "#/$defs/error"}},
+    "fallback": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/fallback"}]}
+  },
+  "$defs": {
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope", "name", "required", "status", "code", "message"],
+      "properties": {
+        "scope": {"enum": ["host", "tool", "repository", "action", "service"]},
+        "name": {"type": "string"},
+        "required": {"type": "boolean"},
+        "status": {"enum": ["ready", "warning", "action_required", "failed", "skipped"]},
+        "code": {"type": "string", "pattern": "^NPR-[A-Z0-9-]+$"},
+        "message": {"type": "string"},
+        "remediation": {"type": ["string", "null"]}
+      }
+    },
+    "plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action_id", "target", "required", "state", "blocked_by", "prerequisites", "credential_policy", "network_policy", "environment_profile", "recovery"],
+      "properties": {
+        "action_id": {"type": "string"},
+        "target": {"type": "string"},
+        "required": {"type": "boolean"},
+        "state": {"enum": ["planned", "blocked", "authorized", "started", "applied", "failed", "partial", "unknown"]},
+        "blocked_by": {"type": "array", "items": {"type": "string"}},
+        "prerequisites": {"type": "array", "items": {"type": "string"}},
+        "credential_policy": {"enum": ["deny", "required", "optional"]},
+        "network_policy": {"enum": ["deny", "required", "optional"]},
+        "environment_profile": {"type": "string", "minLength": 1},
+        "recovery": {"$ref": "#/$defs/recovery"}
+      }
+    },
+    "mutation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action_id", "state", "targets", "recovery", "child_exit", "timed_out", "success_probe"],
+      "properties": {
+        "action_id": {"type": "string"},
+        "state": {"enum": ["started", "applied", "failed", "partial", "unknown"]},
+        "targets": {"type": "array", "items": {"type": "string"}},
+        "recovery": {"$ref": "#/$defs/recovery"},
+        "child_exit": {"type": ["integer", "null"]},
+        "timed_out": {"type": "boolean"},
+        "success_probe": {"enum": ["pass", "fail", "unknown", "not_run"]}
+      }
+    },
+    "recovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "owner", "affected", "instructions", "verification"],
+      "properties": {
+        "kind": {"enum": ["exact", "manual", "deferred"]},
+        "owner": {"type": "string", "minLength": 1},
+        "affected": {"type": "array", "items": {"type": "string"}},
+        "instructions": {"type": "string"},
+        "verification": {"type": "string"}
+      }
+    },
+    "fallback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage", "reporting_failure"],
+      "properties": {
+        "stage": {"type": "string", "minLength": 1},
+        "reporting_failure": {"type": "string", "minLength": 1}
+      }
+    },
+    "diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": {"type": "string"},
+        "message": {"type": "string"}
+      }
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message", "stage"],
+      "properties": {
+        "code": {"type": "string"},
+        "message": {"type": "string"},
+        "stage": {"type": "string"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"report_kind": {"const": "full"}}},
+      "then": {
+        "required": ["projects_dir", "offline", "authorizations", "plans", "results", "mutations", "diagnostics", "fallback"],
+        "properties": {"fallback": {"type": "null"}}
+      }
+    },
+    {
+      "if": {"properties": {"report_kind": {"const": "fatal"}}},
+      "then": {
+        "required": ["fallback"],
+        "properties": {
+          "overall": {"const": "failed"},
+          "exit_code": {"const": 30},
+          "check_contract_ready": {"const": false},
+          "execution_provenance": {"enum": ["windows-native", "unverified"]},
+          "fallback": {"$ref": "#/$defs/fallback"}
+        }
+      }
+    }
+  ]
+}

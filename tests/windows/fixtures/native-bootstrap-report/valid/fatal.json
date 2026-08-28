@@ -1,0 +1,1 @@
+{"schema_version":1,"report_kind":"fatal","command":"unknown","execution_provenance":"unverified","check_contract_ready":false,"overall":"failed","exit_code":30,"errors":[{"code":"NPR-INTERNAL","message":"Canonical serialization failed.","stage":"serialization"}],"fallback":{"stage":"serialization","reporting_failure":"canonical serializer failed"}}

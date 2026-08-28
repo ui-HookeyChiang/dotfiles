@@ -1,0 +1,1 @@
+{"schema_version":1,"report_kind":"full","command":"unknown","execution_provenance":"unverified","check_contract_ready":false,"projects_dir":null,"offline":null,"overall":"failed","exit_code":2,"authorizations":[],"plans":[],"results":[],"mutations":[],"diagnostics":[],"errors":[{"code":"NPR-INVOCATION","message":"Command is required.","stage":"invocation"}],"fallback":null}
