@@ -129,6 +129,39 @@
           "fallback": {"$ref": "#/$defs/fallback"}
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "plans": {
+            "contains": {
+              "type": "object",
+              "required": ["required"],
+              "properties": {"required": {"const": true}},
+              "anyOf": [
+                {"required": ["state"], "properties": {"state": {"const": "blocked"}}},
+                {
+                  "required": ["recovery"],
+                  "properties": {
+                    "recovery": {
+                      "type": "object",
+                      "required": ["kind"],
+                      "properties": {"kind": {"const": "deferred"}}
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "required": ["plans"]
+      },
+      "then": {
+        "properties": {
+          "overall": {"enum": ["action_required", "failed"]},
+          "exit_code": {"enum": [10, 20, 30]}
+        }
+      }
     }
   ]
 }

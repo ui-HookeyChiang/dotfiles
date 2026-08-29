@@ -42,6 +42,11 @@ function Assert-Equal {
     Assert-Contract -Condition (($Actual | ConvertTo-Json -Depth 20 -Compress) -ceq ($Expected | ConvertTo-Json -Depth 20 -Compress)) -Message $Message
 }
 
+function Copy-ContractData {
+    param([Parameter(Mandatory)] [object] $Value)
+    return [Management.Automation.PSSerializer]::Deserialize([Management.Automation.PSSerializer]::Serialize($Value))
+}
+
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $modulePath = Join-Path $repoRoot 'windows\NativeBootstrap.Contract.psm1'
 $manifestPath = Join-Path $repoRoot 'windows\native-bootstrap.manifest.psd1'
@@ -67,27 +72,83 @@ if ($script:Failed -eq 0) {
     Assert-Equal -Actual $validation.ExitCode -Expected 0 -Message 'valid contract data maps to exit 0 from the validator'
 
     $invalidManifests = @()
-    $unknownField = [Management.Automation.PSSerializer]::Deserialize([Management.Automation.PSSerializer]::Serialize($manifest))
+    $unknownField = Copy-ContractData $manifest
     $unknownField.unexpected = $true
     $invalidManifests += $unknownField
-    $duplicateAction = [Management.Automation.PSSerializer]::Deserialize([Management.Automation.PSSerializer]::Serialize($manifest))
+    $duplicateAction = Copy-ContractData $manifest
     $duplicateAction.projects[0].actions[0].id = $duplicateAction.actions[0].id
     $invalidManifests += $duplicateAction
-    $duplicateDestination = [Management.Automation.PSSerializer]::Deserialize([Management.Automation.PSSerializer]::Serialize($manifest))
+    $duplicateDestination = Copy-ContractData $manifest
     $duplicateDestination.projects[1].destination_segment = 'DOTFILES'
     $invalidManifests += $duplicateDestination
-    $unsafeExecutor = [Management.Automation.PSSerializer]::Deserialize([Management.Automation.PSSerializer]::Serialize($manifest))
+    $unsafeExecutor = Copy-ContractData $manifest
     $unsafeExecutor.tools[0].executable = 'wsl.exe'
     $invalidManifests += $unsafeExecutor
-    $contradictoryPolicy = [Management.Automation.PSSerializer]::Deserialize([Management.Automation.PSSerializer]::Serialize($manifest))
+    $contradictoryPolicy = Copy-ContractData $manifest
     $contradictoryPolicy.projects[0].actions[0].v1_state = 'inspect'
     $invalidManifests += $contradictoryPolicy
-    $incompleteRecovery = [Management.Automation.PSSerializer]::Deserialize([Management.Automation.PSSerializer]::Serialize($manifest))
+    $incompleteRecovery = Copy-ContractData $manifest
     $incompleteRecovery.actions[0].recovery.Remove('verification')
     $invalidManifests += $incompleteRecovery
+    $unknownProfileField = Copy-ContractData $manifest
+    $unknownProfileField.environment_profiles[0].unexpected = $true
+    $invalidManifests += $unknownProfileField
+    $missingProfileField = Copy-ContractData $manifest
+    $missingProfileField.environment_profiles[0].Remove('allow_inherited')
+    $invalidManifests += $missingProfileField
+    $duplicateProfile = Copy-ContractData $manifest
+    $duplicateProfile.environment_profiles[1].id = $duplicateProfile.environment_profiles[0].id
+    $invalidManifests += $duplicateProfile
+    $unknownProfileReference = Copy-ContractData $manifest
+    $unknownProfileReference.tools[0].environment_profile = 'missing-profile'
+    $invalidManifests += $unknownProfileReference
+    $unknownWrapperField = Copy-ContractData $manifest
+    $unknownWrapperField.tools[1].wrapper_policy.unexpected = $true
+    $invalidManifests += $unknownWrapperField
+    $missingWrapperField = Copy-ContractData $manifest
+    $missingWrapperField.tools[1].wrapper_policy.Remove('require_sha256')
+    $invalidManifests += $missingWrapperField
+    $unknownFutureField = Copy-ContractData $manifest
+    $unknownFutureField.future_activation.unexpected = $true
+    $invalidManifests += $unknownFutureField
+    $missingFutureField = Copy-ContractData $manifest
+    $missingFutureField.future_activation.Remove('approve_all')
+    $invalidManifests += $missingFutureField
+    $wrongToolInventory = Copy-ContractData $manifest
+    $wrongToolInventory.tools[0].executable = 'powershell.exe'
+    $invalidManifests += $wrongToolInventory
+    $brokenToolReference = Copy-ContractData $manifest
+    $brokenToolReference.projects[0].required_tools[0] = 'missing-tool'
+    $invalidManifests += $brokenToolReference
+    $brokenPrerequisite = Copy-ContractData $manifest
+    $brokenPrerequisite.projects[0].actions[1].prerequisites[0] = 'missing-action'
+    $invalidManifests += $brokenPrerequisite
+    $wrongProfileType = Copy-ContractData $manifest
+    $wrongProfileType.environment_profiles[0].allow_inherited = 'false'
+    $invalidManifests += $wrongProfileType
+    $missingProjectField = Copy-ContractData $manifest
+    $missingProjectField.projects[0].Remove('actions')
+    $invalidManifests += $missingProjectField
+    $missingActionField = Copy-ContractData $manifest
+    $missingActionField.actions[0].Remove('executor_id')
+    $invalidManifests += $missingActionField
+    $missingToolField = Copy-ContractData $manifest
+    $missingToolField.tools[0].Remove('network_policy')
+    $invalidManifests += $missingToolField
+    $nullTool = Copy-ContractData $manifest
+    $nullTool.tools[0] = $null
+    $invalidManifests += $nullTool
+    $wrongProjectInventory = Copy-ContractData $manifest
+    $wrongProjectInventory.projects[0].canonical_identity = 'github.com/ui-HookeyChiang/not-dotfiles'
+    $invalidManifests += $wrongProjectInventory
+    $wrongActionInventory = Copy-ContractData $manifest
+    $wrongActionInventory.actions[0].id = 'replacement-action'
+    $invalidManifests += $wrongActionInventory
     foreach ($invalidManifest in $invalidManifests) {
-        $invalidResult = Test-NativeBootstrapManifest -Manifest $invalidManifest
-        Assert-Contract -Condition (-not $invalidResult.Valid -and $invalidResult.ExitCode -eq 30) -Message 'invalid contract data is rejected and maps to exit 30 without a child seam'
+        $invalidResult = $null
+        $threw = $false
+        try { $invalidResult = Test-NativeBootstrapManifest -Manifest $invalidManifest } catch { $threw = $true }
+        Assert-Contract -Condition (-not $threw -and -not $invalidResult.Valid -and $invalidResult.ExitCode -eq 30) -Message 'invalid contract data returns structured exit 30 without throwing or invoking a child seam'
     }
 
     foreach ($url in @('git@github.com:UI-HookeyChiang/DotFiles.git', 'ssh://git@github.com/ui-HookeyChiang/dotfiles.git', 'https://github.com/ui-HookeyChiang/dotfiles.git')) {
@@ -108,7 +169,17 @@ if ($script:Failed -eq 0) {
         [pscustomobject]@{ scope = 'repository'; name = 'dotfiles'; required = $true; status = 'skipped'; code = 'NPR-A' }
     )
     Assert-Equal -Actual (Get-NativeBootstrapOverall -Results $results) -Expected 'action_required' -Message 'required skipped results normalize to action-required with fixed precedence'
-    Assert-Equal -Actual (Get-NativeBootstrapExitCode -Overall ready -RequiredDeferred) -Expected 10 -Message 'exit 0 is unreachable while required deferred work exists'
+    $optionalFailure = @(
+        [pscustomobject]@{ required = $true; status = 'ready' },
+        [pscustomobject]@{ required = $false; status = 'failed' }
+    )
+    Assert-Equal -Actual (Get-NativeBootstrapOverall -Results $optionalFailure) -Expected 'ready' -Message 'optional failures do not escalate a required ready result'
+    Assert-Equal -Actual (Get-NativeBootstrapOverall -Results @([pscustomobject]@{ required = $false; status = 'failed' })) -Expected 'skipped' -Message 'optional-only results do not define overall status'
+    Assert-Equal -Actual (Get-NativeBootstrapExitCode -Overall ready -Manifest $manifest -Results @() -Plans @()) -Expected 10 -Message 'exit selection derives required deferred work from the manifest'
+    $requiredBlockedPlan = @([pscustomobject]@{ required = $true; state = 'blocked'; blocked_by = @('deferred') })
+    Assert-Equal -Actual (Get-NativeBootstrapExitCode -Overall ready -Results @() -Plans $requiredBlockedPlan) -Expected 10 -Message 'exit selection derives required blocking from plans'
+    $requiredDeferredPlan = @([pscustomobject]@{ required = $true; state = 'planned'; recovery = [pscustomobject]@{ kind = 'deferred' } })
+    Assert-Equal -Actual (Get-NativeBootstrapExitCode -Overall ready -Results @() -Plans $requiredDeferredPlan) -Expected 10 -Message 'exit selection derives required deferred recovery from plans'
     Assert-Equal -Actual (Get-NativeBootstrapExitCode -Overall failed) -Expected 20 -Message 'failed operations select exit 20'
     Assert-Equal -Actual (Get-NativeBootstrapExitCode -Overall ready -InvariantFailure) -Expected 30 -Message 'invariant failure selects exit 30'
     $sorted = Sort-NativeBootstrapResults -Results $results -ProjectOrder @('dotfiles', 'skill-dev')
@@ -120,11 +191,38 @@ if ($script:Failed -eq 0) {
     $redacted = Protect-NativeBootstrapText -Text "TOKEN=hunter2 Authorization: Bearer abc https://user:pass@example.com/a C:\Users\Ada\secret`u{0001}" -ProfileRoots @('C:\Users\Ada')
     Assert-Contract -Condition ($redacted -notmatch 'hunter2|abc|user:pass|C:\\Users\\Ada' -and $redacted -match '<redacted>' -and $redacted -match '<profile-root>') -Message 'diagnostic text redacts credential forms, URL userinfo, profile roots, and controls'
     Assert-Equal -Actual (Protect-NativeBootstrapText -Text 'anything' -CredentialAuthorized) -Expected '<suppressed:credential-authorized-action>' -Message 'credential-authorized child text is fully suppressed'
+    foreach ($secretText in @('TOKEN="two words" trailing', "PASSWORD='two words' trailing", 'API_KEY="escaped \"value\" here" trailing', 'SECRET="unterminated value')) {
+        $quotedRedaction = Protect-NativeBootstrapText -Text $secretText
+        Assert-Contract -Condition ($quotedRedaction -notmatch 'two words|escaped|value|here' -and $quotedRedaction -match '<redacted>') -Message 'quoted credential assignments are redacted through their closing quote'
+    }
 
     $fullFixture = Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'fixtures\native-bootstrap-report\valid\full.json') | ConvertFrom-Json
     $serialized = ConvertTo-NativeBootstrapReportJson -Report $fullFixture
     Assert-Contract -Condition ($serialized.StartsWith('{"schema_version":1,"report_kind":"full","command":"check","execution_provenance":"windows-native","check_contract_ready":true')) -Message 'full report serialization uses the fixed canonical field order'
     Assert-Contract -Condition ($serialized | Test-Json -SchemaFile $schemaPath) -Message 'serialized full reports satisfy the native JSON Schema contract'
+    $orderedReportA = $fullFixture
+    $orderedReportB = $fullFixture | ConvertTo-Json -Depth 30 | ConvertFrom-Json
+    $orderedReportA.plans[0].blocked_by = @('zeta', 'alpha')
+    $orderedReportA.plans[0].prerequisites = @('tool.z', 'tool.a')
+    $orderedReportB.plans[0].blocked_by = @('alpha', 'zeta')
+    $orderedReportB.plans[0].prerequisites = @('tool.a', 'tool.z')
+    $orderedReportA.results = @(
+        [pscustomobject][ordered]@{ scope = 'action'; name = 'z'; required = $true; status = 'action_required'; code = 'NPR-Z'; message = 'z'; remediation = $null },
+        [pscustomobject][ordered]@{ scope = 'host'; name = 'host'; required = $true; status = 'ready'; code = 'NPR-A'; message = 'a'; remediation = $null }
+    )
+    $orderedReportB.results = @(
+        [pscustomobject]@{ remediation = $null; message = 'a'; code = 'NPR-A'; status = 'ready'; required = $true; name = 'host'; scope = 'host' },
+        [pscustomobject]@{ remediation = $null; message = 'z'; code = 'NPR-Z'; status = 'action_required'; required = $true; name = 'z'; scope = 'action' }
+    )
+    Assert-Equal -Actual (ConvertTo-NativeBootstrapReportJson -Report $orderedReportA) -Expected (ConvertTo-NativeBootstrapReportJson -Report $orderedReportB) -Message 'canonical serialization is byte-identical across nested dictionary and set ordering'
+
+    $readyWithBlockedPlan = $fullFixture | ConvertTo-Json -Depth 30 | ConvertFrom-Json
+    $readyWithBlockedPlan.overall = 'ready'
+    $readyWithBlockedPlan.exit_code = 0
+    $readyWithBlockedPlan.plans[0].state = 'planned'
+    $readyBlockedValid = $false
+    try { $readyBlockedValid = ($readyWithBlockedPlan | ConvertTo-Json -Depth 30) | Test-Json -SchemaFile $schemaPath -ErrorAction Stop } catch { $readyBlockedValid = $false }
+    Assert-Contract -Condition (-not $readyBlockedValid) -Message 'schema rejects ready exit 0 with a required blocked plan'
 
     $fixtureRoot = Join-Path $PSScriptRoot 'fixtures\native-bootstrap-report'
     foreach ($fixture in Get-ChildItem -LiteralPath (Join-Path $fixtureRoot 'valid') -Filter '*.json' | Sort-Object Name) {
