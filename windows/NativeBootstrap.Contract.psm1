@@ -28,6 +28,24 @@ function Test-ContractFields {
     foreach ($name in $keys) { if ($name -notin $Allowed) { $Errors.Add("$Location has unknown field '$name'.") } }
 }
 
+function Test-CanonicalContractDescriptors {
+    param(
+        [object[]] $Values,
+        [string] $IdentityField,
+        [System.Collections.IDictionary] $ExpectedHashes,
+        [string] $Location,
+        [System.Collections.Generic.List[string]] $Errors
+    )
+    if ($Values.Count -ne $ExpectedHashes.Count) { $Errors.Add("$Location inventory is incomplete.") }
+    foreach ($value in $Values) {
+        if ($null -eq $value) { continue }
+        $identity = [string](Get-ContractValue $value $IdentityField)
+        if (-not $ExpectedHashes.Contains($identity) -or (Get-CanonicalContractHash $value) -cne $ExpectedHashes[$identity]) {
+            $Errors.Add("$Location descriptor '$identity' differs from the canonical version 1 contract.")
+        }
+    }
+}
+
 function Test-NativeBootstrapManifest {
     [CmdletBinding()]
     param([Parameter(Mandatory)] [AllowNull()] [object] $Manifest)
@@ -115,6 +133,31 @@ function Test-NativeBootstrapManifest {
     if (Compare-Object @($profileIds | Sort-Object -Unique) @($expectedProfileIds | Sort-Object)) { $errors.Add('manifest has an incomplete environment profile inventory.') }
     $expectedActionIds = @('checkout-root.create.deferred', 'shell-tests.deferred', 'services.deferred', 'repo.dotfiles.clone.deferred', 'dotfiles.host-integration.deferred', 'repo.skill-dev.clone.deferred', 'skill-dev.dependencies.deferred', 'repo.awesome-cv.clone.deferred', 'awesome-cv.dependencies.deferred', 'repo.telegram-bridge.clone.deferred', 'telegram-bridge.dependencies.deferred', 'repo.stock-finder.clone.deferred', 'stock-finder.dependencies.deferred')
     if (Compare-Object @($actionIds | Sort-Object -Unique) @($expectedActionIds | Sort-Object)) { $errors.Add('manifest has an incomplete action inventory.') }
+
+    # These hashes pin the reviewed static descriptors without loading a second manifest or executable content.
+    $profileHashes = [ordered]@{
+        'tool-probe-v1' = 'e315d1d65cc79f4f58dbce6ba304f68a0e7d6301e599b708d1c551421611dcd0'; 'git-inspect-v1' = '358bc5b3f261b16147e2cf38bb4a1dc81597603dbc39f643613f887c50a62e24'
+        'git-clone-anonymous-future' = '4d17d88e8954ed95bb6ac4b7d1a5a7f1dbaf69045aa2493c1e6ccf1faf4199c6'; 'git-clone-gcm-future' = 'ad221cd1165427b15995c70c04ee3f836e851efa3b0ba0706c41167a172106a0'
+    }
+    $toolHashes = [ordered]@{
+        pwsh = '72178fbd4dc8b3ff9b9e7fff397689cef1ec7a09802ff98dc0aec7ab1ac2640a'; scoop = 'bfc9c721f694c607dbdb328c7e89696caabfbd078b07e51d8e41d48aba421a52'; git = '3b350d08a73f6bb9495b36855afd03d94d6d3b4bd139d04604640d89ad59b240'
+        gh = 'bbe5b5d4b4aacd5920092a120b64a0a6272013a880b311d709032bde5be9c9fc'; node = 'ae9452889e8ab8fff30a6a84cd328775fdd535afa5f31abf5ea2c942563c62df'; npm = '3e4c5cc2e40b3643573d303de4b8336dbdb9528d379ebf1618802317c48ed01d'
+        python = '6604c871293004b6e778d7e8720a502f4c376343172bba328899f66609509a57'; uv = '01f84d19455e4d782d74f8df881a605389bbb52e372cecd721f0417b630333ee'; jq = '4d6c4825a96bb0eeb4e76f7b6619320bc799430428d81c61a149864400e9e004'
+        yq = 'c8e4e9f7bf9751f265f43d288b264f43ea1cf6e49587d4f90c62fd655d31d35a'; fzf = '8168848fa9fe21e437023a2222566ebd73b691a358a0bfa36e2b08b99cbd981d'; fd = 'a2ba690e4ec708c0471634b12bdf020de26395f4723e15ad997901110bf35bc7'
+        'ast-grep' = '1e2ce7bdedac268d0191a0fd795964cb4f8e84ddfbe5ad45e88a097b6b722687'; pdfinfo = 'ce7d8fd26a13bd9ca6b29ec217f78aae84706e5550ee9f9e2c74b38ec64631a0'; xelatex = 'faa1bbabccf7cedf7ff3ec43d6f7f53ca918d6739933ff33eafc6fdebc3cdf38'
+    }
+    $hostActionHashes = [ordered]@{
+        'checkout-root.create.deferred' = 'a5aa860b3277323dcb985bbaab2f6896ad1a557c6e8a2e5e3a1eb4dfbf32d32d'; 'shell-tests.deferred' = '89a294680788279113e93d406c5cb9ef6119477724ceb8543547e96239983732'; 'services.deferred' = 'd73beb99b87aa860488d34fa0a3d969632a3a1f1ca0d09945d1e6a653539a320'
+    }
+    $projectHashes = [ordered]@{
+        dotfiles = '3555d674502865905809288454ca6025c45f5eff2743f329d945126cfd32b187'; 'skill-dev' = 'f60288feeb3b579ba2d9cf545c38c93385b45be457c7e24fc4b83f9d54c661ef'; 'Awesome-CV' = '99d082d2907fa9ad4f7f5773843255cff2b1bdd4035b970627c5978e120ba593'
+        'telegram-claude-bridge' = 'fbe519410594a954b5af723fda56beea91f482f2eae0df09075c3f3ec0be6881'; 'stock-target-finder' = '889d7251817aca8395f6cff8a693e5764643d66ae15f6f82777564f03cacbbb4'
+    }
+    Test-CanonicalContractDescriptors $profiles 'id' $profileHashes 'environment profile' $errors
+    Test-CanonicalContractDescriptors $tools 'id' $toolHashes 'tool' $errors
+    Test-CanonicalContractDescriptors $hostActions 'id' $hostActionHashes 'host action' $errors
+    Test-CanonicalContractDescriptors $projects 'name' $projectHashes 'project' $errors
+    if ((Get-CanonicalContractHash $future) -cne '7eac3a82a41314d738b1be7cc534a28e69983dcbbe4b1b453ee7deb3d8acfcb8') { $errors.Add('future activation descriptor differs from the canonical version 1 contract.') }
 
     foreach ($profile in $profiles) {
         if ($null -eq $profile) { continue }
@@ -303,7 +346,9 @@ function Protect-NativeBootstrapText {
     if ($CredentialAuthorized) { return '<suppressed:credential-authorized-action>' }
     if ($null -eq $Text) { return $null }
     $result = $Text -replace '(?i)(authorization\s*:\s*(?:bearer|basic)\s+)\S+', '$1<redacted>'
-    $credentialName = '[A-Z0-9_]*(?:TOKEN|SECRET|PASSWORD|CREDENTIAL|API_KEY)[A-Z0-9_]*'
+    $credentialName = '[A-Z0-9_]*(?:TOKEN|SECRET|PASSWORD|CREDENTIAL|KEY)[A-Z0-9_]*'
+    $result = [regex]::Replace($result, "(?is)\b($credentialName)\s*=\s*`"(?:\\.|[^`"\\])*\z", '$1=<redacted>')
+    $result = [regex]::Replace($result, "(?is)\b($credentialName)\s*=\s*'(?:''|[^'])*\z", '$1=<redacted>')
     $result = [regex]::Replace($result, "(?i)\b($credentialName)\s*=\s*(?:`"(?:\\.|[^`"\\])*`"|'(?:''|[^'])*'|(?![`"'])\S+)", '$1=<redacted>')
     $result = [regex]::Replace($result, "(?im)\b($credentialName)\s*=\s*(?!<redacted>)[^\r\n]*", '$1=<redacted>')
     $result = $result -replace '(?i)(https?://)[^/@\s]+@', '$1<redacted>@'
@@ -316,20 +361,33 @@ function ConvertTo-CanonicalContractValue {
     if ($null -eq $Value) { return $null }
     if ($Value -is [System.Collections.IDictionary] -or $Value.GetType().FullName -eq 'System.Management.Automation.PSCustomObject') {
         $ordered = [ordered]@{}
-        foreach ($key in @(Get-ContractKeys $Value | Sort-Object)) { $ordered[$key] = ConvertTo-CanonicalContractValue (Get-ContractValue $Value $key) $key }
+        foreach ($key in @(Get-ContractKeys $Value | Sort-Object { ConvertTo-OrdinalSortKey ([string]$_) })) { $ordered[$key] = ConvertTo-CanonicalContractValue (Get-ContractValue $Value $key) $key }
         return $ordered
     }
     if ($Value -is [array]) {
         $items = @($Value | ForEach-Object { ConvertTo-CanonicalContractValue $_ $PropertyName })
-        if ($PropertyName -in @('affected', 'authorizations', 'blocked_by', 'prerequisites', 'targets')) { $items = @($items | Sort-Object { $_ | ConvertTo-Json -Depth 30 -Compress }) }
-        elseif ($PropertyName -eq 'plans') { $items = @($items | Sort-Object @{ Expression = { Get-ContractValue $_ 'action_id' } }, @{ Expression = { Get-ContractValue $_ 'target' } }) }
-        elseif ($PropertyName -eq 'results') { $items = @($items | Sort-Object @{ Expression = { Get-ContractValue $_ 'scope' } }, @{ Expression = { Get-ContractValue $_ 'name' } }, @{ Expression = { Get-ContractValue $_ 'code' } }) }
-        elseif ($PropertyName -eq 'mutations') { $items = @($items | Sort-Object @{ Expression = { Get-ContractValue $_ 'action_id' } }) }
-        elseif ($PropertyName -eq 'diagnostics') { $items = @($items | Sort-Object @{ Expression = { Get-ContractValue $_ 'code' } }, @{ Expression = { Get-ContractValue $_ 'message' } }) }
-        elseif ($PropertyName -eq 'errors') { $items = @($items | Sort-Object @{ Expression = { Get-ContractValue $_ 'code' } }, @{ Expression = { Get-ContractValue $_ 'stage' } }, @{ Expression = { Get-ContractValue $_ 'message' } }) }
+        $actionOrder = @('checkout-root.create.deferred', 'shell-tests.deferred', 'services.deferred', 'repo.dotfiles.clone.deferred', 'dotfiles.host-integration.deferred', 'repo.skill-dev.clone.deferred', 'skill-dev.dependencies.deferred', 'repo.awesome-cv.clone.deferred', 'awesome-cv.dependencies.deferred', 'repo.telegram-bridge.clone.deferred', 'telegram-bridge.dependencies.deferred', 'repo.stock-finder.clone.deferred', 'stock-finder.dependencies.deferred')
+        $projectOrder = @('dotfiles', 'skill-dev', 'Awesome-CV', 'telegram-claude-bridge', 'stock-target-finder')
+        if ($PropertyName -in @('affected', 'authorizations', 'blocked_by', 'prerequisites', 'targets')) { $items = @($items | Sort-Object { ConvertTo-OrdinalSortKey ([string]$_) }) }
+        elseif ($PropertyName -eq 'plans') { $items = @($items | Sort-Object @{ Expression = { $position = [Array]::IndexOf($actionOrder, [string](Get-ContractValue $_ 'action_id')); if ($position -lt 0) { [int]::MaxValue } else { $position } } }, @{ Expression = { ConvertTo-OrdinalSortKey ([string](Get-ContractValue $_ 'action_id')) } }, @{ Expression = { ConvertTo-OrdinalSortKey ([string](Get-ContractValue $_ 'target')) } }) }
+        elseif ($PropertyName -eq 'results') { $items = @($items | Sort-Object @{ Expression = { if ((Get-ContractValue $_ 'scope') -in @('host', 'tool')) { 0 } else { 1 } } }, @{ Expression = { $position = [Array]::IndexOf($projectOrder, [string](Get-ContractValue $_ 'name')); if ($position -lt 0) { [int]::MaxValue } else { $position } } }, @{ Expression = { ConvertTo-OrdinalSortKey ([string](Get-ContractValue $_ 'scope')) } }, @{ Expression = { ConvertTo-OrdinalSortKey ([string](Get-ContractValue $_ 'code')) } }) }
+        elseif ($PropertyName -eq 'mutations') { $items = @($items | Sort-Object @{ Expression = { $position = [Array]::IndexOf($actionOrder, [string](Get-ContractValue $_ 'action_id')); if ($position -lt 0) { [int]::MaxValue } else { $position } } }, @{ Expression = { ConvertTo-OrdinalSortKey ([string](Get-ContractValue $_ 'action_id')) } }) }
+        elseif ($PropertyName -eq 'diagnostics') { $items = @($items | Sort-Object @{ Expression = { ConvertTo-OrdinalSortKey ([string](Get-ContractValue $_ 'code')) } }, @{ Expression = { ConvertTo-OrdinalSortKey ([string](Get-ContractValue $_ 'message')) } }) }
+        elseif ($PropertyName -eq 'errors') { $items = @($items | Sort-Object @{ Expression = { ConvertTo-OrdinalSortKey ([string](Get-ContractValue $_ 'code')) } }, @{ Expression = { ConvertTo-OrdinalSortKey ([string](Get-ContractValue $_ 'stage')) } }, @{ Expression = { ConvertTo-OrdinalSortKey ([string](Get-ContractValue $_ 'message')) } }) }
         return ,$items
     }
     return $Value
+}
+
+function ConvertTo-OrdinalSortKey {
+    param([AllowEmptyString()] [string] $Value)
+    return (($Value.ToCharArray() | ForEach-Object { ([int]$_).ToString('x4') }) -join '')
+}
+
+function Get-CanonicalContractHash {
+    param([AllowNull()] [object] $Value)
+    $json = ConvertTo-CanonicalContractValue $Value | ConvertTo-Json -Depth 30 -Compress
+    return [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($json))).ToLowerInvariant()
 }
 
 function ConvertTo-NativeBootstrapReportJson {

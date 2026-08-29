@@ -132,6 +132,30 @@
     },
     {
       "if": {
+        "required": ["report_kind", "check_contract_ready"],
+        "properties": {"report_kind": {"const": "full"}, "check_contract_ready": {"const": true}}
+      },
+      "then": {
+        "required": ["plans"],
+        "properties": {
+          "overall": {"enum": ["action_required", "failed"]},
+          "exit_code": {"enum": [10, 20, 30]},
+          "plans": {
+            "contains": {
+              "type": "object",
+              "required": ["required"],
+              "properties": {"required": {"const": true}},
+              "anyOf": [
+                {"required": ["state"], "properties": {"state": {"const": "blocked"}}},
+                {"required": ["recovery"], "properties": {"recovery": {"required": ["kind"], "properties": {"kind": {"const": "deferred"}}}}}
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "properties": {
           "plans": {
             "contains": {

@@ -144,6 +144,29 @@ if ($script:Failed -eq 0) {
     $wrongActionInventory = Copy-ContractData $manifest
     $wrongActionInventory.actions[0].id = 'replacement-action'
     $invalidManifests += $wrongActionInventory
+    $unsafeToolArguments = Copy-ContractData $manifest
+    $unsafeToolArguments.tools[0].version_argv = @('-EncodedCommand', 'arbitrary-code')
+    $invalidManifests += $unsafeToolArguments
+    $unsafeToolProfile = Copy-ContractData $manifest
+    $unsafeToolProfile.tools[0].environment_profile = 'git-clone-gcm-future'
+    $invalidManifests += $unsafeToolProfile
+    $emptyProjectTools = Copy-ContractData $manifest
+    $emptyProjectTools.projects[0].required_tools = @()
+    $invalidManifests += $emptyProjectTools
+    $emptyReadinessProbes = Copy-ContractData $manifest
+    $emptyReadinessProbes.projects[0].readiness_probes = @()
+    $invalidManifests += $emptyReadinessProbes
+    $relocatedAction = Copy-ContractData $manifest
+    $relocated = $relocatedAction.projects[0].actions[0]
+    $relocatedAction.projects[0].actions = @($relocatedAction.projects[0].actions | Select-Object -Skip 1)
+    $relocatedAction.actions = @($relocatedAction.actions) + @($relocated)
+    $invalidManifests += $relocatedAction
+    $optionalRequiredAction = Copy-ContractData $manifest
+    $optionalRequiredAction.actions[0].required = $false
+    $invalidManifests += $optionalRequiredAction
+    $invalidRecoveryKind = Copy-ContractData $manifest
+    $invalidRecoveryKind.actions[0].recovery.kind = 'bogus'
+    $invalidManifests += $invalidRecoveryKind
     foreach ($invalidManifest in $invalidManifests) {
         $invalidResult = $null
         $threw = $false
@@ -195,6 +218,10 @@ if ($script:Failed -eq 0) {
         $quotedRedaction = Protect-NativeBootstrapText -Text $secretText
         Assert-Contract -Condition ($quotedRedaction -notmatch 'two words|escaped|value|here' -and $quotedRedaction -match '<redacted>') -Message 'quoted credential assignments are redacted through their closing quote'
     }
+    foreach ($secretText in @('AWS_ACCESS_KEY_ID=AKIAEXAMPLE', 'PRIVATE_KEY=private-material', "SECRET=`"first`r`nsecond-secret")) {
+        $keyRedaction = Protect-NativeBootstrapText -Text $secretText
+        Assert-Contract -Condition ($keyRedaction -notmatch 'AKIAEXAMPLE|private-material|second-secret' -and $keyRedaction -match '<redacted>') -Message 'generic key names and multiline unterminated quoted credentials are redacted'
+    }
 
     $fullFixture = Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'fixtures\native-bootstrap-report\valid\full.json') | ConvertFrom-Json
     $serialized = ConvertTo-NativeBootstrapReportJson -Report $fullFixture
@@ -215,6 +242,19 @@ if ($script:Failed -eq 0) {
         [pscustomobject]@{ remediation = $null; message = 'z'; code = 'NPR-Z'; status = 'action_required'; required = $true; name = 'z'; scope = 'action' }
     )
     Assert-Equal -Actual (ConvertTo-NativeBootstrapReportJson -Report $orderedReportA) -Expected (ConvertTo-NativeBootstrapReportJson -Report $orderedReportB) -Message 'canonical serialization is byte-identical across nested dictionary and set ordering'
+    $canonicalOrderReport = $fullFixture | ConvertTo-Json -Depth 30 | ConvertFrom-Json
+    $canonicalOrderReport.plans = @(
+        [pscustomobject]@{ action_id = 'services.deferred'; target = 'host'; required = $true; state = 'blocked'; blocked_by = @('ä', 'z', 'a'); prerequisites = @(); credential_policy = 'deny'; network_policy = 'deny'; environment_profile = 'tool-probe-v1'; recovery = [pscustomobject]@{ kind = 'deferred'; owner = 'issue 09'; affected = @(); instructions = 'deferred'; verification = 'verify' } },
+        [pscustomobject]@{ action_id = 'shell-tests.deferred'; target = 'host'; required = $true; state = 'blocked'; blocked_by = @('deferred'); prerequisites = @(); credential_policy = 'deny'; network_policy = 'deny'; environment_profile = 'tool-probe-v1'; recovery = [pscustomobject]@{ kind = 'deferred'; owner = 'issue 08'; affected = @(); instructions = 'deferred'; verification = 'verify' } }
+    )
+    $canonicalOrderReport.results = @(
+        [pscustomobject]@{ scope = 'action'; name = 'services.deferred'; required = $true; status = 'action_required'; code = 'NPR-SERVICE'; message = 'service'; remediation = $null },
+        [pscustomobject]@{ scope = 'host'; name = 'host'; required = $true; status = 'ready'; code = 'NPR-HOST'; message = 'host'; remediation = $null }
+    )
+    $canonicalOrder = ConvertTo-NativeBootstrapReportJson -Report $canonicalOrderReport | ConvertFrom-Json
+    Assert-Equal -Actual @($canonicalOrder.plans.action_id) -Expected @('shell-tests.deferred', 'services.deferred') -Message 'canonical plans follow manifest action order'
+    Assert-Equal -Actual @($canonicalOrder.results.scope) -Expected @('host', 'action') -Message 'canonical results put host scope first'
+    Assert-Equal -Actual @($canonicalOrder.plans[1].blocked_by) -Expected @('a', 'z', 'ä') -Message 'canonical sets use ordinal string order'
 
     $readyWithBlockedPlan = $fullFixture | ConvertTo-Json -Depth 30 | ConvertFrom-Json
     $readyWithBlockedPlan.overall = 'ready'
@@ -223,6 +263,13 @@ if ($script:Failed -eq 0) {
     $readyBlockedValid = $false
     try { $readyBlockedValid = ($readyWithBlockedPlan | ConvertTo-Json -Depth 30) | Test-Json -SchemaFile $schemaPath -ErrorAction Stop } catch { $readyBlockedValid = $false }
     Assert-Contract -Condition (-not $readyBlockedValid) -Message 'schema rejects ready exit 0 with a required blocked plan'
+    $readyWithoutPlans = $fullFixture | ConvertTo-Json -Depth 30 | ConvertFrom-Json
+    $readyWithoutPlans.plans = @()
+    $readyWithoutPlans.overall = 'ready'
+    $readyWithoutPlans.exit_code = 0
+    $readyWithoutPlansValid = $false
+    try { $readyWithoutPlansValid = ($readyWithoutPlans | ConvertTo-Json -Depth 30) | Test-Json -SchemaFile $schemaPath -ErrorAction Stop } catch { $readyWithoutPlansValid = $false }
+    Assert-Contract -Condition (-not $readyWithoutPlansValid) -Message 'schema version 1 rejects ready exit 0 even when required plans are omitted'
 
     $fixtureRoot = Join-Path $PSScriptRoot 'fixtures\native-bootstrap-report'
     foreach ($fixture in Get-ChildItem -LiteralPath (Join-Path $fixtureRoot 'valid') -Filter '*.json' | Sort-Object Name) {
@@ -237,6 +284,18 @@ if ($script:Failed -eq 0) {
         try { $isValid = Get-Content -Raw -LiteralPath $fixture.FullName | Test-Json -SchemaFile $schemaPath -ErrorAction Stop } catch { $isValid = $false }
         Assert-Contract -Condition (-not $isValid) -Message "invalid schema fixture is rejected by Test-Json: $($fixture.Name)"
     }
+    $coveredMutationStates = @(Get-ChildItem -LiteralPath (Join-Path $fixtureRoot 'valid') -Filter '*.json' | ForEach-Object {
+        $fixtureData = Get-Content -Raw -LiteralPath $_.FullName | ConvertFrom-Json
+        if ($null -ne $fixtureData.PSObject.Properties['mutations']) {
+            foreach ($mutation in @($fixtureData.mutations)) { if ($null -ne $mutation) { $mutation.state } }
+        }
+    } | Sort-Object -Unique)
+    Assert-Equal -Actual $coveredMutationStates -Expected @('applied', 'failed', 'partial', 'unknown') -Message 'valid pure fixtures cover every successor mutation terminal state'
+    $coveredDiagnostics = @(Get-ChildItem -LiteralPath (Join-Path $fixtureRoot 'valid') -Filter '*.json' | ForEach-Object {
+        $fixtureData = Get-Content -Raw -LiteralPath $_.FullName | ConvertFrom-Json
+        if ($null -ne $fixtureData.PSObject.Properties['diagnostics']) { $fixtureData.diagnostics }
+    } | Where-Object { $null -ne $_ })
+    Assert-Contract -Condition ($coveredDiagnostics.Count -gt 0) -Message 'valid pure fixtures exercise non-empty diagnostic objects'
 }
 
 if ($script:Failed -gt 0) {
