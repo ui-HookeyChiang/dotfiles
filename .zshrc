@@ -51,7 +51,6 @@ zinit wait lucid atload'!_zsh_autosuggest_start' for \
 # --- 來自 Oh-My-Zsh 的插件 (Snippets) ---
 zinit wait lucid for \
     OMZ::plugins/git/git.plugin.zsh \
-    OMZ::plugins/tmux/tmux.plugin.zsh \
     OMZ::plugins/fzf/fzf.plugin.zsh \
     OMZ::plugins/extract/extract.plugin.zsh
 
@@ -212,7 +211,10 @@ oc() {
 # Headless coding CLIs — prompt mode with auto-approve
 alias claude='claude --dangerously-skip-permissions'
 alias cc='claude -p --dangerously-skip-permissions'
-command -v codex >/dev/null 2>&1 && alias cx='codex -a never'
+if command -v codex >/dev/null 2>&1; then
+  alias codex='command codex --dangerously-bypass-approvals-and-sandbox'
+  alias cx='command codex --dangerously-bypass-approvals-and-sandbox'
+fi
 alias cur='cursor -p'
 
 # opencode

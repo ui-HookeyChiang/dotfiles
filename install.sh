@@ -162,7 +162,7 @@ Usage: ./install.sh [OPTIONS]
 Single-command bootstrap for this dotfiles repo. Idempotent.
 
 Core (always run unless --no-symlink):
-  - system packages (zsh, tmux, neovim, ripgrep, fd, fzf, bat, jq, zoxide, tldr, git)
+  - system packages (zsh, tmux, neovim, ripgrep, fd, fzf, bat, eza, jq, zoxide, git)
   - zsh as default shell (.zshrc auto-bootstraps zinit on first launch)
   - git submodules (.config/nvim, .config/tmux)
   - dotfile symlinks (whitelist + timestamped backup on conflict)
@@ -346,7 +346,11 @@ sudo_keepalive() {
     note "sudo not available; skip"
     return 0
   fi
-  sudo -v
+  # A NOPASSWD sudoers rule may permit commands in a non-interactive runner
+  # while still rejecting `sudo -v` because no terminal is attached.
+  if ! sudo -n true 2>/dev/null; then
+    sudo -v
+  fi
   # Background keep-alive: refresh sudo timestamp every 60s, exit when parent dies.
   ( while true; do
       sudo -n true 2>/dev/null || exit
@@ -449,7 +453,7 @@ install_core_packages() {
   local pkgs
   case "$OS" in
     linux)
-      pkgs=(zsh tmux neovim ripgrep fd-find fzf bat jq zoxide tldr git)
+      pkgs=(zsh tmux neovim ripgrep fd-find fzf bat eza jq zoxide git)
       local missing=()
       for p in "${pkgs[@]}"; do
         if is_present_apt "$p"; then
@@ -466,7 +470,7 @@ install_core_packages() {
       fi
       ;;
     macos)
-      pkgs=(zsh tmux neovim ripgrep fd fzf bat jq zoxide tldr git)
+      pkgs=(zsh tmux neovim ripgrep fd fzf bat eza jq zoxide git)
       for p in "${pkgs[@]}"; do
         if is_installed_brew "$p"; then
           note "skip $p (installed)"
