@@ -270,6 +270,10 @@ if ($script:Failed -eq 0) {
     $readyWithoutPlansValid = $false
     try { $readyWithoutPlansValid = ($readyWithoutPlans | ConvertTo-Json -Depth 30) | Test-Json -SchemaFile $schemaPath -ErrorAction Stop } catch { $readyWithoutPlansValid = $false }
     Assert-Contract -Condition (-not $readyWithoutPlansValid) -Message 'schema version 1 rejects ready exit 0 even when required plans are omitted'
+    $readyWithoutPlans.check_contract_ready = $false
+    $readyWithoutPlansValid = $false
+    try { $readyWithoutPlansValid = ($readyWithoutPlans | ConvertTo-Json -Depth 30) | Test-Json -SchemaFile $schemaPath -ErrorAction Stop } catch { $readyWithoutPlansValid = $false }
+    Assert-Contract -Condition (-not $readyWithoutPlansValid) -Message 'schema version 1 rejects exit 0 before contract readiness completes'
 
     $fixtureRoot = Join-Path $PSScriptRoot 'fixtures\native-bootstrap-report'
     foreach ($fixture in Get-ChildItem -LiteralPath (Join-Path $fixtureRoot 'valid') -Filter '*.json' | Sort-Object Name) {

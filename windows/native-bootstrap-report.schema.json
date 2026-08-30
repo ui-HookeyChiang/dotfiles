@@ -13,7 +13,7 @@
     "projects_dir": {"type": ["string", "null"]},
     "offline": {"type": ["boolean", "null"]},
     "overall": {"enum": ["ready", "warning", "action_required", "failed"]},
-    "exit_code": {"enum": [0, 2, 10, 20, 30]},
+    "exit_code": {"enum": [2, 10, 20, 30]},
     "authorizations": {"type": "array", "maxItems": 0},
     "plans": {"type": "array", "items": {"$ref": "#/$defs/plan"}},
     "results": {"type": "array", "items": {"$ref": "#/$defs/result"}},
