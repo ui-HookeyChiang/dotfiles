@@ -1,8 +1,8 @@
 # Native bootstrap contract artifacts
 
-Status: ready-for-agent
+Status: done
 Labels: flow:task
-Spec: ../specs/active/2026-08-27-native-windows-setup-check.md
+Spec: ../../specs/active/2026-08-27-native-windows-setup-check.md
 Stack: 1/3
 Blocked by: none
 
