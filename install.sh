@@ -5,7 +5,8 @@
 #
 # Spec: docs/specs/active/2026-05-06-install-script.md
 #
-# Core (always run): system packages, zsh, submodules, symlinks.
+# Core (always run): system packages, zsh, submodules, symlinks,
+# GitHub SSH auth + commit-signing keys.
 # Optional modules (--with-*) are stubs in this task; filled in by Task 2.
 
 set -euo pipefail
@@ -166,6 +167,9 @@ Core (always run unless --no-symlink):
   - zsh as default shell (.zshrc auto-bootstraps zinit on first launch)
   - git submodules (.config/nvim, .config/tmux)
   - dotfile symlinks (whitelist + timestamped backup on conflict)
+  - GitHub SSH key (~/.ssh/id_ed25519_github), Host github.com, allowed_signers,
+    and gh upload as authentication + signing keys (fail-soft; never runs
+    gh auth refresh)
 
 Optional modules:
   --with-node     Node.js LTS + @anthropic-ai/claude-code (Task 2)
@@ -1477,6 +1481,133 @@ install_projects() {
 }
 
 # ---------------------------------------------------------------------------
+# GitHub SSH auth + commit signing
+# ---------------------------------------------------------------------------
+# Matches .gitconfig: gpg.format=ssh, user.signingkey=~/.ssh/id_ed25519_github.pub
+# Remote upload uses gh ssh-key add. Does not run `gh auth refresh` (browser).
+# Skip GitHub API when HOME != REAL_HOME (TARGET_HOME and unit tests).
+
+_github_ssh_print_sop() {
+  local pub="$1" host_id="$2"
+  note "SOP: gh auth login   # if needed"
+  note "SOP: gh auth refresh -h github.com -s admin:public_key,admin:ssh_signing_key"
+  note "SOP: gh ssh-key add $pub --title $host_id --type authentication"
+  note "SOP: gh ssh-key add $pub --title signing-${host_id} --type signing"
+}
+
+_github_ssh_ensure_uploaded() {
+  local pub="$1" list="$2" blob="$3" kind="$4" title="$5"
+  if printf '%s\n' "$list" | grep -F "$blob" | grep -qE "${kind}$"; then
+    note "skip GitHub $kind key (already registered)"
+    return 0
+  fi
+  if gh ssh-key add "$pub" --title "$title" --type "$kind"; then
+    note "registered GitHub $kind key ($title)"
+    return 0
+  fi
+  note "gh ssh-key add --type $kind failed"
+  return 1
+}
+
+setup_github_ssh_signing() {
+  log "setup_github_ssh_signing"
+
+  local key="$HOME/.ssh/id_ed25519_github"
+  local pub="${key}.pub"
+  local ssh_config="$HOME/.ssh/config"
+  local signers="$HOME/.git_allowed_signers"
+  local email="hookey.chiang@gmail.com"
+  local host_id algo blob
+  host_id="$(hostname -s 2>/dev/null || hostname)"
+
+  run mkdir -p "$HOME/.ssh"
+  if [[ -f "$key" && -f "$pub" ]]; then
+    note "skip ssh key (present: $key)"
+  elif (( DRY_RUN )); then
+    printf '+ ssh-keygen -t ed25519 -f %q -C %q -N ""\n' "$key" "hookey@${host_id}-github" >&2
+  else
+    ssh-keygen -t ed25519 -f "$key" -C "hookey@${host_id}-github" -N "" -q
+    chmod 700 "$HOME/.ssh"
+    chmod 600 "$key"
+    chmod 644 "$pub"
+    note "generated $key (empty passphrase)"
+  fi
+
+  if [[ -f "$ssh_config" ]] && grep -qE '^Host[[:space:]]+github\.com([[:space:]]|$)' "$ssh_config"; then
+    note "skip ssh config Host github.com (already present)"
+  elif (( DRY_RUN )); then
+    printf '+ append Host github.com to %q\n' "$ssh_config" >&2
+  else
+    if [[ -f "$ssh_config" && -s "$ssh_config" ]]; then
+      printf '\n' >> "$ssh_config"
+    fi
+    cat >> "$ssh_config" <<'EOF'
+Host github.com
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/id_ed25519_github
+  IdentitiesOnly yes
+EOF
+    chmod 600 "$ssh_config"
+    note "appended Host github.com to $ssh_config"
+  fi
+
+  if [[ ! -f "$pub" ]]; then
+    note "skip allowed_signers (no pubkey)"
+  else
+    read -r algo blob _ < "$pub"
+    if [[ -f "$signers" ]] && grep -qF "$blob" "$signers"; then
+      note "skip allowed_signers (key already listed)"
+    elif (( DRY_RUN )); then
+      printf '+ append signer to %q\n' "$signers" >&2
+    else
+      printf '%s %s %s hookey@%s-github\n' "$email" "$algo" "$blob" "$host_id" >> "$signers"
+      note "appended signing key to $signers"
+    fi
+  fi
+
+  if (( DRY_RUN )); then
+    note "dry-run: skip GitHub key upload"
+    return 0
+  fi
+  if [[ "$HOME" != "$REAL_HOME" ]]; then
+    note "HOME!=REAL_HOME; skip GitHub key upload"
+    return 0
+  fi
+  if [[ ! -f "$pub" ]]; then
+    note "skip GitHub key upload (no pubkey)"
+    return 0
+  fi
+  if ! command -v gh >/dev/null 2>&1; then
+    note "gh not on PATH; skip GitHub key upload"
+    _github_ssh_print_sop "$pub" "$host_id"
+    return 0
+  fi
+  if ! gh auth status >/dev/null 2>&1; then
+    note "gh not logged in; skip GitHub key upload"
+    _github_ssh_print_sop "$pub" "$host_id"
+    return 0
+  fi
+
+  local list
+  if ! list="$(gh ssh-key list 2>/dev/null)"; then
+    note "gh ssh-key list failed (need admin:public_key,admin:ssh_signing_key)"
+    _github_ssh_print_sop "$pub" "$host_id"
+    return 0
+  fi
+
+  read -r algo blob _ < "$pub"
+  if ! _github_ssh_ensure_uploaded "$pub" "$list" "$blob" authentication "$host_id"; then
+    _github_ssh_print_sop "$pub" "$host_id"
+    return 0
+  fi
+  if ! _github_ssh_ensure_uploaded "$pub" "$list" "$blob" signing "signing-${host_id}"; then
+    _github_ssh_print_sop "$pub" "$host_id"
+    return 0
+  fi
+}
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -1499,6 +1630,7 @@ main() {
   init_submodules
   symlink_dotfiles
   symlink_submodule_overrides
+  setup_github_ssh_signing
 
   if (( WITH_NODE ));     then install_node;     fi
   if (( WITH_GO ));       then install_go;       fi
