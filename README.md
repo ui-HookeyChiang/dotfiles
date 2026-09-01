@@ -26,6 +26,7 @@ exec $SHELL                           # reload
 | Default shell | `chsh` to zsh | `chsh` + adds zsh to `/etc/shells` |
 | Submodules | `.config/nvim` + `.config/tmux` | same |
 | Symlinks | whitelist symlink to `$HOME`, conflicts go to `~/.dotfiles-backup-<ts>/` | same |
+| GitHub SSH signing | generate `~/.ssh/id_ed25519_github` if missing, `Host github.com`, append `~/.git_allowed_signers`, `gh ssh-key add` as authentication **and** signing (fail-soft) | same |
 
 | Optional flag | What it adds |
 |---|---|
@@ -53,8 +54,28 @@ Missing entries are reported at the end of the run with copy-pasteable `security
 ./install.sh --with-secrets   # = --with-projects + --with-node + .env from Keychain
 ```
 
+### GitHub SSH + commit signing
+
+Core install keeps GitHub auth and verified commits in sync with `.gitconfig` (`gpg.format=ssh`, `commit.gpgsign=true`):
+
+1. Create `~/.ssh/id_ed25519_github` if missing (empty passphrase).
+2. Append `Host github.com` to `~/.ssh/config` if that host block is absent.
+3. Append the pubkey to `~/.git_allowed_signers` (local `git log --show-signature`).
+4. If `gh` is logged in **and** this is a real-HOME run, register the same pubkey as both an authentication key and a signing key.
+
+Isolated `TARGET_HOME=` runs never call the GitHub API. Missing `gh`, missing login, or missing `admin:public_key` / `admin:ssh_signing_key` scopes fail-soft and print:
+
+```bash
+gh auth login   # if needed
+gh auth refresh -h github.com -s admin:public_key,admin:ssh_signing_key
+gh ssh-key add ~/.ssh/id_ed25519_github.pub --title "$(hostname -s)" --type authentication
+gh ssh-key add ~/.ssh/id_ed25519_github.pub --title "signing-$(hostname -s)" --type signing
+```
+
+`gh auth refresh` is interactive (browser / device code). Install never runs it.
+
 ### Preconditions for `--with-projects`
-- GitHub SSH key configured (llm-wiki includes a submodule cloned via SSH)
+- GitHub SSH key configured (core install now does this; llm-wiki includes a submodule cloned via SSH)
 - `uv` installed for stock-target-finder (https://astral.sh/uv/install.sh)
 
 If a precondition is missing, that repo's install fails-soft with a WARN and the others continue.
