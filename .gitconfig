@@ -1,9 +1,10 @@
 [user]
     name = ui-HookeyChiang
-    email = hookey.chiang@ui.com
+    email = hookey.chiang@gmail.com
     signingkey = ~/.ssh/id_ed25519.pub
 [core]
     filemode = true
+    symlinks = true
     editor = nvim
 	excludesfile = ~/.gitignore
 [commit]

@@ -51,7 +51,6 @@ zinit wait lucid atload'!_zsh_autosuggest_start' for \
 # --- 來自 Oh-My-Zsh 的插件 (Snippets) ---
 zinit wait lucid for \
     OMZ::plugins/git/git.plugin.zsh \
-    OMZ::plugins/tmux/tmux.plugin.zsh \
     OMZ::plugins/fzf/fzf.plugin.zsh \
     OMZ::plugins/extract/extract.plugin.zsh
 
@@ -212,8 +211,19 @@ oc() {
 # Headless coding CLIs — prompt mode with auto-approve
 alias claude='claude --dangerously-skip-permissions'
 alias cc='claude -p --dangerously-skip-permissions'
-command -v codex >/dev/null 2>&1 && alias cx='codex -a never'
-alias cur='cursor -p'
+if command -v codex >/dev/null 2>&1; then
+  alias codex='command codex --dangerously-bypass-approvals-and-sandbox'
+  alias cx='command codex --dangerously-bypass-approvals-and-sandbox'
+fi
+# Cursor Agent binary is cursor-agent (also linked as agent); --yolo == --force
+if command -v cursor-agent >/dev/null 2>&1; then
+  alias cursor-agent='command cursor-agent --yolo'
+  alias agent='command cursor-agent --yolo'
+  alias cur='command cursor-agent -p --yolo'
+elif command -v agent >/dev/null 2>&1; then
+  alias agent='command agent --yolo'
+  alias cur='command agent -p --yolo'
+fi
 
 # opencode
 export PATH=/Users/hookeychiang/.opencode/bin:$PATH

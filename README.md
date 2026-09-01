@@ -22,7 +22,7 @@ exec $SHELL                           # reload
 
 | Step | Linux | macOS |
 |---|---|---|
-| OS packages | `apt`: zsh tmux neovim ripgrep fd-find fzf bat jq zoxide tldr git | `brew`: same names + auto-installs Homebrew if missing |
+| OS packages | `apt`: zsh tmux neovim ripgrep fd-find fzf bat eza jq zoxide git | `brew`: same names + auto-installs Homebrew if missing |
 | Default shell | `chsh` to zsh | `chsh` + adds zsh to `/etc/shells` |
 | Submodules | `.config/nvim` + `.config/tmux` | same |
 | Symlinks | whitelist symlink to `$HOME`, conflicts go to `~/.dotfiles-backup-<ts>/` | same |
@@ -149,16 +149,16 @@ These are the original step-by-step setup instructions. `./install.sh` automates
 
 ```bash
 sudo apt update
-sudo apt install -y python3-venv python3-pip clang npm unzip ripgrep fzf bat \
+sudo apt install -y python3-venv python3-pip clang npm unzip ripgrep fzf bat eza \
     fd-find cmake gettext curl ca-certificates git-buildpackage cargo tmux zsh \
-    tldr jless zoxide
+    jless zoxide
 ```
 
 ### 2. Shell Setup (Zsh + zinit)
 
 ```bash
 # Set Zsh as default shell
-sudo chsh -s $(which zsh)
+chsh -s "$(command -v zsh)"
 ```
 
 `.zshrc` auto-bootstraps zinit on first launch and installs all configured plugins (autosuggestions, syntax highlighting, completions, fast directory jumping). No manual plugin clones needed.
