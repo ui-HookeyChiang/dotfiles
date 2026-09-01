@@ -215,7 +215,15 @@ if command -v codex >/dev/null 2>&1; then
   alias codex='command codex --dangerously-bypass-approvals-and-sandbox'
   alias cx='command codex --dangerously-bypass-approvals-and-sandbox'
 fi
-alias cur='cursor -p'
+# Cursor Agent binary is cursor-agent (also linked as agent); --yolo == --force
+if command -v cursor-agent >/dev/null 2>&1; then
+  alias cursor-agent='command cursor-agent --yolo'
+  alias agent='command cursor-agent --yolo'
+  alias cur='command cursor-agent -p --yolo'
+elif command -v agent >/dev/null 2>&1; then
+  alias agent='command agent --yolo'
+  alias cur='command agent -p --yolo'
+fi
 
 # opencode
 export PATH=/Users/hookeychiang/.opencode/bin:$PATH
