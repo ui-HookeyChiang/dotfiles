@@ -44,3 +44,10 @@ id_*
 
 # install.sh --with-claude-agents runtime bridge (register-harness.sh layout)
 /.claude/agent-compat
+
+# Harness/skill runtime transients — shared list, SSOT:
+# skill-dev/_shared/lib/sh/harness-dirt.sh
+.claude/worktrees/
+.claude/*.lock
+.claude/*.bak
+.flow-dev-lock
