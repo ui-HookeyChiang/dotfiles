@@ -8,7 +8,12 @@
 
 # macOS-only optional Homebrew toolchains (heavy paths). brew shellenv is in .zshenv.
 if [[ "$OSTYPE" == darwin* ]]; then
-  for d in /opt/homebrew/opt/llvm/bin /opt/homebrew/opt/openjdk/bin /opt/homebrew/opt/rustup/bin; do
+  for d in \
+    /opt/homebrew/opt/python@3.13/libexec/bin \
+    "$HOME/Library/TinyTeX/bin/universal-darwin" \
+    /opt/homebrew/opt/llvm/bin \
+    /opt/homebrew/opt/openjdk/bin \
+    /opt/homebrew/opt/rustup/bin; do
     [[ -d "$d" ]] && export PATH="$d:$PATH"
   done
   [[ -d /opt/homebrew/opt/openjdk/include ]] && export CPPFLAGS="-I/opt/homebrew/opt/openjdk/include"
