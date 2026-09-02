@@ -8,6 +8,7 @@
 
 # -- theme (powerline — matches p10k POWERLEVEL9K_MODE=powerline / MesloLGS NF) -
 # Requires a Nerd Font or Powerline-patched font in the terminal (same as p10k).
+# SOP when glyphs show as ?: docs/specs/done/2026-09-02-tmux-powerline-font-sop.md (install.sh: macOS/Linux/WSL; Windows: scripts/install-meslo-fonts.ps1).
 tmux_conf_theme_left_separator_main='\uE0B0'
 tmux_conf_theme_left_separator_sub='\uE0B1'
 tmux_conf_theme_right_separator_main='\uE0B2'
