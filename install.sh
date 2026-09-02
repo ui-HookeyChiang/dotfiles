@@ -9,7 +9,35 @@
 # GitHub SSH auth + commit-signing keys.
 # Optional modules (--with-*) are stubs in this task; filled in by Task 2.
 
-set -euo pipefail
+# Re-exec under Bash 4+ when available. macOS first run may install bash via
+# Homebrew in ensure_bash4_macos() before re-exec. Homebrew bootstrap keeps
+# /bin/bash only (ensure_pkg_manager). Sourced loads (unit tests) skip re-exec.
+if (( BASH_VERSINFO[0] < 4 )); then
+  _bash4=""
+  for _candidate in /opt/homebrew/bin/bash /usr/local/bin/bash "${HOME:-}/.local/share/skill-dev/bin/bash"; do
+    if [ -x "$_candidate" ] && "$_candidate" -c '(( BASH_VERSINFO[0] >= 4 ))' 2>/dev/null; then
+      _bash4="$_candidate"
+      break
+    fi
+  done
+  if [[ -n "$_bash4" && "${BASH_SOURCE[0]}" == "$0" ]]; then
+    exec "$_bash4" "$0" "$@"
+  fi
+  if [[ "$(uname -s)" == "Darwin" ]]; then
+    _DOTFILES_BOOTSTRAP_BASH4=1
+  elif [[ -z "$_bash4" ]]; then
+    echo "ERROR: Bash 4+ required (found ${BASH_VERSION:-unknown})." >&2
+    echo "On macOS: re-run after Homebrew bash is installed." >&2
+    exit 2
+  fi
+fi
+unset _bash4 _candidate
+
+if [[ "${_DOTFILES_BOOTSTRAP_BASH4:-0}" == "1" ]]; then
+  set -eo pipefail
+else
+  set -euo pipefail
+fi
 trap 'echo "FAILED at line $LINENO" >&2' ERR
 
 # ---------------------------------------------------------------------------
@@ -17,6 +45,9 @@ trap 'echo "FAILED at line $LINENO" >&2' ERR
 # ---------------------------------------------------------------------------
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Snapshot script argv before main/parse_flags so ensure_bash4_macos re-exec can
+# restore flags when invoked as a zero-arg function from main().
+DOTFILES_INSTALL_ARGV=("$@")
 
 # Test seam: set TARGET_HOME to fully isolate every $HOME write (symlinks,
 # ~/.claude, ~/.config, tool invocations). This is the ONLY supported way to
@@ -390,6 +421,30 @@ sudo_keepalive() {
 # Package manager bootstrap
 # ---------------------------------------------------------------------------
 
+# ensure_bash4_macos — first macOS run under bash 3.2 installs Homebrew bash,
+# then re-execs so the rest of install.sh runs under Bash 4+.
+ensure_bash4_macos() {
+  (( BASH_VERSINFO[0] >= 4 )) && return 0
+  [[ "$OS" != "macos" ]] && return 0
+  ensure_pkg_manager
+  if ! is_installed_brew bash; then
+    note "installing bash (Bash 4+ required)"
+    run brew install bash
+  fi
+  local _b _bash4=""
+  for _b in /opt/homebrew/bin/bash /usr/local/bin/bash; do
+    if [ -x "$_b" ] && "$_b" -c '(( BASH_VERSINFO[0] >= 4 ))' 2>/dev/null; then
+      _bash4="$_b"
+      break
+    fi
+  done
+  if [[ -n "$_bash4" ]]; then
+    exec "$_bash4" "$0" ${DOTFILES_INSTALL_ARGV+"${DOTFILES_INSTALL_ARGV[@]}"}
+  fi
+  err "Bash 4+ required after brew install bash; not found under Homebrew paths"
+  exit 2
+}
+
 ensure_pkg_manager() {
   log "ensure_pkg_manager"
   case "$OS" in
@@ -496,7 +551,7 @@ install_core_packages() {
       fi
       ;;
     macos)
-      pkgs=(zsh tmux neovim ripgrep fd fzf bat eza jq zoxide git)
+      pkgs=(bash zsh tmux neovim ripgrep fd fzf bat eza jq zoxide git)
       for p in "${pkgs[@]}"; do
         if is_installed_brew "$p"; then
           note "skip $p (installed)"
@@ -1969,6 +2024,7 @@ main() {
   [[ -n "${TARGET_HOME:-}" ]] && note "TARGET_HOME override: HOME=$HOME (real: $REAL_HOME)"
 
   detect_os
+  ensure_bash4_macos
   sudo_keepalive
   ensure_pkg_manager
   install_core_packages

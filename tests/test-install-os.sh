@@ -28,7 +28,7 @@ tmp_dir="$(mktemp -d -t install-os-test.XXXXXX)"
 trap 'rm -rf -- "$tmp_dir"' EXIT
 
 # ---------- TAP helpers ------------------------------------------------------
-plan_count=12
+plan_count=14
 echo "1..$plan_count"
 echo "# OS=$(uname -s) bash=${BASH_VERSION}"
 echo "# repo_root=$repo_root"
@@ -384,6 +384,58 @@ test_T12() {
   ok "$desc (DISTRO_ID=$distro_id)"
 }
 
+# T13: macOS core packages include bash (Homebrew Bash 4+ provisioning).
+test_T13() {
+  local desc="macOS install_core_packages includes bash"
+  if ! is_macos; then
+    skip "$desc" "not macOS (host is $(uname -s))"
+    return
+  fi
+  if ! grep -q 'pkgs=(bash ' "$install_sh"; then
+    nok "$desc" "install.sh macOS pkgs missing bash"
+    return
+  fi
+  ok "$desc"
+}
+
+# T14: ensure_bash4_macos re-exec must forward the script argv snapshot, not
+# the function's (empty) positional params. SKIPs when /bin/bash is not 3.x.
+test_T14() {
+  local desc="ensure_bash4_macos re-exec preserves installer flags (argv snapshot)"
+  if ! is_macos; then
+    skip "$desc" "not macOS (host is $(uname -s))"
+    return
+  fi
+  if ! /bin/bash -c '(( BASH_VERSINFO[0] < 4 ))' 2>/dev/null; then
+    skip "$desc" "/bin/bash is not 3.x on this host"
+    return
+  fi
+  local out
+  out="$(/bin/bash -c '
+    install_sh="$1"
+    # shellcheck disable=SC1090
+    . "$install_sh"
+    set +eu
+    trap - ERR
+    log() { :; }
+    note() { :; }
+    err() { printf "ERR:%s\n" "$*"; }
+    run() { :; }
+    is_installed_brew() { return 0; }
+    ensure_pkg_manager() { :; }
+    OS=macos
+    DOTFILES_INSTALL_ARGV=(--dry-run --no-symlink --allow-foreign-root)
+    exec() { printf "EXEC:%s\n" "$*"; exit 0; }
+    ensure_bash4_macos
+    echo "NO_EXEC"
+  ' _ "$install_sh" 2>&1)"
+  if [[ "$out" != EXEC:*--dry-run*--no-symlink*--allow-foreign-root* ]]; then
+    nok "$desc" "expected re-exec argv to include installer flags; got: $out"
+    return
+  fi
+  ok "$desc"
+}
+
 # ---------- run --------------------------------------------------------------
 test_T1
 test_T2
@@ -397,6 +449,8 @@ test_T9
 test_T10
 test_T11
 test_T12
+test_T13
+test_T14
 
 echo "# passed=$((n - fail)) failed=$fail of $n"
 exit "$fail"
