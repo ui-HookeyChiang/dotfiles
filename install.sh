@@ -187,6 +187,8 @@ Core (always run unless --no-symlink):
   - zsh as default shell (.zshrc auto-bootstraps zinit on first launch)
   - git submodules (.config/nvim, .config/tmux)
   - dotfile symlinks (whitelist + timestamped backup on conflict)
+  - MesloLGS NF fonts + iTerm2 profile font when still on an unpatched font
+    (macOS; tmux powerline theme + p10k)
   - GitHub SSH key (~/.ssh/id_ed25519_github), Host github.com, allowed_signers,
     and gh upload as authentication + signing keys (fail-soft; never runs
     gh auth refresh)
@@ -1501,6 +1503,128 @@ install_projects() {
 }
 
 # ---------------------------------------------------------------------------
+# Terminal fonts (tmux powerline + p10k)
+# ---------------------------------------------------------------------------
+# .tmux.conf.local uses Private Use Area powerline separators (U+E0B0..E0B3).
+# Terminals need MesloLGS NF (or another Nerd/Powerline font) or glyphs render as ?.
+
+MESLO_FONT_URL_BASE='https://github.com/romkatv/powerlevel10k-media/raw/master'
+MESLO_FONT_VARIANTS=(Regular Bold Italic 'Bold Italic')
+MESLO_FONT_ITERM='MesloLGSNF-Regular 14'
+MESLO_FONT_SOP='docs/specs/done/2026-09-02-tmux-powerline-font-sop.md'
+
+_tmux_font_print_sop() {
+  note "SOP: open a new iTerm tab/window (existing tabs keep the old font)"
+  note "SOP: tmux set-environment -g TMUX_CONF_LOCAL \"\$HOME/dotfiles/.tmux.conf.local\""
+  note "SOP: tmux source-file ~/.config/tmux/.tmux.conf"
+  note "SOP: full guide: $MESLO_FONT_SOP"
+}
+
+_meslo_font_path() {
+  printf '%s/Library/Fonts/MesloLGS NF %s.ttf' "$HOME" "$1"
+}
+
+_meslo_font_url() {
+  local encoded="${1// /%20}"
+  printf '%s/MesloLGS%%20NF%%20%s.ttf' "$MESLO_FONT_URL_BASE" "$encoded"
+}
+
+install_meslo_fonts() {
+  log "install_meslo_fonts"
+  if [[ "$OS" != "macos" ]]; then
+    note "skip Meslo fonts (macOS only; see $MESLO_FONT_SOP on Linux)"
+    return 0
+  fi
+
+  local variant dest url installed=0
+  for variant in "${MESLO_FONT_VARIANTS[@]}"; do
+    dest="$(_meslo_font_path "$variant")"
+    if [[ -f "$dest" ]]; then
+      note "skip Meslo font (present: $dest)"
+      continue
+    fi
+    url="$(_meslo_font_url "$variant")"
+    if (( DRY_RUN )); then
+      printf '+ mkdir -p %q\n' "$HOME/Library/Fonts" >&2
+      printf '+ curl -fsSL %q -o %q\n' "$url" "$dest" >&2
+      continue
+    fi
+    run mkdir -p "$HOME/Library/Fonts"
+    if run curl -fsSL "$url" -o "$dest"; then
+      note "installed $dest"
+      installed=1
+    else
+      warn "failed to download MesloLGS NF $variant"
+    fi
+  done
+
+  if (( installed )); then
+    note "MesloLGS NF matches tmux powerline theme and p10k"
+  fi
+}
+
+configure_iterm2_meslo_font() {
+  log "configure_iterm2_meslo_font"
+  if [[ "$OS" != "macos" ]]; then
+    note "skip iTerm2 font (macOS only)"
+    return 0
+  fi
+  if [[ "$HOME" != "$REAL_HOME" ]]; then
+    note "HOME!=REAL_HOME; skip iTerm2 font"
+    return 0
+  fi
+
+  local plist="$HOME/Library/Preferences/com.googlecode.iterm2.plist"
+  if [[ ! -f "$plist" ]]; then
+    note "skip iTerm2 font (no plist: $plist)"
+    return 0
+  fi
+
+  if (( DRY_RUN )); then
+    printf '+ python3 update iTerm2 profile font -> %q\n' "$MESLO_FONT_ITERM" >&2
+    return 0
+  fi
+
+  local out updated
+  out="$(python3 - "$plist" "$MESLO_FONT_ITERM" <<'PYEOF'
+import plistlib, sys, pathlib
+
+plist_path = pathlib.Path(sys.argv[1])
+font = sys.argv[2]
+with plist_path.open("rb") as f:
+    data = plistlib.load(f)
+
+updated = 0
+for bm in data.get("New Bookmarks", []):
+    normal = bm.get("Normal Font", "")
+    if "Meslo" in normal:
+        continue
+    bm["Normal Font"] = font
+    bm["Non Ascii Font"] = font
+    bm["Use Non-ASCII Font"] = False
+    updated += 1
+
+if updated:
+    with plist_path.open("wb") as f:
+        plistlib.dump(data, f)
+print(updated)
+PYEOF
+)" || return 1
+  updated="${out##*$'\n'}"
+  if [[ "$updated" == "0" ]]; then
+    note "skip iTerm2 font (already Meslo or no profiles)"
+  else
+    note "updated $updated iTerm2 profile(s) to $MESLO_FONT_ITERM"
+    _tmux_font_print_sop
+  fi
+}
+
+setup_terminal_fonts() {
+  install_meslo_fonts
+  configure_iterm2_meslo_font
+}
+
+# ---------------------------------------------------------------------------
 # GitHub SSH auth + commit signing
 # ---------------------------------------------------------------------------
 # Matches .gitconfig: gpg.format=ssh, user.signingkey=~/.ssh/id_ed25519_github.pub
@@ -1650,6 +1774,7 @@ main() {
   init_submodules
   symlink_dotfiles
   symlink_submodule_overrides
+  setup_terminal_fonts
   setup_github_ssh_signing
 
   if (( WITH_NODE ));     then install_node;     fi
