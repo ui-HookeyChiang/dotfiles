@@ -48,14 +48,15 @@ guard_canonical_root() {
   git_dir="$(git -C "$REPO_ROOT" rev-parse --git-dir 2>/dev/null || true)"
   if [[ "$common_dir" != "$git_dir" ]]; then
     err "refusing to install into real HOME from a linked worktree: $REPO_ROOT"
-    err "home symlinks would point at a disposable checkout."
+    err "symlinks (~/.zshrc, ~/.config/nvim, ~/.config/tmux, …) would point at a disposable checkout."
     err "run from $canonical, or set TARGET_HOME=<dir> for an isolated test,"
     err "or pass --allow-foreign-root if you really mean it."
     exit 2
   fi
   if [[ -n "$canon_real" && "$root_real" != "$canon_real" ]]; then
     err "refusing to install into real HOME from non-canonical checkout: $root_real"
-    err "canonical: $canon_real. Use TARGET_HOME=<dir> or --allow-foreign-root."
+    err "canonical: $canon_real (expected for ~/.config/nvim and other symlink targets)."
+    err "use TARGET_HOME=<dir> for an isolated test, or --allow-foreign-root."
     exit 2
   fi
 }
@@ -143,8 +144,27 @@ note() {
   printf '    %s\n' "$*" >&2
 }
 
+warn() {
+  printf 'WARNING: %s\n' "$*" >&2
+}
+
 err() {
   printf 'ERROR: %s\n' "$*" >&2
+}
+
+# Submodule-specific recovery hint for init_submodules drift guard messages.
+submodule_drift_hint() {
+  case "$1" in
+    .config/nvim)
+      printf '%s' 'push from .config/nvim (topic branch off origin/dev), then bump the dotfiles gitlink'
+      ;;
+    .config/tmux)
+      printf '%s' 'push from .config/tmux, then bump the dotfiles gitlink'
+      ;;
+    *)
+      printf '%s' 'commit or push from the submodule, then bump the dotfiles gitlink'
+      ;;
+  esac
 }
 
 # run <cmd...>: execute or, in --dry-run mode, echo "+ <cmd>" without running.
@@ -568,18 +588,18 @@ init_submodules() {
       git -C "$REPO_ROOT/$path" fetch --quiet >/dev/null 2>&1 || true
     fi
     if ! git -C "$REPO_ROOT/$path" cat-file -e "$recorded^{commit}" 2>/dev/null; then
-      note "WARNING: submodule $path recorded commit $recorded unavailable even after fetch; skipping update (check the submodule remote, then re-run)"
+      warn "submodule $path: dotfiles pin $recorded not available locally even after fetch; skipping update (check submodule remote access, then re-run)"
       continue
     fi
     if ! git -C "$REPO_ROOT/$path" merge-base --is-ancestor "$head" "$recorded" 2>/dev/null; then
-      note "WARNING: submodule $path has local commits: HEAD $head not reachable from recorded $recorded; skipping update (commit or push them, then re-run)"
+      warn "submodule $path: HEAD $head is ahead of dotfiles pin $recorded; skipping update ($(submodule_drift_hint "$path"))"
       continue
     fi
     update_paths+=("$path")
   done < <(git config -f "$REPO_ROOT/.gitmodules" -z --get-regexp '^submodule\..*\.path$')
 
   if (( ${#update_paths[@]} == 0 )); then
-    note "all submodules skipped by drift guard; nothing to update"
+    warn "all submodules skipped by drift guard; nothing to update (resolve warnings above, then re-run install.sh)"
     return 0
   fi
   # LIMITATION: --recursive still detach-resets NESTED submodules without a
