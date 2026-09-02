@@ -26,7 +26,7 @@ exec $SHELL                           # reload
 | Default shell | `chsh` to zsh | `chsh` + adds zsh to `/etc/shells` |
 | Submodules | `.config/nvim` + `.config/tmux` | same |
 | Symlinks | whitelist symlink to `$HOME`, conflicts go to `~/.dotfiles-backup-<ts>/` | same |
-| Terminal fonts | — | MesloLGS NF + iTerm2 profile when unpatched (tmux powerline + p10k); see [SOP](docs/specs/done/2026-09-02-tmux-powerline-font-sop.md) |
+| Terminal fonts | MesloLGS NF + `fc-cache`; manual profile font | MesloLGS NF + iTerm2/WT when unpatched; WSL copies to Windows; see [SOP](docs/specs/done/2026-09-02-tmux-powerline-font-sop.md); native Windows: `scripts/install-meslo-fonts.ps1` |
 | GitHub SSH signing | generate `~/.ssh/id_ed25519_github` if missing, `Host github.com`, append `~/.git_allowed_signers`, `gh ssh-key add` as authentication **and** signing (fail-soft) | same |
 
 | Optional flag | What it adds |

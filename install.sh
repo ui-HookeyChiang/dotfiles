@@ -187,8 +187,8 @@ Core (always run unless --no-symlink):
   - zsh as default shell (.zshrc auto-bootstraps zinit on first launch)
   - git submodules (.config/nvim, .config/tmux)
   - dotfile symlinks (whitelist + timestamped backup on conflict)
-  - MesloLGS NF fonts + iTerm2 profile font when still on an unpatched font
-    (macOS; tmux powerline theme + p10k)
+  - MesloLGS NF fonts for tmux powerline + p10k (macOS + Linux/WSL); iTerm2 /
+    Windows Terminal profile font when still on an unpatched font
   - GitHub SSH key (~/.ssh/id_ed25519_github), Host github.com, allowed_signers,
     and gh upload as authentication + signing keys (fail-soft; never runs
     gh auth refresh)
@@ -1510,18 +1510,51 @@ install_projects() {
 
 MESLO_FONT_URL_BASE='https://github.com/romkatv/powerlevel10k-media/raw/master'
 MESLO_FONT_VARIANTS=(Regular Bold Italic 'Bold Italic')
+MESLO_FONT_FACE='MesloLGS NF'
 MESLO_FONT_ITERM='MesloLGSNF-Regular 14'
 MESLO_FONT_SOP='docs/specs/done/2026-09-02-tmux-powerline-font-sop.md'
+# Test seams (TARGET_HOME-style isolation for WSL/WT helpers)
+MESLO_WIN_FONTS_DIR="${MESLO_WIN_FONTS_DIR:-}"
+MESLO_WT_SETTINGS="${MESLO_WT_SETTINGS:-}"
+MESLO_FORCE_WSL="${MESLO_FORCE_WSL:-0}"
 
 _tmux_font_print_sop() {
-  note "SOP: open a new iTerm tab/window (existing tabs keep the old font)"
+  case "$OS" in
+    macos)
+      note "SOP: open a new iTerm tab/window (existing tabs keep the old font)"
+      ;;
+    linux)
+      if _is_wsl; then
+        note "SOP: open a new Windows Terminal tab (existing tabs keep the old font)"
+      else
+        note "SOP: set your terminal profile font to $MESLO_FONT_FACE (see $MESLO_FONT_SOP)"
+      fi
+      ;;
+  esac
   note "SOP: tmux set-environment -g TMUX_CONF_LOCAL \"\$HOME/dotfiles/.tmux.conf.local\""
   note "SOP: tmux source-file ~/.config/tmux/.tmux.conf"
+  note "SOP: native Windows (no WSL): pwsh ~/dotfiles/scripts/install-meslo-fonts.ps1"
   note "SOP: full guide: $MESLO_FONT_SOP"
 }
 
+_is_wsl() {
+  if (( MESLO_FORCE_WSL )); then
+    return 0
+  fi
+  [[ -n "${WSL_DISTRO_NAME:-}" ]] && return 0
+  [[ -r /proc/version ]] && grep -qi microsoft /proc/version
+}
+
+_meslo_font_dir() {
+  case "$OS" in
+    macos) printf '%s/Library/Fonts' "$HOME" ;;
+    linux) printf '%s/.local/share/fonts/meslo-lgs-nf' "$HOME" ;;
+    *) return 1 ;;
+  esac
+}
+
 _meslo_font_path() {
-  printf '%s/Library/Fonts/MesloLGS NF %s.ttf' "$HOME" "$1"
+  printf '%s/MesloLGS NF %s.ttf' "$(_meslo_font_dir)" "$1"
 }
 
 _meslo_font_url() {
@@ -1529,14 +1562,56 @@ _meslo_font_url() {
   printf '%s/MesloLGS%%20NF%%20%s.ttf' "$MESLO_FONT_URL_BASE" "$encoded"
 }
 
-install_meslo_fonts() {
-  log "install_meslo_fonts"
-  if [[ "$OS" != "macos" ]]; then
-    note "skip Meslo fonts (macOS only; see $MESLO_FONT_SOP on Linux)"
+_wsl_win_user() {
+  if [[ -n "${MESLO_WIN_USER:-}" ]]; then
+    printf '%s' "$MESLO_WIN_USER"
     return 0
   fi
+  local user=""
+  if command -v cmd.exe >/dev/null 2>&1; then
+    user="$(cmd.exe /c 'echo %USERNAME%' 2>/dev/null | tr -d '\r\n')"
+  fi
+  if [[ -z "$user" || "$user" == *'%'* ]]; then
+    local d base
+    for d in /mnt/c/Users/*; do
+      [[ -d "$d" ]] || continue
+      base="$(basename "$d")"
+      case "$base" in
+        Public|Default|'Default User'|'All Users') continue ;;
+      esac
+      user="$base"
+      break
+    done
+  fi
+  [[ -n "$user" ]] || return 1
+  printf '%s' "$user"
+}
 
-  local variant dest url installed=0
+_wsl_win_fonts_dir() {
+  if [[ -n "$MESLO_WIN_FONTS_DIR" ]]; then
+    printf '%s' "$MESLO_WIN_FONTS_DIR"
+    return 0
+  fi
+  local user dir
+  user="$(_wsl_win_user)" || return 1
+  dir="/mnt/c/Users/$user/AppData/Local/Microsoft/Windows/Fonts"
+  [[ -d "/mnt/c/Users/$user" ]] || return 1
+  printf '%s' "$dir"
+}
+
+install_meslo_fonts() {
+  log "install_meslo_fonts"
+  case "$OS" in
+    macos|linux) ;;
+    *)
+      note "skip Meslo fonts (unsupported OS; see $MESLO_FONT_SOP)"
+      return 0
+      ;;
+  esac
+
+  local font_dir variant dest url installed=0
+  font_dir="$(_meslo_font_dir)" || return 0
+
   for variant in "${MESLO_FONT_VARIANTS[@]}"; do
     dest="$(_meslo_font_path "$variant")"
     if [[ -f "$dest" ]]; then
@@ -1545,11 +1620,11 @@ install_meslo_fonts() {
     fi
     url="$(_meslo_font_url "$variant")"
     if (( DRY_RUN )); then
-      printf '+ mkdir -p %q\n' "$HOME/Library/Fonts" >&2
+      printf '+ mkdir -p %q\n' "$font_dir" >&2
       printf '+ curl -fsSL %q -o %q\n' "$url" "$dest" >&2
       continue
     fi
-    run mkdir -p "$HOME/Library/Fonts"
+    run mkdir -p "$font_dir"
     if run curl -fsSL "$url" -o "$dest"; then
       note "installed $dest"
       installed=1
@@ -1558,8 +1633,59 @@ install_meslo_fonts() {
     fi
   done
 
+  if [[ "$OS" == "linux" ]] && (( installed )) && command -v fc-cache >/dev/null 2>&1; then
+    if (( DRY_RUN )); then
+      printf '+ fc-cache -f %q\n' "$font_dir" >&2
+    else
+      run fc-cache -f "$font_dir"
+      note "ran fc-cache for $font_dir"
+    fi
+  fi
+
+  if _is_wsl && [[ "$OS" == "linux" ]]; then
+    install_meslo_fonts_wsl_windows
+  fi
+
   if (( installed )); then
     note "MesloLGS NF matches tmux powerline theme and p10k"
+  fi
+}
+
+install_meslo_fonts_wsl_windows() {
+  log "install_meslo_fonts_wsl_windows"
+  local win_dir variant src dest copied=0
+  win_dir="$(_wsl_win_fonts_dir)" || {
+    note "skip Windows font copy (WSL Windows profile not found)"
+    return 0
+  }
+
+  if (( DRY_RUN )); then
+    printf '+ mkdir -p %q\n' "$win_dir" >&2
+    for variant in "${MESLO_FONT_VARIANTS[@]}"; do
+      printf '+ cp %q %q/\n' "$(_meslo_font_path "$variant")" "$win_dir" >&2
+    done
+    return 0
+  fi
+
+  run mkdir -p "$win_dir"
+  for variant in "${MESLO_FONT_VARIANTS[@]}"; do
+    src="$(_meslo_font_path "$variant")"
+    dest="$win_dir/$(basename "$src")"
+    [[ -f "$src" ]] || continue
+    if [[ -f "$dest" ]]; then
+      note "skip Windows font (present: $dest)"
+      continue
+    fi
+    if run cp "$src" "$dest"; then
+      note "installed Windows font $dest"
+      copied=1
+    else
+      warn "failed to copy MesloLGS NF to $dest"
+    fi
+  done
+
+  if (( copied )); then
+    note "Windows Terminal can use $MESLO_FONT_FACE after a new tab"
   fi
 }
 
@@ -1619,9 +1745,85 @@ PYEOF
   fi
 }
 
+_wsl_windows_terminal_settings_candidates() {
+  local user="$1" base
+  if [[ -n "$MESLO_WT_SETTINGS" ]]; then
+    printf '%s\n' "$MESLO_WT_SETTINGS"
+    return 0
+  fi
+  base="/mnt/c/Users/$user/AppData/Local"
+  printf '%s\n' \
+    "$base/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json" \
+    "$base/Microsoft/Windows Terminal/settings.json"
+}
+
+configure_windows_terminal_meslo_font() {
+  log "configure_windows_terminal_meslo_font"
+  if [[ "$OS" != "linux" ]] || ! _is_wsl; then
+    note "skip Windows Terminal font (WSL only)"
+    return 0
+  fi
+  if [[ "$HOME" != "$REAL_HOME" ]]; then
+    note "HOME!=REAL_HOME; skip Windows Terminal font"
+    return 0
+  fi
+
+  local user settings updated=0
+  if [[ -n "${MESLO_WT_SETTINGS:-}" ]]; then
+    user="${MESLO_WIN_USER:-testuser}"
+  else
+    user="$(_wsl_win_user)" || {
+      note "skip Windows Terminal font (Windows user not found)"
+      return 0
+    }
+  fi
+
+  if (( DRY_RUN )); then
+    printf '+ python3 update Windows Terminal font -> %q\n' "$MESLO_FONT_FACE" >&2
+    return 0
+  fi
+
+  while IFS= read -r settings; do
+    [[ -f "$settings" ]] || continue
+    local out count
+    out="$(python3 - "$settings" "$MESLO_FONT_FACE" <<'PYEOF'
+import json, pathlib, sys
+
+path = pathlib.Path(sys.argv[1])
+face = sys.argv[2]
+raw = path.read_text(encoding="utf-8-sig")
+data = json.loads(raw)
+profiles = data.setdefault("profiles", {})
+defaults = profiles.setdefault("defaults", {})
+font = defaults.setdefault("font", {})
+current = font.get("face", "")
+if "Meslo" in current:
+    print(0)
+    raise SystemExit(0)
+font["face"] = face
+font.setdefault("size", 14)
+path.write_text(json.dumps(data, indent=4) + "\n", encoding="utf-8")
+print(1)
+PYEOF
+)" || continue
+    count="${out##*$'\n'}"
+    if [[ "$count" == "1" ]]; then
+      note "updated Windows Terminal font in $settings"
+      updated=1
+    fi
+  done < <(_wsl_windows_terminal_settings_candidates "$user")
+
+  if (( updated )); then
+    _tmux_font_print_sop
+  else
+    note "skip Windows Terminal font (already Meslo or settings.json not found)"
+  fi
+}
+
 setup_terminal_fonts() {
   install_meslo_fonts
   configure_iterm2_meslo_font
+  configure_windows_terminal_meslo_font
 }
 
 # ---------------------------------------------------------------------------
